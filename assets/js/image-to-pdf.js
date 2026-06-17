@@ -1,8 +1,10 @@
 let imageFiles = [];
-let currentMode = 'fit'; // 'fit' = 贴合图片，'a4' = A4标准页
+let currentMode = 'fit';
+let currentQuality = 0.8;
 
 const dropZone = document.getElementById('drop-zone');
 const fileInput = document.getElementById('file-input');
+const imageList = document.getElementById('image-list');
 
 function isHeic(file) {
   const name = file.name.toLowerCase();
@@ -61,7 +63,6 @@ function addImage(dataUrl, name) {
 
 function renderImageList() {
   const section = document.getElementById('image-list-section');
-  const list = document.getElementById('image-list');
   const count = document.getElementById('image-count');
   
   if (imageFiles.length === 0) {
@@ -72,10 +73,10 @@ function renderImageList() {
   section.classList.remove('hidden');
   count.textContent = `(${imageFiles.length} 张)`;
   
-  list.innerHTML = imageFiles.map((img, idx) => {
+  imageList.innerHTML = imageFiles.map((img, idx) => {
     const orient = img.width > img.height ? '横' : '竖';
     return `
-      <div class="thumb">
+      <div class="thumb" data-idx="${idx}">
         <img src="${img.dataUrl}" alt="${img.name}">
         <span class="thumb-num">${idx + 1}</span>
         <span class="thumb-orientation">${orient}</span>
@@ -88,13 +89,26 @@ function renderImageList() {
     `;
   }).join('');
   
-  list.querySelectorAll('.thumb-remove').forEach(btn => {
+  // 绑定删除按钮
+  imageList.querySelectorAll('.thumb-remove').forEach(btn => {
     btn.addEventListener('click', e => {
       e.stopPropagation();
       const idx = parseInt(btn.dataset.idx);
       imageFiles.splice(idx, 1);
       renderImageList();
     });
+  });
+  
+  // 初始化拖拽排序
+  Sortable.create(imageList, {
+    animation: 150,
+    ghostClass: 'dragging',
+    dragClass: 'drag-over',
+    onEnd: function (evt) {
+      const movedItem = imageFiles.splice(evt.oldIndex, 1)[0];
+      imageFiles.splice(evt.newIndex, 0, movedItem);
+      renderImageList();
+    }
   });
 }
 
@@ -105,9 +119,36 @@ function clearImages() {
 }
 
 function selectMode(mode) {
-  document.querySelectorAll('.orient-option').forEach(o => o.classList.remove('active'));
+  document.querySelectorAll('[data-mode]').forEach(o => o.classList.remove('active'));
   document.querySelector(`[data-mode="${mode}"]`).classList.add('active');
   currentMode = mode;
+}
+
+function selectQuality(q) {
+  document.querySelectorAll('[data-quality]').forEach(o => o.classList.remove('active'));
+  document.querySelector(`[data-quality="${q}"]`).classList.add('active');
+  currentQuality = parseFloat(q);
+}
+
+// 使用 Canvas 压缩图片
+function compressImage(dataUrl, quality, callback) {
+  if (quality >= 1.0) {
+    callback(dataUrl);
+    return;
+  }
+  const img = new Image();
+  img.onload = () => {
+    const canvas = document.createElement('canvas');
+    canvas.width = img.width;
+    canvas.height = img.height;
+    const ctx = canvas.getContext('2d');
+    // 白色背景，防止透明 PNG 变黑
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(0, 0, canvas.width, canvas.height);
+    ctx.drawImage(img, 0, 0);
+    callback(canvas.toDataURL('image/jpeg', quality));
+  };
+  img.src = dataUrl;
 }
 
 async function convertToPdf() {
@@ -127,29 +168,25 @@ async function convertToPdf() {
     
     for (let i = 0; i < imageFiles.length; i++) {
       const img = imageFiles[i];
-      const isPng = img.dataUrl.startsWith('data:image/png');
-      const format = isPng ? 'PNG' : 'JPEG';
+      
+      // 压缩图片
+      const compressedDataUrl = await new Promise(resolve => {
+        compressImage(img.dataUrl, currentQuality, resolve);
+      });
       
       if (currentMode === 'fit') {
-        // ===== 贴合图片模式：页面尺寸 = 图片尺寸，无白边 =====
         const w = img.width;
         const h = img.height;
         const orientation = w >= h ? 'landscape' : 'portrait';
         
         if (!pdf) {
-          pdf = new jsPDF({
-            unit: 'pt',
-            format: [w, h],
-            orientation: orientation
-          });
+          pdf = new jsPDF({ unit: 'pt', format: [w, h], orientation: orientation });
         } else {
           pdf.addPage([w, h], orientation);
         }
-        // 图片铺满整个页面，坐标 (0,0)，尺寸 = 页面尺寸
-        pdf.addImage(img.dataUrl, format, 0, 0, w, h, undefined, 'FAST');
+        pdf.addImage(compressedDataUrl, 'JPEG', 0, 0, w, h, undefined, 'FAST');
         
       } else {
-        // ===== A4 标准页模式：每页 A4，图片居中 =====
         let pageOrientation = img.width > img.height ? 'landscape' : 'portrait';
         
         if (!pdf) {
@@ -160,7 +197,6 @@ async function convertToPdf() {
         
         const pageWidth = pdf.internal.pageSize.getWidth();
         const pageHeight = pdf.internal.pageSize.getHeight();
-        
         const margin = 10;
         const availWidth = pageWidth - margin * 2;
         const availHeight = pageHeight - margin * 2;
@@ -172,11 +208,7 @@ async function convertToPdf() {
         const x = (pageWidth - renderWidth) / 2;
         const y = (pageHeight - renderHeight) / 2;
         
-        try {
-          pdf.addImage(img.dataUrl, format, x, y, renderWidth, renderHeight, undefined, 'FAST');
-        } catch (e) {
-          pdf.addImage(img.dataUrl, 'JPEG', x, y, renderWidth, renderHeight, undefined, 'FAST');
-        }
+        pdf.addImage(compressedDataUrl, 'JPEG', x, y, renderWidth, renderHeight, undefined, 'FAST');
       }
     }
     
@@ -221,6 +253,10 @@ fileInput.addEventListener('change', (e) => {
 document.getElementById('clear-images-btn').addEventListener('click', clearImages);
 document.getElementById('convert-btn').addEventListener('click', convertToPdf);
 
-document.querySelectorAll('.orient-option').forEach(opt => {
+document.querySelectorAll('[data-mode]').forEach(opt => {
   opt.addEventListener('click', () => selectMode(opt.dataset.mode));
+});
+
+document.querySelectorAll('[data-quality]').forEach(opt => {
+  opt.addEventListener('click', () => selectQuality(opt.dataset.quality));
 });
