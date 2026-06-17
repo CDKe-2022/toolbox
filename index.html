@@ -1,80 +1,166 @@
+<!-- tools/number-to-chinese.html -->
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>工具集 · 效率工具箱</title>
+<title>数字转中文大写 · 工具集</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,600;9..144,700;9..144,900&family=Noto+Sans+SC:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.tailwindcss.com"></script>
-<link rel="stylesheet" href="assets/css/common.css">
-<link rel="manifest" href="/manifest.json">
+<link rel="stylesheet" href="../assets/css/common.css">
 </head>
 <body class="page-enter bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen">
 
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12 relative z-10">
-  <!-- 头部区域 -->
-  <header class="mb-12">
-    <div class="deco-line mb-6"></div>
-    <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
-      <div>
-        <h1 class="font-display text-5xl md:text-6xl font-bold hero-title mb-4 leading-tight">效率工具集</h1>
-        <p class="text-[--ink-soft] text-lg font-light">简洁、纯粹、专注的本地化工具，解决日常需求。</p>
+  <!-- 头部导航优化 -->
+  <header class="flex items-center justify-between mb-8 md:mb-12">
+    <div class="flex items-center gap-4">
+      <tool-button variant="ghost" onclick="goHome()" class="shrink-0">
+        <svg width="18" height="18" viewBox="0 0 16" fill="none">
+          <path d="M10 4L6 8L10 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        返回主页
+      </tool-button>
+      <div class="h-6 w-px bg-[--border] hidden sm:block"></div>
+      <div class="hidden sm:flex items-center gap-2 text-sm text-[--muted]">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+        </svg>
+        <span>数字转中文大写</span>
       </div>
-      <span class="tool-num">Local Tools</span>
     </div>
+    <span class="tool-num bg-[--green]/10 text-[--green] px-3 py-1 rounded-full">Tool 01</span>
   </header>
-
-  <!-- 搜索框 -->
-  <div class="mb-8 max-w-md mx-auto">
-    <div class="relative">
-      <input 
-        type="text" 
-        id="search-input" 
-        placeholder="搜索工具..." 
-        class="w-full px-4 py-2 pl-10 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[--green] focus:border-transparent"
-      >
-      <svg class="absolute left-3 top-2.5 w-5 h-5 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path>
-      </svg>
+  
+  <div class="main-layout">
+    <!-- 主要内容区 -->
+    <div class="space-y-8">
+      <!-- 标题区域 -->
+      <div class="mb-8">
+        <div class="deco-line mb-6"></div>
+        <h2 class="font-display text-4xl sm:text-5xl md:text-6xl font-bold text-[--green] mb-4 leading-tight">数字转中文大写</h2>
+        <p class="text-[--ink-soft] text-lg font-light max-w-2xl">输入阿拉伯数字，自动转换为人民币大写金额格式。</p>
+      </div>
+      
+      <!-- 输入区域 -->
+      <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 md:p-8">
+        <label class="block text-sm font-medium text-[--ink-soft] mb-4">输入数字</label>
+        <div class="relative mb-6">
+          <input type="text" id="num-input" class="input font-display text-2xl md:text-3xl w-full py-4 px-5 pr-16" placeholder="例如 1234.56" inputmode="decimal">
+          <div class="absolute right-4 top-1/2 -translate-y-1/2 text-[--muted] font-mono text-sm">
+            ¥
+          </div>
+        </div>
+      </div>
+      
+      <!-- 输出区域 -->
+      <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 md:p-8">
+        <label class="block text-sm font-medium text-[--ink-soft] mb-4">中文大写</label>
+        <div id="num-output" class="result-box w-full min-h-[120px] p-5">
+          <span class="text-[--muted] text-base font-sans font-normal">结果将显示在这里</span>
+        </div>
+      </div>
+      
+      <!-- 底部操作按钮 -->
+      <div class="flex flex-wrap gap-3 pt-2">
+        <tool-button id="copy-input-btn" variant="primary">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <rect x="4" y="4" width="8" height="8" rx="1.5" stroke="currentColor" stroke-width="1.3"/>
+            <path d="M3 9V3C3 2.45 3.45 2 4 2H9" stroke="currentColor" stroke-width="1.3"/>
+          </svg>
+          复制输入
+        </tool-button>
+        
+        <tool-button id="clear-all-btn" variant="ghost">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <path d="M3 3L11 11M11 3L3 11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+          清空全部
+        </tool-button>
+      </div>
+    </div>
+    
+    <!-- 侧边栏 -->
+    <div class="space-y-6 mt-8 lg:mt-0">
+      <!-- 使用说明 -->
+      <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 sticky top-8">
+        <h3 class="font-display text-lg font-semibold text-[--ink] mb-4 flex items-center gap-2">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="16" x2="12" y2="12"></line>
+            <line x1="12" y1="8" x2="12.01" y2="8"></line>
+          </svg>
+          使用说明
+        </h3>
+        <ul class="space-y-3 text-sm text-[--ink-soft]">
+          <li class="flex gap-3">
+            <span class="text-[--green] mt-0.5">•</span>
+            <span>支持整数、小数（最多两位，对应角分）、负数</span>
+          </li>
+          <li class="flex gap-3">
+            <span class="text-[--green] mt-0.5">•</span>
+            <span>转换为标准人民币大写金额格式，如"壹仟贰佰叁拾肆元伍角陆分"</span>
+          </li>
+          <li class="flex gap-3">
+            <span class="text-[--green] mt-0.5">•</span>
+            <span>可一键复制原始输入或转换后的结果</span>
+          </li>
+          <li class="flex gap-3">
+            <span class="text-[--green] mt-0.5">•</span>
+            <span>所有计算在本地完成，不会发送任何数据</span>
+          </li>
+          <li class="flex gap-3">
+            <span class="text-[--green] mt-0.5">•</span>
+            <span>支持 URL 参数自动计算：<code class="bg-gray-100 px-1 py-0.5 rounded text-xs">?v=12345.67</code></span>
+          </li>
+        </ul>
+        
+        <!-- 示例卡片 -->
+        <div class="mt-6 p-4 bg-blue-50 rounded-xl border border-blue-100">
+          <h4 class="font-medium text-[--ink] mb-3 text-sm">常用示例</h4>
+          <div class="space-y-2 text-sm text-blue-800">
+            <div class="flex justify-between">
+              <span>12.34</span>
+              <span class="text-blue-600">壹拾贰元叁角肆分</span>
+            </div>
+            <div class="flex justify-between">
+              <span>10000</span>
+              <span class="text-blue-600">壹万元整</span>
+            </div>
+            <div class="flex justify-between">
+              <span>0.05</span>
+              <span class="text-blue-600">伍分</span>
+            </div>
+          </div>
+        </div>
+        
+        <!-- 键盘快捷键 -->
+        <div class="mt-6 p-4 bg-gray-50 rounded-xl border border-gray-100">
+          <h4 class="font-medium text-[--ink] mb-3 text-sm">键盘快捷键</h4>
+          <div class="space-y-2 text-xs text-[--muted]">
+            <div class="flex justify-between">
+              <span><kbd class="bg-white px-2 py-1 rounded border">Enter</kbd></span>
+              <span>复制结果</span>
+            </div>
+            <div class="flex justify-between">
+              <span><kbd class="bg-white px-2 py-1 rounded border">Esc</kbd></span>
+              <span>清空输入</span>
+            </div>
+            <div class="flex justify-between">
+              <span><kbd class="bg-white px-2 py-1 rounded border">Ctrl/Cmd + C</kbd></span>
+              <span>复制输入</span>
+            </div>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
-
-  <!-- 分类筛选标签 -->
-  <div id="categories-container" class="flex flex-wrap gap-3 mb-8">
-    <!-- 分类按钮将由 JS 动态生成 -->
-  </div>
-
-  <!-- 工具卡片网格 -->
-  <div id="tools-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
-    <!-- 工具卡片将由 JS 动态生成 -->
-  </div>
-
-  <!-- 底部说明 -->
-  <footer class="text-center text-sm text-[--muted] py-8 border-t border-[--border]">
-    <p>所有工具均在浏览器本地运行，不会上传任何数据，请放心使用。</p>
-    <p class="mt-2">当前已有 <span id="tool-count">0</span> 个工具可用</p>
-  </footer>
 </div>
 
-<script src="assets/js/common.js"></script>
-<script src="assets/js/components.js"></script>
-<script src="assets/js/tools-data.js"></script>
-<script src="assets/js/home.js"></script>
-<script>
-  document.addEventListener('DOMContentLoaded', () => {
-    try {
-      if (!window.toolData || !window.toolData.tools) {
-        showError('工具数据加载失败，请刷新页面');
-        return;
-      }
-      new HomePage();
-    } catch (error) {
-      console.error('初始化失败:', error);
-      showError('应用初始化失败，请刷新页面');
-    }
-  });
-</script>
+<script src="../assets/js/common.js"></script>
+<script src="../assets/js/components.js"></script>
+<script src="../assets/js/number-to-chinese.js"></script>
 </body>
 </html>
