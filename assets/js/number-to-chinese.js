@@ -11,6 +11,11 @@ function numberToChinese(num) {
   let intStr = parts[0];
   let decStr = parts[1] || '';
   
+  // 边界校验：超过16位整数（千万亿）提示超出范围
+  if (intStr.replace(/^0+/, '').length > 16) {
+    return '数字超出支持范围';
+  }
+  
   intStr = intStr.replace(/^0+/, '');
   if (intStr === '') intStr = '0';
   
@@ -91,8 +96,6 @@ const output = document.getElementById('num-output');
 
 function convertNumber() {
   let value = input.value;
-  
-  // 自动清理非法字符
   const cleaned = value
     .replace(/[^\d.\-]/g, '')
     .replace(/-/g, (m, offset) => offset === 0 ? '-' : '')
@@ -106,14 +109,15 @@ function convertNumber() {
     output.innerHTML = '<span class="text-[--muted] text-base font-sans font-normal">结果将显示在这里</span>';
     return;
   }
-  
   if (isNaN(value)) {
     output.innerHTML = '<span class="text-[--muted] text-base font-sans font-normal">请输入有效数字</span>';
     return;
   }
   
   const result = numberToChinese(value);
-  if (result) {
+  if (result === '数字超出支持范围') {
+    output.innerHTML = '<span class="text-[--accent] text-base font-sans font-normal">数字超出支持范围（最大16位整数）</span>';
+  } else if (result) {
     output.textContent = result;
   } else {
     output.innerHTML = '<span class="text-[--muted] text-base font-sans font-normal">请输入有效数字</span>';
@@ -160,5 +164,13 @@ document.getElementById('copy-output-btn').addEventListener('click', () => {
   copyToClipboard(text).then(() => showToast('已复制大写结果')).catch(() => showToast('复制失败', true));
 });
 
-// 初始化
-convertNumber();
+// ============ URL 参数支持 ============
+// 支持 tools/number-to-chinese.html?v=12345.67
+const urlParams = new URLSearchParams(window.location.search);
+const val = urlParams.get('v');
+if (val) {
+  input.value = val;
+  convertNumber();
+} else {
+  convertNumber();
+}
