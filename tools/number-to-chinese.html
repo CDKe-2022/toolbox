@@ -173,8 +173,21 @@
   // 添加键盘快捷键支持
   document.addEventListener('DOMContentLoaded', function() {
     const input = document.getElementById('num-input');
+    const output = document.getElementById('num-output');
     
     if (input) {
+      // 输入框实时转换
+      input.addEventListener('input', function() {
+        const value = this.value.trim();
+        if (value) {
+          // 这里应该调用转换函数，假设 numberToChinese 是转换函数
+          const chinese = numberToChinese(value);
+          output.textContent = chinese;
+        } else {
+          output.textContent = '结果将显示在这里';
+        }
+      });
+      
       input.addEventListener('keydown', function(e) {
         // Enter键复制结果
         if (e.key === 'Enter') {
@@ -194,6 +207,35 @@
       // 自动聚焦到输入框
       input.focus();
     }
+    
+    // 复制输入按钮
+    document.getElementById('copy-input-btn')?.addEventListener('click', function() {
+      const input = document.getElementById('num-input');
+      if (input && input.value) {
+        navigator.clipboard.writeText(input.value).then(() => {
+          showToast('已复制输入内容');
+        });
+      }
+    });
+    
+    // 复制结果按钮
+    document.getElementById('copy-output-btn')?.addEventListener('click', function() {
+      const output = document.getElementById('num-output');
+      if (output && output.textContent !== '结果将显示在这里') {
+        navigator.clipboard.writeText(output.textContent).then(() => {
+          showToast('已复制结果内容');
+        });
+      }
+    });
+    
+    // 清空全部按钮
+    document.getElementById('clear-all-btn')?.addEventListener('click', function() {
+      const input = document.getElementById('num-input');
+      const output = document.getElementById('num-output');
+      if (input) input.value = '';
+      if (output) output.textContent = '结果将显示在这里';
+      showToast('已清空所有内容');
+    });
   });
 </script>
 </body>
