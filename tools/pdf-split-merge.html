@@ -11,6 +11,22 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
 <link rel="stylesheet" href="../assets/css/common.css">
+<style>
+  /* 模式选择按钮样式增强 */
+  .mode-option {
+    flex: 1; padding: 16px 12px; border: 1px solid var(--border);
+    border-radius: 12px; background: white; cursor: pointer;
+    text-align: center; transition: all 0.2s ease;
+    font-size: 14px; color: var(--ink-soft);
+  }
+  .mode-option.active {
+    background: var(--green); color: white; border-color: var(--green); 
+    box-shadow: 0 4px 12px rgba(26, 58, 50, 0.2);
+  }
+  .mode-option:not(.active):hover {
+    border-color: var(--ink-soft); background: var(--bg-2); color: var(--ink);
+  }
+</style>
 </head>
 <body class="page-enter bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen">
 
