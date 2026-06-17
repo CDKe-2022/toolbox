@@ -1,4 +1,4 @@
-// 自定义组件定义
+// assets/js/components.js
 class ToolCard extends HTMLElement {
   constructor() {
     super();
@@ -84,6 +84,32 @@ class ToolCard extends HTMLElement {
   
   connectedCallback() {
     this.render();
+    this.setupEventListeners();
+  }
+  
+  setupEventListeners() {
+    // 整个卡片可点击
+    this.addEventListener('click', (e) => {
+      // 如果点击的是按钮，让按钮自己处理
+      if (e.target.closest('tool-button')) return;
+      
+      const href = this.getAttribute('href');
+      if (href) {
+        window.location.href = href;
+      }
+    });
+    
+    // 按钮点击处理
+    const button = this.shadowRoot.getElementById('card-button');
+    if (button) {
+      button.addEventListener('click', (e) => {
+        e.stopPropagation(); // 阻止事件冒泡
+        const href = this.getAttribute('href');
+        if (href) {
+          window.location.href = href;
+        }
+      });
+    }
   }
   
   render() {
@@ -98,209 +124,12 @@ class ToolCard extends HTMLElement {
     this.shadowRoot.getElementById('card-desc').textContent = desc;
     this.shadowRoot.getElementById('card-status').textContent = status;
     
+    // 确保按钮有正确的 href
     const button = this.shadowRoot.getElementById('card-button');
-    button.onclick = () => {
-      window.location.href = href;
-    };
+    if (button && href) {
+      button.setAttribute('data-href', href);
+    }
   }
 }
 
-class ToolButton extends HTMLElement {
-  constructor() {
-    super();
-    this.attachShadow({ mode: 'open' });
-    
-    const template = document.createElement('template');
-    template.innerHTML = `
-      <style>
-        :host {
-          display: inline-flex;
-          align-items: center;
-          gap: 6px;
-          padding: 8px 16px;
-          border-radius: 8px;
-          font-size: 14px;
-          font-weight: 500;
-          cursor: pointer;
-          transition: all 0.2s ease;
-          border: 1px solid transparent;
-        }
-        
-        :host([variant="primary"]) {
-          background: var(--green);
-          color: white;
-        }
-        
-        :host([variant="primary"]:hover) {
-          background: #14532d;
-          transform: translateY(-1px);
-          box-shadow: 0 4px 12px rgba(20, 83, 45, 0.2);
-        }
-        
-        :host([variant="ghost"]) {
-          background: transparent;
-          color: var(--ink-soft);
-          border: 1px solid var(--border);
-        }
-        
-        :host([variant="ghost"]:hover) {
-          background: var(--bg-2);
-          color: var(--ink);
-        }
-        
-        :host([variant="accent"]) {
-          background: var(--accent);
-          color: white;
-        }
-        
-        :host([variant="accent"]:hover) {
-          background: #111827;
-        }
-        
-        :host([size="sm"]) {
-          padding: 6px 12px;
-          font-size: 12px;
-        }
-        
-        :host(:disabled) {
-          opacity: 0.5;
-          cursor: not-allowed;
-        }
-        
-        :host(:disabled) svg {
-          animation: spin 1s linear infinite;
-        }
-        
-        svg {
-          width: 16px;
-          height: 16px;
-        }
-        
-        @keyframes spin {
-          from { transform: rotate(0deg); }
-          to { transform: rotate(360deg); }
-        }
-      </style>
-      <slot></slot>
-    `;
-    
-    this.shadowRoot.appendChild(template.content.cloneNode(true));
-  }
-}
-
-class DropZone extends HTMLElement {
-  constructor() {
-    super();
-    this.attachShadow({ mode: 'open' });
-    
-    const template = document.createElement('template');
-    template.innerHTML = `
-      <style>
-        :host {
-          border: 2px dashed var(--border);
-          border-radius: 12px;
-          padding: 32px;
-          text-align: center;
-          cursor: pointer;
-          transition: all 0.2s ease;
-          background: var(--bg-2);
-        }
-        
-        :host(:hover) {
-          border-color: var(--green);
-          background: var(--green-light);
-        }
-        
-        :host(.dragover) {
-          border-color: var(--green);
-          background: var(--green-light);
-        }
-        
-        .tool-icon {
-          color: var(--green);
-          margin-bottom: 1rem;
-        }
-        
-        input[type="file"] {
-          display: none;
-        }
-      </style>
-      
-      <div class="tool-icon" id="tool-icon">
-        <slot name="icon"></slot>
-      </div>
-      <p class="font-medium text-[--ink] mb-1" id="drop-text"></p>
-      <p class="text-xs text-[--muted]" id="drop-hint"></p>
-      <input type="file" id="file-input">
-    `;
-    
-    this.shadowRoot.appendChild(template.content.cloneNode(true));
-  }
-  
-  connectedCallback() {
-    this.render();
-    this.setupEventListeners();
-  }
-  
-  render() {
-    const text = this.getAttribute('text') || '点击或拖拽文件到此处';
-    const hint = this.getAttribute('hint') || '支持 .pdf 格式';
-    const icon = this.getAttribute('icon') || `
-      <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-        <path d="M12 16V4M12 4L7 9M12 4L17 9M5 20H19" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-      </svg>
-    `;
-    
-    this.shadowRoot.getElementById('drop-text').textContent = text;
-    this.shadowRoot.getElementById('drop-hint').textContent = hint;
-    this.shadowRoot.getElementById('tool-icon').innerHTML = icon;
-  }
-  
-  setupEventListeners() {
-    const fileInput = this.shadowRoot.getElementById('file-input');
-    const dropZone = this;
-    
-    // 点击上传
-    this.addEventListener('click', () => {
-      fileInput.click();
-    });
-    
-    // 文件选择
-    fileInput.addEventListener('change', (e) => {
-      if (e.target.files.length > 0) {
-        this.dispatchEvent(new CustomEvent('fileselect', { 
-          detail: e.target.files, 
-          bubbles: true 
-        }));
-      }
-    });
-    
-    // 拖拽上传
-    this.addEventListener('dragover', (e) => {
-      e.preventDefault();
-      dropZone.classList.add('dragover');
-    });
-    
-    this.addEventListener('dragleave', (e) => {
-      e.preventDefault();
-      dropZone.classList.remove('dragover');
-    });
-    
-    this.addEventListener('drop', (e) => {
-      e.preventDefault();
-      dropZone.classList.remove('dragover');
-      
-      if (e.dataTransfer.files.length > 0) {
-        this.dispatchEvent(new CustomEvent('fileselect', { 
-          detail: e.dataTransfer.files, 
-          bubbles: true 
-        }));
-      }
-    });
-  }
-}
-
-// 注册自定义元素
 customElements.define('tool-card', ToolCard);
-customElements.define('tool-button', ToolButton);
-customElements.define('drop-zone', DropZone);
