@@ -8,6 +8,7 @@ class PDFSplitMerge {
   init() {
     this.setupEventListeners();
     this.setupModeToggle();
+    this.setMode('split');
   }
   
   setupEventListeners() {
@@ -34,11 +35,11 @@ class PDFSplitMerge {
     
     // 文件选择事件
     splitUpload.querySelector('input[type="file"]').addEventListener('change', (e) => {
-      this.handleFileSelect(e.target.files[0], 'split');
+      if (e.target.files[0]) this.handleFileSelect(e.target.files[0], 'split');
     });
     
     mergeUpload.querySelector('input[type="file"]').addEventListener('change', (e) => {
-      this.handleMultipleFiles(e.target.files, 'merge');
+      if (e.target.files.length > 0) this.handleMultipleFiles(e.target.files, 'merge');
     });
     
     // 拖拽上传
@@ -58,9 +59,9 @@ class PDFSplitMerge {
         zone.classList.remove('dragover');
         
         if (zone.id === 'pdf-upload') {
-          this.handleFileSelect(e.dataTransfer.files[0], 'split');
+          if (e.dataTransfer.files[0]) this.handleFileSelect(e.dataTransfer.files[0], 'split');
         } else {
-          this.handleMultipleFiles(e.dataTransfer.files, 'merge');
+          if (e.dataTransfer.files.length > 0) this.handleMultipleFiles(e.dataTransfer.files, 'merge');
         }
       });
     });
@@ -72,9 +73,17 @@ class PDFSplitMerge {
     
     // 键盘快捷键
     document.addEventListener('keydown', (e) => {
-      if (e.key === 'Enter' && (document.getElementById('split-btn')?.offsetParent || document.getElementById('merge-btn')?.offsetParent)) {
-        e.preventDefault();
-        document.getElementById('split-btn')?.click() || document.getElementById('merge-btn')?.click();
+      // 只在输入框未聚焦时处理
+      if (document.activeElement.tagName === 'INPUT') return;
+
+      if (e.key === 'Enter') {
+        if (this.mode === 'split' && document.getElementById('split-btn')?.offsetParent) {
+          e.preventDefault();
+          document.getElementById('split-btn').click();
+        } else if (this.mode === 'merge' && document.getElementById('merge-btn')?.offsetParent) {
+          e.preventDefault();
+          document.getElementById('merge-btn').click();
+        }
       }
       
       if (e.key === 'Escape') {
@@ -88,27 +97,23 @@ class PDFSplitMerge {
       option.addEventListener('click', () => {
         document.querySelectorAll('.mode-option').forEach(o => o.classList.remove('active'));
         option.classList.add('active');
-        
-        const mode = option.dataset.mode;
-        this.setMode(mode);
+        this.setMode(option.dataset.mode);
       });
     });
   }
   
   setMode(mode) {
     this.mode = mode;
-    
-    // 显示/隐藏对应模式
     if (mode === 'split') {
       document.getElementById('split-mode').classList.remove('hidden');
       document.getElementById('merge-mode').classList.add('hidden');
-      document.getElementById('split-btn').classList.remove('hidden');
-      document.getElementById('merge-btn').classList.add('hidden');
+      document.getElementById('split-btn')?.classList.remove('hidden');
+      document.getElementById('merge-btn')?.classList.add('hidden');
     } else {
       document.getElementById('split-mode').classList.add('hidden');
       document.getElementById('merge-mode').classList.remove('hidden');
-      document.getElementById('split-btn').classList.add('hidden');
-      document.getElementById('merge-btn').classList.remove('hidden');
+      document.getElementById('split-btn')?.classList.add('hidden');
+      document.getElementById('merge-btn')?.classList.remove('hidden');
     }
   }
   
@@ -150,13 +155,12 @@ class PDFSplitMerge {
   
   showPDFPreview(file) {
     const preview = document.getElementById('pdf-preview');
-    const fileName = document.getElementById('pdf-preview').querySelector('.font-medium');
+    const fileName = preview.querySelector('.font-medium');
     const pageCount = document.getElementById('page-count');
     
     fileName.textContent = file.name;
-    pageCount.textContent = '...';
+    pageCount.textContent = '计算中...';
     
-    // 读取PDF页数
     const reader = new FileReader();
     reader.onload = async (e) => {
       try {
@@ -232,6 +236,20 @@ class PDFSplitMerge {
     document.getElementById('merge-btn').classList.add('hidden');
   }
   
+  // 设置按钮 loading 状态
+  setLoading(btnId, isLoading, originalText) {
+    const btn = document.getElementById(btnId);
+    if (!btn) return;
+    
+    if (isLoading) {
+      btn.setAttribute('disabled', 'true');
+      btn.innerHTML = `<span class="spinner"></span> 处理中...`;
+    } else {
+      btn.removeAttribute('disabled');
+      btn.innerHTML = originalText;
+    }
+  }
+  
   async splitPDF() {
     if (this.files.length === 0) return;
     
@@ -243,57 +261,63 @@ class PDFSplitMerge {
       return;
     }
     
+    const btn = document.getElementById('split-btn');
+    const originalText = btn.innerHTML;
+    this.setLoading('split-btn', true, originalText);
+    
     try {
-      showToast('正在处理，请稍候...');
+      const arrayBuffer = await file.arrayBuffer();
+      const pdfDoc = await PDFLib.PDFDocument.load(arrayBuffer);
+      const pageCount = pdfDoc.getPageCount();
       
-      const reader = new FileReader();
-      reader.onload = async (e) => {
-        const pdfData = new Uint8Array(e.target.result);
-        const pdfDoc = await PDFLib.PDFDocument.load(pdfData);
-        const pageCount = pdfDoc.getPageCount();
+      if (method === 'pages') {
+        const pagesPerFile = parseInt(document.querySelector('.split-pages').value);
+        if (!pagesPerFile || pagesPerFile < 1) {
+          showToast('请输入有效的页数', 'error');
+          this.setLoading('split-btn', false, originalText);
+          return;
+        }
+        const totalFiles = Math.ceil(pageCount / pagesPerFile);
         
-        if (method === 'pages') {
-          const pagesPerFile = parseInt(document.querySelector('.split-pages').value);
-          const totalFiles = Math.ceil(pageCount / pagesPerFile);
-          
-          for (let i = 0; i < totalFiles; i++) {
-            const newPdf = await PDFLib.PDFDocument.create();
-            const startPage = i * pagesPerFile;
-            const endPage = Math.min(startPage + pagesPerFile, pageCount);
-            
-            for (let j = startPage; j < endPage; j++) {
-              const [page] = await newPdf.copyPages(pdfDoc, [j]);
-              newPdf.addPage(page);
-            }
-            
-            const bytes = await newPdf.save();
-            this.downloadPDF(bytes, `split_${i + 1}.pdf`);
-          }
-        } else if (method === 'range') {
-          const startPage = parseInt(document.querySelector('.split-start').value) - 1;
-          const endPage = parseInt(document.querySelector('.split-end').value);
-          
-          if (startPage >= pageCount || endPage > pageCount || startPage >= endPage) {
-            showToast('页码范围无效', 'error');
-            return;
-          }
-          
+        for (let i = 0; i < totalFiles; i++) {
           const newPdf = await PDFLib.PDFDocument.create();
+          const startPage = i * pagesPerFile;
+          const endPage = Math.min(startPage + pagesPerFile, pageCount);
+          
           for (let j = startPage; j < endPage; j++) {
             const [page] = await newPdf.copyPages(pdfDoc, [j]);
             newPdf.addPage(page);
           }
           
           const bytes = await newPdf.save();
-          this.downloadPDF(bytes, `split_range.pdf`);
+          this.downloadPDF(bytes, `split_${i + 1}.pdf`);
+        }
+      } else if (method === 'range') {
+        const startPage = parseInt(document.querySelector('.split-start').value) - 1;
+        const endPage = parseInt(document.querySelector('.split-end').value);
+        
+        if (startPage >= pageCount || endPage > pageCount || startPage >= endPage || startPage < 0) {
+          showToast('页码范围无效', 'error');
+          this.setLoading('split-btn', false, originalText);
+          return;
         }
         
-        showToast('拆分完成！');
-      };
-      reader.readAsArrayBuffer(file);
+        const newPdf = await PDFLib.PDFDocument.create();
+        for (let j = startPage; j < endPage; j++) {
+          const [page] = await newPdf.copyPages(pdfDoc, [j]);
+          newPdf.addPage(page);
+        }
+        
+        const bytes = await newPdf.save();
+        this.downloadPDF(bytes, `split_range.pdf`);
+      }
+      
+      showToast('拆分完成！');
     } catch (error) {
       console.error('拆分失败:', error);
       showToast('拆分失败，请重试', 'error');
+    } finally {
+      this.setLoading('split-btn', false, originalText);
     }
   }
   
@@ -303,30 +327,29 @@ class PDFSplitMerge {
       return;
     }
     
+    const btn = document.getElementById('merge-btn');
+    const originalText = btn.innerHTML;
+    this.setLoading('merge-btn', true, originalText);
+    
     try {
-      showToast('正在合并，请稍候...');
-      
       const mergedPdf = await PDFLib.PDFDocument.create();
       
+      // 使用 for...of 依次处理文件
       for (const file of this.files) {
-        const reader = new FileReader();
-        reader.onload = async (e) => {
-          const pdfData = new Uint8Array(e.target.result);
-          const pdfDoc = await PDFLib.PDFDocument.load(pdfData);
-          const copiedPages = await mergedPdf.copyPages(pdfDoc, pdfDoc.getPageIndices());
-          copiedPages.forEach(page => mergedPdf.addPage(page));
-          
-          if (this.files.indexOf(file) === this.files.length - 1) {
-            const bytes = await mergedPdf.save();
-            this.downloadPDF(bytes, `merged.pdf`);
-            showToast('合并完成！');
-          }
-        };
-        reader.readAsArrayBuffer(file);
+        const arrayBuffer = await file.arrayBuffer();
+        const pdfDoc = await PDFLib.PDFDocument.load(arrayBuffer);
+        const copiedPages = await mergedPdf.copyPages(pdfDoc, pdfDoc.getPageIndices());
+        copiedPages.forEach(page => mergedPdf.addPage(page));
       }
+      
+      const bytes = await mergedPdf.save();
+      this.downloadPDF(bytes, `merged.pdf`);
+      showToast('合并完成！');
     } catch (error) {
       console.error('合并失败:', error);
       showToast('合并失败，请重试', 'error');
+    } finally {
+      this.setLoading('merge-btn', false, originalText);
     }
   }
   
@@ -342,16 +365,19 @@ class PDFSplitMerge {
   
   clearAll() {
     this.files = [];
-    document.getElementById('pdf-preview').classList.add('hidden');
-    document.getElementById('split-options').classList.add('hidden');
-    document.getElementById('merge-list').classList.add('hidden');
-    document.getElementById('split-btn').classList.add('hidden');
-    document.getElementById('merge-btn').classList.add('hidden');
+    document.getElementById('pdf-preview')?.classList.add('hidden');
+    document.getElementById('split-options')?.classList.add('hidden');
+    document.getElementById('merge-list')?.classList.add('hidden');
+    document.getElementById('split-btn')?.classList.add('hidden');
+    document.getElementById('merge-btn')?.classList.add('hidden');
     
-    // 清空文件输入
     document.querySelectorAll('input[type="file"]').forEach(input => {
       input.value = '';
     });
+    
+    // 重置单选框
+    const defaultRadio = document.querySelector('input[name="split-method"][value="pages"]');
+    if (defaultRadio) defaultRadio.checked = true;
     
     showToast('已清空所有内容');
   }
