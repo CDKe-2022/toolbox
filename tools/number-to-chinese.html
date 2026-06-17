@@ -72,14 +72,6 @@
           复制输入
         </tool-button>
         
-        <tool-button id="copy-output-btn" variant="accent" size="sm">
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-            <rect x="4" y="4" width="8" height="8" rx="1.5" stroke="currentColor" stroke-width="1.3"/>
-            <path d="M3 9V3C3 2.45 3.45 2 4 2H9" stroke="currentColor" stroke-width="1.3"/>
-          </svg>
-          复制结果
-        </tool-button>
-        
         <tool-button id="clear-all-btn" variant="ghost">
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
             <path d="M3 3L11 11M11 3L3 11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
@@ -124,7 +116,7 @@
           </li>
         </ul>
         
-        <!-- 简化示例卡片 -->
+        <!-- 示例卡片 -->
         <div class="mt-6 p-4 bg-blue-50 rounded-xl border border-blue-100">
           <h4 class="font-medium text-[--ink] mb-3 text-sm">常用示例</h4>
           <div class="space-y-2 text-sm text-blue-800">
@@ -169,74 +161,5 @@
 <script src="../assets/js/common.js"></script>
 <script src="../assets/js/components.js"></script>
 <script src="../assets/js/number-to-chinese.js"></script>
-<script>
-  // 添加键盘快捷键支持
-  document.addEventListener('DOMContentLoaded', function() {
-    const input = document.getElementById('num-input');
-    const output = document.getElementById('num-output');
-    
-    if (input) {
-      // 输入框实时转换
-      input.addEventListener('input', function() {
-        const value = this.value.trim();
-        if (value) {
-          // 这里应该调用转换函数，假设 numberToChinese 是转换函数
-          const chinese = numberToChinese(value);
-          output.textContent = chinese;
-        } else {
-          output.textContent = '结果将显示在这里';
-        }
-      });
-      
-      input.addEventListener('keydown', function(e) {
-        // Enter键复制结果
-        if (e.key === 'Enter') {
-          e.preventDefault();
-          const copyBtn = document.getElementById('copy-output-btn');
-          if (copyBtn) copyBtn.click();
-        }
-        
-        // Esc键清空输入
-        if (e.key === 'Escape') {
-          e.preventDefault();
-          const clearBtn = document.getElementById('clear-all-btn');
-          if (clearBtn) clearBtn.click();
-        }
-      });
-      
-      // 自动聚焦到输入框
-      input.focus();
-    }
-    
-    // 复制输入按钮
-    document.getElementById('copy-input-btn')?.addEventListener('click', function() {
-      const input = document.getElementById('num-input');
-      if (input && input.value) {
-        navigator.clipboard.writeText(input.value).then(() => {
-          showToast('已复制输入内容');
-        });
-      }
-    });
-    
-    // 复制结果按钮
-    document.getElementById('copy-output-btn')?.addEventListener('click', function() {
-      const output = document.getElementById('num-output');
-      if (output && output.textContent !== '结果将显示在这里') {
-        navigator.clipboard.writeText(output.textContent).then(() => {
-          showToast('已复制结果内容');
-        });
-      }
-    });
-    
-    // 清空全部按钮
-    document.getElementById('clear-all-btn')?.addEventListener('click', function() {
-      const input = document.getElementById('num-input');
-      const output = document.getElementById('num-output');
-      if (input) input.value = '';
-      if (output) output.textContent = '结果将显示在这里';
-      showToast('已清空所有内容');
-    });
-  });
-</script>
 </body>
 </html>
