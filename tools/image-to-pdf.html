@@ -16,7 +16,7 @@
 <body class="page-enter bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen">
 
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12 relative z-10">
-  <!-- 使用自定义组件替换重复的头部结构 -->
+  <!-- 头部组件 -->
   <tool-header title="图片转 PDF" tool-id="02"></tool-header>
   
   <div class="xl:grid xl:grid-cols-[1fr_350px] xl:gap-12">
@@ -37,7 +37,7 @@
       <!-- 图片列表区域 -->
       <div id="image-list-section" class="hidden">
         <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 md:p-8 space-y-8">
-          <!-- 使用自定义组件替换重复的列表头部结构 -->
+          <!-- 列表头部组件 -->
           <list-header 
             title="已选图片" 
             count-id="image-count" 
@@ -49,7 +49,7 @@
           <!-- 图片网格 -->
           <div id="image-list" class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-8 gap-3 md:gap-4"></div>
           
-          <!-- 使用自定义组件替换重复的设置区域结构 -->
+          <!-- 设置选项组件化 -->
           <setting-group title="页面模式" id="mode-group">
             <option-card active value="fit" title="贴合图片" desc="无白边 · 同快捷指令"></option-card>
             <option-card value="a4" title="A4 标准页" desc="居中带白边 · 适合打印"></option-card>
@@ -83,34 +83,32 @@
     
     <!-- 侧边栏 -->
     <div class="space-y-6 mt-8 lg:mt-0">
-      <!-- 使用InfoCard组件替换手写的说明列表 -->
+      <!-- 使用说明组件 -->
       <info-card title="使用说明">
-        <ul class="space-y-3 text-sm text-[--ink-soft]">
-          <li class="flex gap-3">
-            <span class="text-[--green] mt-0.5">•</span>
-            <span>所有图片处理均在本地完成，不会上传到任何服务器</span>
-          </li>
-          <li class="flex gap-3">
-            <span class="text-[--green] mt-0.5">•</span>
-            <span>HEIC 格式（苹果照片）将自动转换为 JPEG 后嵌入 PDF</span>
-          </li>
-          <li class="flex gap-3">
-            <span class="text-[--green] mt-0.5">•</span>
-            <span><strong>拖拽排序</strong>：在缩略图上长按拖动，可以调整图片在 PDF 中的顺序</span>
-          </li>
-          <li class="flex gap-3">
-            <span class="text-[--green] mt-0.5">•</span>
-            <span><strong>贴合图片</strong>：每页尺寸等于图片尺寸，无白边，跟 iOS 快捷指令效果一致</span>
-          </li>
-          <li class="flex gap-3">
-            <span class="text-[--green] mt-0.5">•</span>
-            <span><strong>页面方向</strong>：选择 A4 模式时，可强制指定所有页面为纵向或横向</span>
-          </li>
-          <li class="flex gap-3">
-            <span class="text-[--green] mt-0.5">•</span>
-            <span><strong>压缩等级</strong>：通过 Canvas 重新绘制图片，控制 JPEG 质量，有效减小文件体积</span>
-          </li>
-        </ul>
+        <li class="flex gap-3">
+          <span class="text-[--green] mt-0.5">•</span>
+          <span>所有图片处理均在本地完成，不会上传到任何服务器</span>
+        </li>
+        <li class="flex gap-3">
+          <span class="text-[--green] mt-0.5">•</span>
+          <span>HEIC 格式（苹果照片）将自动转换为 JPEG 后嵌入 PDF</span>
+        </li>
+        <li class="flex gap-3">
+          <span class="text-[--green] mt-0.5">•</span>
+          <span><strong>拖拽排序</strong>：在缩略图上长按拖动，可以调整图片在 PDF 中的顺序</span>
+        </li>
+        <li class="flex gap-3">
+          <span class="text-[--green] mt-0.5">•</span>
+          <span><strong>贴合图片</strong>：每页尺寸等于图片尺寸，无白边，跟 iOS 快捷指令效果一致</span>
+        </li>
+        <li class="flex gap-3">
+          <span class="text-[--green] mt-0.5">•</span>
+          <span><strong>页面方向</strong>：选择 A4 模式时，可强制指定所有页面为纵向或横向</span>
+        </li>
+        <li class="flex gap-3">
+          <span class="text-[--green] mt-0.5">•</span>
+          <span><strong>压缩等级</strong>：通过 Canvas 重新绘制图片，控制 JPEG 质量，有效减小文件体积</span>
+        </li>
       </info-card>
       
       <!-- 提示卡片 -->
@@ -132,107 +130,5 @@
 <script src="../assets/js/common.js"></script>
 <script src="../assets/js/components.js"></script>
 <script src="../assets/js/image-to-pdf.js"></script>
-<script>
-  // 定义新的自定义组件以减少HTML重复
-  customElements.define('tool-header', class extends HTMLElement {
-    connectedCallback() {
-      const title = this.getAttribute('title') || '工具';
-      const toolId = this.getAttribute('tool-id') || '00';
-      this.innerHTML = `
-        <header class="flex items-center justify-between mb-8 md:mb-12">
-          <div class="flex items-center gap-4">
-            <tool-button variant="ghost" onclick="goHome()" class="shrink-0">
-              <svg width="18" height="18" viewBox="0 0 16 16" fill="none">
-                <path d="M10 4L6 8L10 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-              </svg>
-              返回主页
-            </tool-button>
-            <div class="h-6 w-px bg-[--border] hidden sm:block"></div>
-            <div class="hidden sm:flex items-center gap-2 text-sm text-[--muted]">
-              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-                <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
-                <circle cx="8.5" cy="8.5" r="1.5"></circle>
-                <polyline points="21 15 16 10 5 21"></polyline>
-              </svg>
-              <span>${title}</span>
-            </div>
-          </div>
-          <span class="tool-num bg-[--green]/10 text-[--green] px-3 py-1 rounded-full">Tool ${toolId}</span>
-        </header>
-      `;
-    }
-  });
-
-  customElements.define('list-header', class extends HTMLElement {
-    connectedCallback() {
-      const title = this.getAttribute('title') || '列表';
-      const countId = this.getAttribute('count-id') || '';
-      const actionId = this.getAttribute('action-id') || '';
-      const actionText = this.getAttribute('action-text') || '操作';
-      const hint = this.getAttribute('hint') || '';
-      this.innerHTML = `
-        <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-          <div>
-            <label class="text-base font-medium text-[--ink]">
-              ${title} <span id="${countId}" class="text-[--muted] ml-1"></span>
-            </label>
-            ${hint ? `<p class="text-sm text-[--muted] mt-1">${hint}</p>` : ''}
-          </div>
-          <tool-button id="${actionId}" variant="ghost" class="shrink-0">
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-              <polyline points="3 6 5 6 21 6"></polyline>
-              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-            </svg>
-            ${actionText}
-          </tool-button>
-        </div>
-      `;
-    }
-  });
-
-  customElements.define('setting-group', class extends HTMLElement {
-    connectedCallback() {
-      const title = this.getAttribute('title') || '设置';
-      const id = this.getAttribute('id') || '';
-      const hint = this.getAttribute('hint') || '';
-      this.innerHTML = `
-        <div class="space-y-3">
-          <label class="block text-sm font-medium text-[--ink-soft]">
-            ${title} ${hint ? `<span class="text-xs text-[--muted] font-normal">${hint}</span>` : ''}
-          </label>
-          <div class="space-y-2" id="${id}"></div>
-        </div>
-      `;
-    }
-  });
-
-  customElements.define('option-card', class extends HTMLElement {
-    static get observedAttributes() { return ['active', 'value', 'title', 'desc']; }
-    
-    connectedCallback() {
-      this.render();
-    }
-    
-    attributeChangedCallback() {
-      if (this.isConnected) this.render();
-    }
-    
-    render() {
-      const active = this.hasAttribute('active');
-      const value = this.getAttribute('value') || '';
-      const title = this.getAttribute('title') || '';
-      const desc = this.getAttribute('desc') || '';
-      
-      this.className = 'orient-option' + (active ? ' active' : '');
-      this.innerHTML = `
-        <div class="font-medium">${title}</div>
-        <div class="text-xs opacity-75 mt-0.5">${desc}</div>
-      `;
-      
-      // 保留data属性以便JS选择
-      this.dataset.value = value;
-    }
-  });
-</script>
 </body>
 </html>
