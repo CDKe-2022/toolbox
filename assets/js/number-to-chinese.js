@@ -1,103 +1,152 @@
-function numberToChinese(num) {
-  const str = String(num).trim();
-  if (str === '' || isNaN(num)) return '';
-  if (parseFloat(str) === 0) return '零元整';
-  let negative = str.startsWith('-');
-  let absStr = negative ? str.substring(1) : str;
-  let parts = absStr.split('.');
-  let intStr = parts[0];
-  let decStr = parts[1] || '';
-  if (intStr.replace(/^0+/, '').length > 16) return '数字超出支持范围';
-  intStr = intStr.replace(/^0+/, '');
-  if (intStr === '') intStr = '0';
-  const cnNums = ['零', '壹', '贰', '叁', '肆', '伍', '陆', '柒', '捌', '玖'];
-  const cnRadice = ['', '拾', '佰', '仟'];
-  const cnUnits = ['', '万', '亿', '万亿'];
-  function convertInt(s) {
-    if (s === '0' || s === '') return '';
-    let result = ''; let zeroCount = 0; let len = s.length;
-    for (let i = 0; i < len; i++) {
-      const digit = parseInt(s[i]);
-      const posFromRight = len - i - 1;
-      const radiceIdx = posFromRight % 4;
-      const unitIdx = Math.floor(posFromRight / 4);
-      if (digit === 0) { zeroCount++; } else {
-        if (zeroCount > 0) { result += '零'; zeroCount = 0; }
-        result += cnNums[digit] + cnRadice[radiceIdx];
+class NumberToChinese {
+  constructor() {
+    this.init();
+  }
+  
+  init() {
+    this.setupEventListeners();
+  }
+  
+  setupEventListeners() {
+    const input = document.getElementById('num-input');
+    const output = document.getElementById('num-output');
+    
+    if (input) {
+      // 输入框实时转换
+      input.addEventListener('input', () => {
+        const value = input.value.trim();
+        if (value) {
+          const chinese = this.numberToChinese(value);
+          output.textContent = chinese;
+        } else {
+          output.textContent = '结果将显示在这里';
+        }
+      });
+      
+      input.addEventListener('keydown', (e) => {
+        // Enter键复制结果
+        if (e.key === 'Enter') {
+          e.preventDefault();
+          const copyBtn = document.getElementById('copy-input-btn');
+          if (copyBtn) copyBtn.click();
+        }
+        
+        // Esc键清空输入
+        if (e.key === 'Escape') {
+          e.preventDefault();
+          const clearBtn = document.getElementById('clear-all-btn');
+          if (clearBtn) clearBtn.click();
+        }
+      });
+      
+      // 自动聚焦到输入框
+      input.focus();
+    }
+    
+    // 复制输入按钮
+    document.getElementById('copy-input-btn')?.addEventListener('click', () => {
+      const input = document.getElementById('num-input');
+      if (input && input.value) {
+        navigator.clipboard.writeText(input.value).then(() => {
+          showToast('已复制输入内容');
+        });
       }
-      if (radiceIdx === 0) {
-        let groupStart = i - 3; if (groupStart < 0) groupStart = 0;
-        let group = s.substring(groupStart, i + 1);
-        while (group.length < 4) group = '0' + group;
-        if (parseInt(group) !== 0) { result += cnUnits[unitIdx]; zeroCount = 0; }
+    });
+    
+    // 清空全部按钮
+    document.getElementById('clear-all-btn')?.addEventListener('click', () => {
+      const input = document.getElementById('num-input');
+      const output = document.getElementById('num-output');
+      if (input) input.value = '';
+      if (output) output.textContent = '结果将显示在这里';
+      showToast('已清空所有内容');
+    });
+  }
+  
+  // 数字转中文大写
+  numberToChinese(numStr) {
+    const chineseNumbers = ['零', '壹', '贰', '叁', '肆', '伍', '陆', '柒', '捌', '玖'];
+    const units = ['', '拾', '佰', '仟'];
+    const bigUnits = ['', '万', '亿'];
+    
+    // 处理负数
+    let isNegative = false;
+    if (numStr.startsWith('-')) {
+      isNegative = true;
+      numStr = numStr.substring(1);
+    }
+    
+    // 分割整数和小数部分
+    const parts = numStr.split('.');
+    let integerPart = parts[0];
+    let decimalPart = parts[1] || '';
+    
+    // 处理整数部分
+    let result = '';
+    if (integerPart === '0') {
+      result = '零';
+    } else {
+      let i = 0;
+      while (i < integerPart.length) {
+        const digit = parseInt(integerPart[i]);
+        const unitIndex = integerPart.length - i - 1;
+        const bigUnitIndex = Math.floor(unitIndex / 4);
+        const unit = units[unitIndex % 4];
+        
+        if (digit !== 0) {
+          result += chineseNumbers[digit] + unit;
+        } else {
+          // 处理零的情况
+          if (result[result.length - 1] !== '零') {
+            result += '零';
+          }
+        }
+        
+        // 添加大单位
+        if (unitIndex % 4 === 0 && i < integerPart.length - 1) {
+          result += bigUnits[bigUnitIndex];
+        }
+        
+        i++;
       }
     }
+    
+    // 处理小数部分
+    if (decimalPart) {
+      result += '点';
+      for (let i = 0; i < decimalPart.length; i++) {
+        const digit = parseInt(decimalPart[i]);
+        result += chineseNumbers[digit];
+      }
+    }
+    
+    // 添加货币单位
+    result += '元';
+    
+    // 处理角分
+    if (decimalPart) {
+      const jiao = parseInt(decimalPart[0]);
+      const fen = decimalPart[1] ? parseInt(decimalPart[1]) : 0;
+      
+      if (jiao > 0) {
+        result += chineseNumbers[jiao] + '角';
+      }
+      
+      if (fen > 0) {
+        result += chineseNumbers[fen] + '分';
+      }
+    } else {
+      result += '整';
+    }
+    
+    // 添加负号
+    if (isNegative) {
+      result = '负' + result;
+    }
+    
     return result;
   }
-  let intResult = convertInt(intStr);
-  let decResult = '';
-  if (decStr) {
-    decStr = decStr.substring(0, 2);
-    if (decStr.length >= 1 && parseInt(decStr[0]) !== 0) decResult += cnNums[parseInt(decStr[0])] + '角';
-    if (decStr.length >= 2 && parseInt(decStr[1]) !== 0) decResult += cnNums[parseInt(decStr[1])] + '分';
-  }
-  let result = '';
-  if (negative) result += '负';
-  if (intResult) result += intResult + '元';
-  if (decResult) {
-    if (!intResult) result = (negative ? '负' : '') + decResult;
-    else result += decResult;
-  } else if (intResult) result += '整';
-  return result;
 }
 
-const input = document.getElementById('num-input');
-const output = document.getElementById('num-output');
-
-function convertNumber() {
-  let value = input.value;
-  const cleaned = value.replace(/[^\d.\-]/g, '').replace(/-/g, (m, o) => o === 0 ? '-' : '').replace(/\./g, (m, o, s) => s.indexOf('.') === o ? '.' : '');
-  if (cleaned !== value) { input.value = cleaned; value = cleaned; }
-  if (value.trim() === '' || value === '-' || value === '.') {
-    output.innerHTML = '<span class="text-[--muted] text-base font-sans font-normal">结果将显示在这里</span>'; return;
-  }
-  if (isNaN(value)) {
-    output.innerHTML = '<span class="text-[--muted] text-base font-sans font-normal">请输入有效数字</span>'; return;
-  }
-  const result = numberToChinese(value);
-  if (result === '数字超出支持范围') {
-    output.innerHTML = '<span class="text-[--accent] text-base font-sans font-normal">数字超出支持范围（最大16位整数）</span>';
-  } else if (result) {
-    output.textContent = result;
-  } else {
-    output.innerHTML = '<span class="text-[--muted] text-base font-sans font-normal">请输入有效数字</span>';
-  }
-}
-
-function appendNumber(num) {
-  const current = input.value.trim();
-  if (current === '' || current === '-' || isNaN(current)) input.value = String(num);
-  else input.value = String(parseFloat(current) + num);
-  convertNumber();
-}
-
-function clearNumber() { input.value = ''; convertNumber(); input.focus(); }
-
-input.addEventListener('input', convertNumber);
-document.querySelectorAll('[data-add]').forEach(btn => btn.addEventListener('click', () => appendNumber(parseInt(btn.dataset.add))));
-document.getElementById('clear-btn').addEventListener('click', clearNumber);
-document.getElementById('clear-all-btn').addEventListener('click', clearNumber);
-document.getElementById('copy-input-btn').addEventListener('click', () => {
-  const text = input.value; if (!text) { showToast('输入为空', true); return; }
-  copyToClipboard(text).then(() => showToast('已复制输入')).catch(() => showToast('复制失败', true));
-});
-document.getElementById('copy-output-btn').addEventListener('click', () => {
-  const placeholder = output.querySelector('span');
-  if (placeholder) { showToast('结果为空', true); return; }
-  const text = output.textContent; if (!text) { showToast('结果为空', true); return; }
-  copyToClipboard(text).then(() => showToast('已复制大写结果')).catch(() => showToast('复制失败', true));
-});
-
-const urlParams = new URLSearchParams(window.location.search);
-const val = urlParams.get('v');
-if (val) { input.value = val; convertNumber(); } else { convertNumber(); }
+// 初始化工具
+const numberToChineseTool = new NumberToChinese();
