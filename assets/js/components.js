@@ -1,21 +1,35 @@
 class ToolButton extends HTMLElement {
-  static get observedAttributes() { return ['disabled', 'variant']; }
+  static get observedAttributes() { return ['disabled', 'variant', 'size']; }
   connectedCallback() {
     if (this._initialized) return;
     this._initialized = true;
     this.classList.add('btn');
     this.updateVariant();
+    this.updateSize();
+    
     this.addEventListener('click', (e) => {
-      if (this.hasAttribute('disabled')) { e.preventDefault(); e.stopPropagation(); }
+      if (this.hasAttribute('disabled')) {
+        e.preventDefault();
+        e.stopPropagation();
+      }
     });
   }
+  
   updateVariant() {
     const variant = this.getAttribute('variant') || 'primary';
     ['primary', 'ghost', 'accent'].forEach(v => this.classList.remove(`btn-${v}`));
     this.classList.add(`btn-${variant}`);
   }
+  
+  updateSize() {
+    const size = this.getAttribute('size') || 'md';
+    ['sm', 'md', 'lg'].forEach(s => this.classList.remove(`btn-${s}`));
+    this.classList.add(`btn-${size}`);
+  }
+  
   attributeChangedCallback(name) {
     if (name === 'variant') this.updateVariant();
+    if (name === 'size') this.updateSize();
     if (name === 'disabled') this.classList.toggle('disabled', this.hasAttribute('disabled'));
   }
 }
@@ -63,10 +77,17 @@ class DropZone extends HTMLElement {
     `;
     const input = this.querySelector('input');
     this.addEventListener('click', () => input.click());
-    this.addEventListener('dragover', (e) => { e.preventDefault(); e.stopPropagation(); this.classList.add('dragover'); });
-    this.addEventListener('dragleave', (e) => { e.preventDefault(); e.stopPropagation(); this.classList.remove('dragover'); });
+    this.addEventListener('dragover', (e) => {
+      e.preventDefault(); e.stopPropagation();
+      this.classList.add('dragover');
+    });
+    this.addEventListener('dragleave', (e) => {
+      e.preventDefault(); e.stopPropagation();
+      this.classList.remove('dragover');
+    });
     this.addEventListener('drop', (e) => {
-      e.preventDefault(); e.stopPropagation(); this.classList.remove('dragover');
+      e.preventDefault(); e.stopPropagation();
+      this.classList.remove('dragover');
       if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
         this.dispatchEvent(new CustomEvent('files-selected', { detail: e.dataTransfer.files }));
       }
