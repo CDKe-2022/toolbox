@@ -10,6 +10,7 @@
 <script src="https://cdn.tailwindcss.com"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/heic2any/0.0.4/heic2any.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
 <link rel="stylesheet" href="../assets/css/common.css">
 </head>
 <body class="page-enter">
@@ -28,7 +29,7 @@
   <div class="mb-10">
     <div class="deco-line mb-6"></div>
     <h2 class="font-display text-5xl md:text-6xl font-bold text-[--green] mb-4 leading-tight">图片转 PDF</h2>
-    <p class="text-[--ink-soft] text-lg font-light">将多张图片合并为单个 PDF 文件，支持 JPEG / PNG / HEIC 等格式。</p>
+    <p class="text-[--ink-soft] text-lg font-light">将多张图片合并为单个 PDF 文件，支持拖拽排序与压缩。</p>
   </div>
   
   <div class="space-y-6">
@@ -47,6 +48,7 @@
       <div class="flex items-center justify-between mb-3">
         <label class="text-sm font-medium text-[--ink-soft]">
           已选图片 <span id="image-count" class="text-[--muted] ml-1"></span>
+          <span class="text-xs text-[--muted] ml-2">(长按可拖拽排序)</span>
         </label>
         <button class="btn btn-ghost text-xs py-1.5 px-3" id="clear-images-btn">全部清除</button>
       </div>
@@ -56,20 +58,30 @@
         <label class="block text-sm font-medium text-[--ink-soft] mb-3">页面模式</label>
         <div class="flex gap-3">
           <div class="orient-option active" data-mode="fit">
-            <svg width="22" height="22" viewBox="0 0 22 22" fill="none" class="mx-auto mb-1.5">
-              <rect x="3" y="5" width="16" height="12" rx="1.5" stroke="currentColor" stroke-width="1.5"/>
-              <path d="M3 5L11 11L19 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-            </svg>
             <div class="font-medium">贴合图片</div>
             <div class="text-xs opacity-75 mt-0.5">无白边 · 同快捷指令</div>
           </div>
           <div class="orient-option" data-mode="a4">
-            <svg width="22" height="22" viewBox="0 0 22 22" fill="none" class="mx-auto mb-1.5">
-              <rect x="5" y="2" width="12" height="18" rx="1.5" stroke="currentColor" stroke-width="1.5"/>
-              <rect x="7.5" y="5.5" width="7" height="11" rx="0.5" stroke="currentColor" stroke-width="1" stroke-dasharray="1.5 1.5"/>
-            </svg>
             <div class="font-medium">A4 标准页</div>
             <div class="text-xs opacity-75 mt-0.5">居中带白边 · 适合打印</div>
+          </div>
+        </div>
+      </div>
+      
+      <div class="mb-6">
+        <label class="block text-sm font-medium text-[--ink-soft] mb-3">压缩等级</label>
+        <div class="flex gap-3">
+          <div class="orient-option" data-quality="1.0">
+            <div class="font-medium">原图质量</div>
+            <div class="text-xs opacity-75 mt-0.5">文件较大</div>
+          </div>
+          <div class="orient-option active" data-quality="0.8">
+            <div class="font-medium">平衡</div>
+            <div class="text-xs opacity-75 mt-0.5">推荐</div>
+          </div>
+          <div class="orient-option" data-quality="0.5">
+            <div class="font-medium">极限压缩</div>
+            <div class="text-xs opacity-75 mt-0.5">文件最小</div>
           </div>
         </div>
       </div>
@@ -93,9 +105,9 @@
       <ul class="text-xs text-[--ink-soft] space-y-1.5 leading-relaxed">
         <li>· 所有图片处理均在本地完成，不会上传到任何服务器</li>
         <li>· HEIC 格式（苹果照片）将自动转换为 JPEG 后嵌入 PDF</li>
+        <li>· <strong>拖拽排序</strong>：在缩略图上长按拖动，可以调整图片在 PDF 中的顺序</li>
         <li>· <strong>贴合图片</strong>：每页尺寸等于图片尺寸，无白边，跟 iOS 快捷指令效果一致</li>
-        <li>· <strong>A4 标准页</strong>：每页 A4 大小，图片按比例居中，适合打印</li>
-        <li>· 多张图片会按上传顺序合并到同一个 PDF，每张占一页</li>
+        <li>· <strong>压缩等级</strong>：通过 Canvas 重新绘制图片，控制 JPEG 质量，有效减小文件体积</li>
       </ul>
     </div>
   </div>
