@@ -28,12 +28,12 @@
 
   <!-- 分类筛选标签 -->
   <div id="categories-container" class="flex flex-wrap gap-3 mb-8">
-    <!-- 分类按钮将由 JS 动态生成 -->
+    <!-- 分类按钮将由 JS 动态生成，初始化后缓存，避免重复创建 -->
   </div>
 
   <!-- 工具卡片网格 -->
   <div id="tools-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-12">
-    <!-- 工具卡片将由 JS 动态生成 -->
+    <!-- 工具卡片将由 JS 动态生成，使用DocumentFragment批量插入 -->
   </div>
 
   <!-- 底部说明 -->
@@ -48,36 +48,68 @@
 <script src="assets/js/tools-data.js"></script>
 <script>
   let currentCategory = '全部';
+  const categoryButtons = new Map(); // 缓存分类按钮，避免重复创建DOM
+
+  // 🔧 优化1：数据验证函数，防止数据加载失败导致白屏
+  function validateData() {
+    if (!window.toolData || 
+        !Array.isArray(window.toolData.tools) || 
+        !Array.isArray(window.toolData.categories)) {
+      document.getElementById('tools-grid').innerHTML = `
+        <div class="col-span-full text-center py-12">
+          <p class="text-[--muted] text-lg">工具数据加载失败</p>
+          <p class="text-[--muted] text-sm mt-2">请刷新页面或检查网络连接</p>
+        </div>
+      `;
+      return false;
+    }
+    return true;
+  }
 
   // 初始化页面
   document.addEventListener('DOMContentLoaded', () => {
+    if (!validateData()) return; // 数据验证失败则终止初始化
     renderCategories();
     renderTools();
     updateToolCount();
   });
 
-  // 渲染分类标签
+  // 🔧 优化2：分类按钮初始化后缓存，切换时只更新激活状态，避免重建整个按钮组
   function renderCategories() {
     const container = document.getElementById('categories-container');
-    container.innerHTML = '';
+    const fragment = document.createDocumentFragment();
     
     window.toolData.categories.forEach(cat => {
       const btn = document.createElement('button');
       btn.className = 'cat-tab' + (cat === currentCategory ? ' active' : '');
       btn.textContent = cat;
-      btn.onclick = () => {
-        currentCategory = cat;
-        renderCategories(); // 更新激活状态
-        renderTools();      // 重新渲染工具
-      };
-      container.appendChild(btn);
+      btn.addEventListener('click', () => {
+        if (cat === currentCategory) return; // 避免相同分类重复触发
+        setActiveCategory(cat); // 调用状态切换函数，只更新class，不重建DOM
+      });
+      categoryButtons.set(cat, btn); // 缓存按钮引用
+      fragment.appendChild(btn);
     });
+    
+    container.appendChild(fragment); // 一次性添加，减少重排
   }
 
-  // 渲染工具卡片
+  // 🔧 优化3：状态切换函数，只修改按钮的class，不重建整个分类按钮组
+  function setActiveCategory(category) {
+    const oldBtn = categoryButtons.get(currentCategory);
+    const newBtn = categoryButtons.get(category);
+    
+    oldBtn?.classList.remove('active'); // 移除旧激活状态
+    newBtn?.classList.add('active'); // 添加新激活状态
+    
+    currentCategory = category;
+    renderTools(); // 重新渲染工具列表（这里仍然重建工具卡片，但数量较少）
+  }
+
+  // 🔧 优化4：工具卡片使用DocumentFragment批量插入，减少多次appendChild带来的重排
   function renderTools() {
     const grid = document.getElementById('tools-grid');
-    grid.innerHTML = '';
+    const fragment = document.createDocumentFragment();
     
     const filteredTools = currentCategory === '全部' 
       ? window.toolData.tools 
@@ -91,8 +123,10 @@
       card.setAttribute('href', tool.href);
       card.setAttribute('status', tool.status);
       card.innerHTML = tool.icon;
-      grid.appendChild(card);
+      fragment.appendChild(card); // 先添加到片段，不直接操作DOM
     });
+    
+    grid.replaceChildren(fragment); // 一次性替换，减少重排重绘
   }
 
   // 更新工具总数
