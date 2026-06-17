@@ -75,6 +75,10 @@ info-card { display: block; }
   line-height: 1.5;
 }
 .btn.btn-block { display: flex; width: 100%; }
+.btn.btn-sm {
+  padding: 6px 12px;
+  font-size: 12px;
+}
 .btn-primary { background: var(--green); color: white; }
 .btn-primary:hover { background: var(--green-2); transform: translateY(-1px); }
 .btn-ghost { background: transparent; color: var(--ink-soft); border-color: var(--border); }
@@ -238,22 +242,13 @@ info-card { display: block; }
 .cat-tab:hover { border-color: var(--ink-soft); color: var(--ink); }
 .cat-tab.active { background: var(--green); color: white; border-color: var(--green); }
 
-/* 在 assets/css/common.css 中添加 */
-@media (min-width: 1536px) {
-  .container-xxl {
-    max-width: 1400px;
-  }
-}
-@media (min-width: 1920px) {
-  .container-xxl {
-    max-width: 1600px;
-  }
-}
+/* ============ 自定义布局类 ============ */
 .keypad-grid {
   display: grid;
   grid-template-columns: repeat(5, 1fr);
   gap: 0.75rem;
 }
+
 @media (min-width: 1024px) {
   .main-layout {
     display: grid;
@@ -261,9 +256,11 @@ info-card { display: block; }
     gap: 3rem;
   }
 }
+
 .result-container {
   position: relative;
 }
+
 .copy-result-btn {
   position: absolute;
   top: 1rem;
@@ -271,7 +268,13 @@ info-card { display: block; }
   opacity: 0;
   transition: opacity 0.2s ease;
 }
+
 .result-container:hover .copy-result-btn {
   opacity: 1;
 }
 
+/* ============ 按钮大小类 ============ */
+.btn-sm {
+  padding: 6px 12px;
+  font-size: 12px;
+}
