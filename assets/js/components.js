@@ -11,7 +11,7 @@ function escapeHtml(str = '') {
 }
 
 // ==========================================
-// 1. ToolButton (基本合格，保持原样)
+// 1. ToolButton
 // ==========================================
 class ToolButton extends HTMLElement {
   static get observedAttributes() { return ['disabled', 'variant', 'size']; }
@@ -52,7 +52,7 @@ class ToolButton extends HTMLElement {
 customElements.define('tool-button', ToolButton);
 
 // ==========================================
-// 2. InfoCard (优化：支持属性局部更新)
+// 2. InfoCard
 // ==========================================
 class InfoCard extends HTMLElement {
   static get observedAttributes() { return ['title']; }
@@ -86,7 +86,7 @@ class InfoCard extends HTMLElement {
 customElements.define('info-card', InfoCard);
 
 // ==========================================
-// 3. DropZone (优化：增加文件类型校验)
+// 3. DropZone (修复文件校验逻辑)
 // ==========================================
 class DropZone extends HTMLElement {
   connectedCallback() {
@@ -111,16 +111,19 @@ class DropZone extends HTMLElement {
     
     const input = this.querySelector('input');
     
-    // 提取文件校验逻辑
+    // 修复后的文件校验逻辑
     const validateFiles = (files) => {
-      if (accept === '*/*' || !accept) return true;
-      const acceptedTypes = accept.split(',').map(t => t.trim());
+      if (!accept || accept === '*/*') return true;
+      const acceptedTypes = accept.split(',').map(t => t.trim().toLowerCase());
       for (const file of files) {
+        const fileName = file.name.toLowerCase();
+        const fileType = file.type.toLowerCase();
         const isValid = acceptedTypes.some(type => {
-          if (type.endsWith('/*')) {
-            return file.type.startsWith(type.slice(0, -1));
-          }
-          return file.type === type || file.name.endsWith(type);
+          if (type.endsWith('/*')) return fileType.startsWith(type.slice(0, -1));
+          if (type.startsWith('.')) return fileName.endsWith(type);
+          if (fileType === type) return true;
+          if (type === 'image/*' && fileType.startsWith('image/')) return true;
+          return false;
         });
         if (!isValid) return false;
       }
@@ -157,9 +160,6 @@ class DropZone extends HTMLElement {
       }
     });
   }
-  
-  // 占位：浏览器会自动回收绑定在 this 上的事件监听器
-  disconnectedCallback() {}
 }
 customElements.define('drop-zone', DropZone);
 
@@ -172,7 +172,6 @@ class ToolCard extends HTMLElement {
   }
   
   connectedCallback() {
-    // 🔧 第五刀：缓存 icon 节点，避免每次 render 重新解析 SVG
     if (!this._iconCached) {
       this._iconNode = this.firstElementChild?.cloneNode(true);
       this._iconCached = true;
@@ -189,23 +188,19 @@ class ToolCard extends HTMLElement {
   render() {
     const status = this.getAttribute('status') || 'active';
     const num = escapeHtml(this.getAttribute('num') || '···');
-    // 🔧 第二刀：使用 escapeHtml 防止 XSS 注入
     const name = escapeHtml(this.getAttribute('name') || '');
     const desc = escapeHtml(this.getAttribute('desc') || '');
     const href = this.getAttribute('href');
     
-    // 动态切换样式类，而不是覆盖全部 class
     this.classList.toggle('disabled', status === 'coming');
     this.classList.add('tool-card');
     
-    // 🔧 第一刀：将 href 存入 dataset，移除组件内部的事件绑定
     if (href && status !== 'coming') {
       this.dataset.href = href;
     } else {
       delete this.dataset.href;
     }
     
-    // 🔧 第四刀：合并重复模板
     const isComing = status === 'coming';
     const actionHtml = isComing 
       ? `<span>敬请期待</span>`
@@ -228,7 +223,6 @@ class ToolCard extends HTMLElement {
       </div>
     `;
     
-    // 插入缓存的 Icon 节点
     if (this._iconNode) {
       const iconContainer = this.querySelector('.tool-icon');
       if (iconContainer) {
@@ -239,17 +233,119 @@ class ToolCard extends HTMLElement {
 }
 customElements.define('tool-card', ToolCard);
 
-// ==========================================
-// 🔧 第一刀补充：全局事件委托
-// 100个卡片只注册1个监听器，提升性能
-// ==========================================
+// ToolCard 全局事件代理
 document.addEventListener('click', (e) => {
   const card = e.target.closest('tool-card');
   if (!card) return;
-  
   const href = card.dataset.href;
   if (href) {
     e.preventDefault();
     window.location.href = href;
   }
 });
+
+// ==========================================
+// 5. 页面级通用组件 (从 HTML 内联提取，便于全局复用)
+// ==========================================
+
+class ToolHeader extends HTMLElement {
+  connectedCallback() {
+    const title = this.getAttribute('title') || '工具';
+    const toolId = this.getAttribute('tool-id') || '00';
+    this.innerHTML = `
+      <header class="flex items-center justify-between mb-8 md:mb-12">
+        <div class="flex items-center gap-4">
+          <tool-button variant="ghost" onclick="goHome()" class="shrink-0">
+            <svg width="18" height="18" viewBox="0 0 16 16" fill="none">
+              <path d="M10 4L6 8L10 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            返回主页
+          </tool-button>
+          <div class="h-6 w-px bg-[--border] hidden sm:block"></div>
+          <div class="hidden sm:flex items-center gap-2 text-sm text-[--muted]">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+              <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+              <circle cx="8.5" cy="8.5" r="1.5"></circle>
+              <polyline points="21 15 16 10 5 21"></polyline>
+            </svg>
+            <span>${title}</span>
+          </div>
+        </div>
+        <span class="tool-num bg-[--green]/10 text-[--green] px-3 py-1 rounded-full">Tool ${toolId}</span>
+      </header>
+    `;
+  }
+}
+customElements.define('tool-header', ToolHeader);
+
+class ListHeader extends HTMLElement {
+  connectedCallback() {
+    const title = this.getAttribute('title') || '列表';
+    const countId = this.getAttribute('count-id') || '';
+    const actionId = this.getAttribute('action-id') || '';
+    const actionText = this.getAttribute('action-text') || '操作';
+    const hint = this.getAttribute('hint') || '';
+    this.innerHTML = `
+      <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div>
+          <label class="text-base font-medium text-[--ink]">
+            ${title} <span id="${countId}" class="text-[--muted] ml-1"></span>
+          </label>
+          ${hint ? `<p class="text-sm text-[--muted] mt-1">${hint}</p>` : ''}
+        </div>
+        <tool-button id="${actionId}" variant="ghost" class="shrink-0">
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <polyline points="3 6 5 6 21 6"></polyline>
+            <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+          </svg>
+          ${actionText}
+        </tool-button>
+      </div>
+    `;
+  }
+}
+customElements.define('list-header', ListHeader);
+
+class SettingGroup extends HTMLElement {
+  connectedCallback() {
+    const title = this.getAttribute('title') || '设置';
+    const id = this.getAttribute('id') || '';
+    const hint = this.getAttribute('hint') || '';
+    this.innerHTML = `
+      <div class="space-y-3">
+        <label class="block text-sm font-medium text-[--ink-soft]">
+          ${title} ${hint ? `<span class="text-xs text-[--muted] font-normal">${hint}</span>` : ''}
+        </label>
+        <div class="space-y-2" id="${id}"></div>
+      </div>
+    `;
+  }
+}
+customElements.define('setting-group', SettingGroup);
+
+class OptionCard extends HTMLElement {
+  static get observedAttributes() { return ['active', 'value', 'title', 'desc']; }
+  
+  connectedCallback() {
+    this.render();
+  }
+  
+  attributeChangedCallback() {
+    if (this.isConnected) this.render();
+  }
+  
+  render() {
+    const active = this.hasAttribute('active');
+    const value = this.getAttribute('value') || '';
+    const title = this.getAttribute('title') || '';
+    const desc = this.getAttribute('desc') || '';
+    
+    this.className = 'orient-option' + (active ? ' active' : '');
+    this.innerHTML = `
+      <div class="font-medium">${title}</div>
+      <div class="text-xs opacity-75 mt-0.5">${desc}</div>
+    `;
+    this.dataset.value = value;
+  }
+}
+customElements.define('option-card', OptionCard);
