@@ -237,3 +237,16 @@ info-card { display: block; }
 }
 .cat-tab:hover { border-color: var(--ink-soft); color: var(--ink); }
 .cat-tab.active { background: var(--green); color: white; border-color: var(--green); }
+
+/* 在 assets/css/common.css 中添加 */
+@media (min-width: 1536px) {
+  .container-xxl {
+    max-width: 1400px;
+  }
+}
+@media (min-width: 1920px) {
+  .container-xxl {
+    max-width: 1600px;
+  }
+}
+
