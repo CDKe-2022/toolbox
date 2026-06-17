@@ -1,3 +1,4 @@
+// assets/js/home.js
 class HomePage {
   constructor() {
     this.currentCategory = '全部';
@@ -71,7 +72,7 @@ class HomePage {
       card.setAttribute('num', tool.num);
       card.setAttribute('name', tool.name);
       card.setAttribute('desc', tool.desc);
-      card.setAttribute('href', tool.href);
+      card.setAttribute('href', tool.href);  // 确保设置 href 属性
       card.setAttribute('status', tool.status);
       card.innerHTML = tool.icon;
       grid.appendChild(card);
