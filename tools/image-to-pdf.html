@@ -12,110 +12,242 @@
 <script src="https://cdnjs.cloudflare.com/ajax/libs/heic2any/0.0.4/heic2any.min.js"></script>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/Sortable/1.15.0/Sortable.min.js"></script>
 <link rel="stylesheet" href="../assets/css/common.css">
+<style>
+  /* 自定义样式增强 */
+  .settings-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: 1.5rem;
+  }
+  
+  @media (min-width: 1280px) {
+    .main-content {
+      display: grid;
+      grid-template-columns: 1fr 350px;
+      gap: 3rem;
+    }
+  }
+  
+  .image-thumbnail {
+    aspect-ratio: 4/3;
+    object-fit: cover;
+  }
+</style>
 </head>
-<body class="page-enter">
+<body class="page-enter bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen">
 
-<div class="max-w-8xl mx-auto px-6 py-12 relative z-10">
-  <header class="flex items-center justify-between mb-12">
-    <tool-button variant="ghost" onclick="goHome()">
-      <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-        <path d="M10 4L6 8L10 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-      </svg>
-      返回主页
-    </tool-button>
-    <span class="tool-num">Tool 02</span>
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12 relative z-10">
+  <!-- 头部导航优化 -->
+  <header class="flex items-center justify-between mb-8 md:mb-12">
+    <div class="flex items-center gap-4">
+      <tool-button variant="ghost" onclick="goHome()" class="shrink-0">
+        <svg width="18" height="18" viewBox="0 0 16 16" fill="none">
+          <path d="M10 4L6 8L10 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        返回主页
+      </tool-button>
+      <div class="h-6 w-px bg-[--border] hidden sm:block"></div>
+      <div class="hidden sm:flex items-center gap-2 text-sm text-[--muted]">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <rect x="3" y="3" width="18" height="18" rx="2" ry="2"></rect>
+          <circle cx="8.5" cy="8.5" r="1.5"></circle>
+          <polyline points="21 15 16 10 5 21"></polyline>
+        </svg>
+        <span>图片转 PDF</span>
+      </div>
+    </div>
+    <span class="tool-num bg-[--green]/10 text-[--green] px-3 py-1 rounded-full">Tool 02</span>
   </header>
   
-  <div class="mb-10">
-    <div class="deco-line mb-6"></div>
-    <h2 class="font-display text-5xl md:text-6xl font-bold text-[--green] mb-4 leading-tight">图片转 PDF</h2>
-    <p class="text-[--ink-soft] text-lg font-light">将多张图片合并为单个 PDF 文件，支持拖拽排序、压缩与方向选择。</p>
-  </div>
-  
-  <div class="space-y-6">
-    <drop-zone id="drop-zone" text="点击或拖拽图片到此处" hint="支持 JPEG、PNG、WebP、BMP、HEIC，可多选" accept="image/jpeg,image/png,image/webp,image/bmp,image/heic,image/heif" multiple></drop-zone>
-    
-    <div id="image-list-section" class="hidden">
-      <div class="flex items-center justify-between mb-3">
-        <label class="text-sm font-medium text-[--ink-soft]">
-          已选图片 <span id="image-count" class="text-[--muted] ml-1"></span>
-          <span class="text-xs text-[--muted] ml-2">(长按可拖拽排序)</span>
-        </label>
-        <tool-button id="clear-images-btn" variant="ghost" style="padding: 6px 12px; font-size: 12px;">全部清除</tool-button>
+  <div class="main-content">
+    <!-- 主要内容区 -->
+    <div class="space-y-8">
+      <!-- 标题区域 -->
+      <div class="mb-8">
+        <div class="deco-line mb-6"></div>
+        <h2 class="font-display text-4xl sm:text-5xl md:text-6xl font-bold text-[--green] mb-4 leading-tight">图片转 PDF</h2>
+        <p class="text-[--ink-soft] text-lg font-light max-w-2xl">将多张图片合并为单个 PDF 文件，支持拖拽排序、压缩与方向选择。</p>
       </div>
-      <div id="image-list" class="grid grid-cols-4 sm:grid-cols-6 lg:grid-cols-8 gap-3 mb-8"></div>
       
-      <div class="mb-6">
-        <label class="block text-sm font-medium text-[--ink-soft] mb-3">页面模式</label>
-        <div class="flex gap-3">
-          <div class="orient-option active" data-mode="fit">
-            <div class="font-medium">贴合图片</div>
-            <div class="text-xs opacity-75 mt-0.5">无白边 · 同快捷指令</div>
+      <!-- 上传区域 -->
+      <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 md:p-8">
+        <drop-zone id="drop-zone" text="点击或拖拽图片到此处" hint="支持 JPEG、PNG、WebP、BMP、HEIC，可多选" accept="image/jpeg,image/png,image/webp,image/bmp,image/heic,image/heif" multiple class="rounded-xl"></drop-zone>
+      </div>
+      
+      <!-- 图片列表区域 -->
+      <div id="image-list-section" class="hidden">
+        <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 md:p-8 space-y-8">
+          <!-- 图片列表头部 -->
+          <div class="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+            <div>
+              <label class="text-base font-medium text-[--ink]">
+                已选图片 <span id="image-count" class="text-[--muted] ml-1"></span>
+              </label>
+              <p class="text-sm text-[--muted] mt-1">(长按可拖拽排序)</p>
+            </div>
+            <tool-button id="clear-images-btn" variant="ghost" class="shrink-0">
+              <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                <polyline points="3 6 5 6 21 6"></polyline>
+                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+              </svg>
+              全部清除
+            </tool-button>
           </div>
-          <div class="orient-option" data-mode="a4">
-            <div class="font-medium">A4 标准页</div>
-            <div class="text-xs opacity-75 mt-0.5">居中带白边 · 适合打印</div>
+          
+          <!-- 图片网格 -->
+          <div id="image-list" class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-5 lg:grid-cols-6 xl:grid-cols-8 gap-3 md:gap-4"></div>
+          
+          <!-- 设置选项 -->
+          <div class="settings-grid">
+            <!-- 页面模式 -->
+            <div class="space-y-3">
+              <label class="block text-sm font-medium text-[--ink-soft]">页面模式</label>
+              <div class="space-y-2">
+                <div class="orient-option active" data-mode="fit">
+                  <div class="font-medium">贴合图片</div>
+                  <div class="text-xs opacity-75 mt-0.5">无白边 · 同快捷指令</div>
+                </div>
+                <div class="orient-option" data-mode="a4">
+                  <div class="font-medium">A4 标准页</div>
+                  <div class="text-xs opacity-75 mt-0.5">居中带白边 · 适合打印</div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- 页面方向 -->
+            <div class="space-y-3">
+              <label class="block text-sm font-medium text-[--ink-soft]">页面方向 <span class="text-xs text-[--muted] font-normal">(仅在 A4 模式生效)</span></label>
+              <div class="space-y-2">
+                <div class="orient-option active" data-orient="auto">
+                  <div class="font-medium">自动</div>
+                  <div class="text-xs opacity-75 mt-0.5">按图片比例</div>
+                </div>
+                <div class="orient-option" data-orient="portrait">
+                  <div class="font-medium">纵向</div>
+                  <div class="text-xs opacity-75 mt-0.5">强制竖向 A4</div>
+                </div>
+                <div class="orient-option" data-orient="landscape">
+                  <div class="font-medium">横向</div>
+                  <div class="text-xs opacity-75 mt-0.5">强制横向 A4</div>
+                </div>
+              </div>
+            </div>
+            
+            <!-- 压缩等级 -->
+            <div class="space-y-3">
+              <label class="block text-sm font-medium text-[--ink-soft]">压缩等级</label>
+              <div class="space-y-2">
+                <div class="orient-option" data-quality="1.0">
+                  <div class="font-medium">原图质量</div>
+                  <div class="text-xs opacity-75 mt-0.5">文件较大</div>
+                </div>
+                <div class="orient-option active" data-quality="0.8">
+                  <div class="font-medium">平衡</div>
+                  <div class="text-xs opacity-75 mt-0.5">推荐</div>
+                </div>
+                <div class="orient-option" data-quality="0.5">
+                  <div class="font-medium">极限压缩</div>
+                  <div class="text-xs opacity-75 mt-0.5">文件最小</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <!-- 生成按钮 -->
+          <div class="pt-4">
+            <tool-button id="convert-btn" variant="primary" class="btn-block group">
+              <svg width="18" height="18" viewBox="0 0 16 16" fill="none">
+                <path d="M3 11V13C3 13.55 3.45 14 4 14H12C12.55 14 13 13.55 13 13V11M8 2V10M8 2L5 5M8 2L11 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+              生成并下载 PDF
+              <span class="ml-2 text-xs opacity-75">(0 张图片)</span>
+            </tool-button>
           </div>
         </div>
       </div>
-      
-      <div class="mb-6">
-        <label class="block text-sm font-medium text-[--ink-soft] mb-3">页面方向 <span class="text-xs text-[--muted] font-normal">(仅在 A4 模式生效)</span></label>
-        <div class="flex gap-3">
-          <div class="orient-option active" data-orient="auto">
-            <div class="font-medium">自动</div>
-            <div class="text-xs opacity-75 mt-0.5">按图片比例</div>
-          </div>
-          <div class="orient-option" data-orient="portrait">
-            <div class="font-medium">纵向</div>
-            <div class="text-xs opacity-75 mt-0.5">强制竖向 A4</div>
-          </div>
-          <div class="orient-option" data-orient="landscape">
-            <div class="font-medium">横向</div>
-            <div class="text-xs opacity-75 mt-0.5">强制横向 A4</div>
-          </div>
-        </div>
-      </div>
-      
-      <div class="mb-6">
-        <label class="block text-sm font-medium text-[--ink-soft] mb-3">压缩等级</label>
-        <div class="flex gap-3">
-          <div class="orient-option" data-quality="1.0">
-            <div class="font-medium">原图质量</div>
-            <div class="text-xs opacity-75 mt-0.5">文件较大</div>
-          </div>
-          <div class="orient-option active" data-quality="0.8">
-            <div class="font-medium">平衡</div>
-            <div class="text-xs opacity-75 mt-0.5">推荐</div>
-          </div>
-          <div class="orient-option" data-quality="0.5">
-            <div class="font-medium">极限压缩</div>
-            <div class="text-xs opacity-75 mt-0.5">文件最小</div>
-          </div>
-        </div>
-      </div>
-      
-      <tool-button id="convert-btn" variant="primary" class="btn-block" style="padding: 16px; font-size: 16px;">
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-          <path d="M3 11V13C3 13.55 3.45 14 4 14H12C12.55 14 13 13.55 13 13V11M8 2V10M8 2L5 5M8 2L11 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-        生成并下载 PDF
-      </tool-button>
     </div>
     
-    <info-card title="使用说明">
-      <li>· 所有图片处理均在本地完成，不会上传到任何服务器</li>
-      <li>· HEIC 格式（苹果照片）将自动转换为 JPEG 后嵌入 PDF</li>
-      <li>· <strong>拖拽排序</strong>：在缩略图上长按拖动，可以调整图片在 PDF 中的顺序</li>
-      <li>· <strong>贴合图片</strong>：每页尺寸等于图片尺寸，无白边，跟 iOS 快捷指令效果一致</li>
-      <li>· <strong>页面方向</strong>：选择 A4 模式时，可强制指定所有页面为纵向或横向</li>
-      <li>· <strong>压缩等级</strong>：通过 Canvas 重新绘制图片，控制 JPEG 质量，有效减小文件体积</li>
-    </info-card>
+    <!-- 侧边栏 -->
+    <div class="space-y-6 mt-8 lg:mt-0">
+      <!-- 使用说明 -->
+      <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 sticky top-8">
+        <h3 class="font-display text-lg font-semibold text-[--ink] mb-4 flex items-center gap-2">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="16" x2="12" y2="12"></line>
+            <line x1="12" y1="8" x2="12.01" y2="8"></line>
+          </svg>
+          使用说明
+        </h3>
+        <ul class="space-y-3 text-sm text-[--ink-soft]">
+          <li class="flex gap-3">
+            <span class="text-[--green] mt-0.5">•</span>
+            <span>所有图片处理均在本地完成，不会上传到任何服务器</span>
+          </li>
+          <li class="flex gap-3">
+            <span class="text-[--green] mt-0.5">•</span>
+            <span>HEIC 格式（苹果照片）将自动转换为 JPEG 后嵌入 PDF</span>
+          </li>
+          <li class="flex gap-3">
+            <span class="text-[--green] mt-0.5">•</span>
+            <span><strong>拖拽排序</strong>：在缩略图上长按拖动，可以调整图片在 PDF 中的顺序</span>
+          </li>
+          <li class="flex gap-3">
+            <span class="text-[--green] mt-0.5">•</span>
+            <span><strong>贴合图片</strong>：每页尺寸等于图片尺寸，无白边，跟 iOS 快捷指令效果一致</span>
+          </li>
+          <li class="flex gap-3">
+            <span class="text-[--green] mt-0.5">•</span>
+            <span><strong>页面方向</strong>：选择 A4 模式时，可强制指定所有页面为纵向或横向</span>
+          </li>
+          <li class="flex gap-3">
+            <span class="text-[--green] mt-0.5">•</span>
+            <span><strong>压缩等级</strong>：通过 Canvas 重新绘制图片，控制 JPEG 质量，有效减小文件体积</span>
+          </li>
+        </ul>
+        
+        <!-- 提示卡片 -->
+        <div class="mt-6 p-4 bg-amber-50 rounded-xl border border-amber-100">
+          <div class="flex gap-3">
+            <svg class="w-5 h-5 text-amber-600 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+            </svg>
+            <div class="text-sm text-amber-800">
+              <p class="font-medium mb-1">小提示</p>
+              <p class="text-amber-700">建议图片总大小不超过 50MB，以确保转换速度和稳定性。</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
 
 <script src="../assets/js/common.js"></script>
 <script src="../assets/js/components.js"></script>
 <script src="../assets/js/image-to-pdf.js"></script>
+<script>
+  // 动态更新按钮文本
+  document.addEventListener('DOMContentLoaded', function() {
+    const convertBtn = document.getElementById('convert-btn');
+    const imageCountEl = document.getElementById('image-count');
+    
+    if (convertBtn && imageCountEl) {
+      const observer = new MutationObserver(function(mutations) {
+        mutations.forEach(function(mutation) {
+          if (mutation.type === 'childList' || mutation.type === 'characterData') {
+            const count = parseInt(imageCountEl.textContent) || 0;
+            const span = convertBtn.querySelector('span');
+            if (span) {
+              span.textContent = `(${count} 张图片)`;
+            }
+          }
+        });
+      });
+      
+      observer.observe(imageCountEl, { childList: true, characterData: true, subtree: true });
+    }
+  });
+</script>
 </body>
 </html>
