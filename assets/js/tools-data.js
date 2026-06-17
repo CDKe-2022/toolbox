@@ -14,7 +14,8 @@ const tools = [
     category: '财务',
     icon: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
       <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/>
-    </svg>`
+    </svg>`,
+    keywords: ['数字', '中文', '金额', '大写', '财务']
   },
   {
     id: 'image-to-pdf',
@@ -28,7 +29,8 @@ const tools = [
       <rect x="3" y="3" width="18" height="18" rx="2" ry="2"/>
       <circle cx="8.5" cy="8.5" r="1.5"/>
       <polyline points="21,15 16,10 5,21"/>
-    </svg>`
+    </svg>`,
+    keywords: ['图片', 'PDF', '转换', '合并', '压缩']
   },
   {
     id: 'pdf-split-merge',
@@ -43,7 +45,8 @@ const tools = [
       <polyline points="14,2 14,8 20,8"/>
       <line x1="16" y1="13" x2="8" y2="13"/>
       <line x1="16" y1="17" x2="8" y2="17"/>
-    </svg>`
+    </svg>`,
+    keywords: ['PDF', '拆分', '合并', '分割', '文档']
   }
 ];
 
