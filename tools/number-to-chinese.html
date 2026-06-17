@@ -9,38 +9,6 @@
 <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,600;9..144,700;9..144,900&family=Noto+Sans+SC:wght@300;400;500;600;700&display=swap" rel="stylesheet">
 <script src="https://cdn.tailwindcss.com"></script>
 <link rel="stylesheet" href="../assets/css/common.css">
-<style>
-  /* 自定义样式增强 */
-  .keypad-grid {
-    display: grid;
-    grid-template-columns: repeat(5, 1fr);
-    gap: 0.75rem;
-  }
-  
-  @media (min-width: 1024px) {
-    .main-layout {
-      display: grid;
-      grid-template-columns: 1fr 320px;
-      gap: 3rem;
-    }
-  }
-  
-  .result-container {
-    position: relative;
-  }
-  
-  .copy-result-btn {
-    position: absolute;
-    top: 1rem;
-    right: 1rem;
-    opacity: 0;
-    transition: opacity 0.2s ease;
-  }
-  
-  .result-container:hover .copy-result-btn {
-    opacity: 1;
-  }
-</style>
 </head>
 <body class="page-enter bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen">
 
@@ -84,65 +52,17 @@
             ¥
           </div>
         </div>
-        
-        <!-- 快捷键网格 -->
-        <div class="space-y-3">
-          <div class="flex items-center justify-between">
-            <span class="text-sm font-medium text-[--ink-soft]">快速添加</span>
-            <button id="clear-btn" class="text-sm text-red-500 hover:text-red-600 transition-colors">清空</button>
-          </div>
-          <div class="keypad-grid">
-            <button class="keypad-btn" data-add="100">
-              <span class="block text-lg font-semibold">+100</span>
-              <span class="text-xs opacity-75 mt-1">壹佰元</span>
-            </button>
-            <button class="keypad-btn" data-add="1000">
-              <span class="block text-lg font-semibold">+1,000</span>
-              <span class="text-xs opacity-75 mt-1">壹仟元</span>
-            </button>
-            <button class="keypad-btn" data-add="10000">
-              <span class="block text-lg font-semibold">+1万</span>
-              <span class="text-xs opacity-75 mt-1">壹万元</span>
-            </button>
-            <button class="keypad-btn" data-add="100000000">
-              <span class="block text-lg font-semibold">+1亿</span>
-              <span class="text-xs opacity-75 mt-1">壹亿元</span>
-            </button>
-            <button class="keypad-btn" data-add="0.01">
-              <span class="block text-lg font-semibold">+0.01</span>
-              <span class="text-xs opacity-75 mt-1">壹分</span>
-            </button>
-          </div>
-        </div>
       </div>
       
       <!-- 输出区域 -->
       <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 md:p-8">
-        <div class="flex items-center justify-between mb-4">
-          <label class="block text-sm font-medium text-[--ink-soft]">中文大写</label>
-          <div class="flex items-center gap-2">
-            <tool-button id="copy-output-btn" variant="accent" size="sm">
-              <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-                <rect x="4" y="4" width="8" height="8" rx="1.5" stroke="currentColor" stroke-width="1.3"/>
-                <path d="M3 9V3C3 2.45 3.45 2 4 2H9" stroke="currentColor" stroke-width="1.3"/>
-              </svg>
-              复制
-            </tool-button>
-          </div>
-        </div>
-        
-        <div id="num-output" class="result-container result-box w-full min-h-[120px] p-5">
+        <label class="block text-sm font-medium text-[--ink-soft] mb-4">中文大写</label>
+        <div id="num-output" class="result-box w-full min-h-[120px] p-5">
           <span class="text-[--muted] text-base font-sans font-normal">结果将显示在这里</span>
-          <button class="copy-result-btn tool-button variant-ghost" size="sm" onclick="copyOutput()">
-            <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-              <rect x="4" y="4" width="8" height="8" rx="1.5" stroke="currentColor" stroke-width="1.3"/>
-              <path d="M3 9V3C3 2.45 3.45 2 4 2H9" stroke="currentColor" stroke-width="1.3"/>
-            </svg>
-          </button>
         </div>
       </div>
       
-      <!-- 操作按钮 -->
+      <!-- 底部操作按钮 -->
       <div class="flex flex-wrap gap-3 pt-2">
         <tool-button id="copy-input-btn" variant="primary">
           <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
@@ -151,7 +71,21 @@
           </svg>
           复制输入
         </tool-button>
-        <tool-button id="clear-all-btn" variant="ghost">清空全部</tool-button>
+        
+        <tool-button id="copy-output-btn" variant="accent" size="sm">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <rect x="4" y="4" width="8" height="8" rx="1.5" stroke="currentColor" stroke-width="1.3"/>
+            <path d="M3 9V3C3 2.45 3.45 2 4 2H9" stroke="currentColor" stroke-width="1.3"/>
+          </svg>
+          复制结果
+        </tool-button>
+        
+        <tool-button id="clear-all-btn" variant="ghost">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <path d="M3 3L11 11M11 3L3 11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+          清空全部
+        </tool-button>
       </div>
     </div>
     
@@ -190,28 +124,21 @@
           </li>
         </ul>
         
-        <!-- 示例卡片 -->
+        <!-- 简化示例卡片 -->
         <div class="mt-6 p-4 bg-blue-50 rounded-xl border border-blue-100">
-          <div class="flex gap-3">
-            <svg class="w-5 h-5 text-blue-600 shrink-0 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-            </svg>
-            <div class="text-sm text-blue-800">
-              <p class="font-medium mb-1">常用示例</p>
-              <div class="space-y-2 mt-2">
-                <div class="flex justify-between">
-                  <span>12.34</span>
-                  <span class="text-blue-600">壹拾贰元叁角肆分</span>
-                </div>
-                <div class="flex justify-between">
-                  <span>10000</span>
-                  <span class="text-blue-600">壹万元整</span>
-                </div>
-                <div class="flex justify-between">
-                  <span>0.05</span>
-                  <span class="text-blue-600">伍分</span>
-                </div>
-              </div>
+          <h4 class="font-medium text-[--ink] mb-3 text-sm">常用示例</h4>
+          <div class="space-y-2 text-sm text-blue-800">
+            <div class="flex justify-between">
+              <span>12.34</span>
+              <span class="text-blue-600">壹拾贰元叁角肆分</span>
+            </div>
+            <div class="flex justify-between">
+              <span>10000</span>
+              <span class="text-blue-600">壹万元整</span>
+            </div>
+            <div class="flex justify-between">
+              <span>0.05</span>
+              <span class="text-blue-600">伍分</span>
             </div>
           </div>
         </div>
@@ -267,33 +194,7 @@
       // 自动聚焦到输入框
       input.focus();
     }
-    
-    // 为快捷键按钮添加动画效果
-    const keypadBtns = document.querySelectorAll('.keypad-btn');
-    keypadBtns.forEach(btn => {
-      btn.addEventListener('click', function() {
-        this.classList.add('scale-95');
-        setTimeout(() => {
-          this.classList.remove('scale-95');
-        }, 150);
-      });
-    });
   });
-  
-  // 复制结果函数（供悬浮按钮调用）
-  function copyOutput() {
-    const output = document.getElementById('num-output');
-    if (!output) return;
-    
-    const text = output.textContent.trim();
-    if (!text || text === '结果将显示在这里') return;
-    
-    navigator.clipboard.writeText(text).then(() => {
-      showToast('已复制到剪贴板');
-    }).catch(err => {
-      console.error('复制失败:', err);
-    });
-  }
 </script>
 </body>
 </html>
