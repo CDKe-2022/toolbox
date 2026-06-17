@@ -1,15 +1,11 @@
-/**
- * 工具集数据文件
- * 包含所有工具的信息及分类筛选逻辑
- */
-
+// assets/js/tools-data.js
 const tools = [
   {
     id: 'number-to-chinese',
     num: 'Tool 01',
     name: '数字转中文大写',
     desc: '输入阿拉伯数字，自动转换为人民币大写金额格式，支持一键复制。',
-    href: 'tools/number-to-chinese.html',
+    href: 'tools/number-to-chinese.html',  // 确保路径正确
     status: 'active',
     category: '财务',
     icon: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
@@ -22,7 +18,7 @@ const tools = [
     num: 'Tool 02',
     name: '图片转 PDF',
     desc: '将多张图片合并为单个 PDF 文件，支持拖拽排序、压缩与方向选择。',
-    href: 'tools/image-to-pdf.html',
+    href: 'tools/image-to-pdf.html',  // 确保路径正确
     status: 'active',
     category: '图片',
     icon: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
@@ -37,7 +33,7 @@ const tools = [
     num: 'Tool 03',
     name: 'PDF拆分与合并',
     desc: '轻松拆分PDF文件或合并多个PDF文档，所有操作在本地完成，保护隐私。',
-    href: 'tools/pdf-split-merge.html',
+    href: 'tools/pdf-split-merge.html',  // 确保路径正确
     status: 'active',
     category: 'PDF',
     icon: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
@@ -49,12 +45,3 @@ const tools = [
     keywords: ['PDF', '拆分', '合并', '分割', '文档']
   }
 ];
-
-// 自动提取所有分类并去重，前置添加"全部"分类
-const categories = ['全部', ...new Set(tools.map(tool => tool.category))];
-
-// 暴露给全局对象，以便 index.html 调用
-window.toolData = {
-  tools,
-  categories
-};
