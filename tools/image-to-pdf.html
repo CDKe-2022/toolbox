@@ -17,12 +17,12 @@
 
 <div class="max-w-3xl mx-auto px-6 py-12 relative z-10">
   <header class="flex items-center justify-between mb-12">
-    <button class="btn btn-ghost" onclick="goHome()">
+    <tool-button variant="ghost" onclick="goHome()">
       <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
         <path d="M10 4L6 8L10 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
       </svg>
       返回主页
-    </button>
+    </tool-button>
     <span class="tool-num">Tool 02</span>
   </header>
   
@@ -33,16 +33,8 @@
   </div>
   
   <div class="space-y-6">
-    <div class="drop-zone" id="drop-zone">
-      <input type="file" id="file-input" multiple accept="image/jpeg,image/png,image/webp,image/bmp,image/heic,image/heif" class="hidden">
-      <div class="tool-icon mx-auto mb-4" style="width:52px;height:52px;">
-        <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
-          <path d="M12 16V4M12 4L7 9M12 4L17 9M5 20H19" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-      </div>
-      <p class="font-medium text-[--ink] mb-1 text-base">点击或拖拽图片到此处</p>
-      <p class="text-xs text-[--muted]">支持 JPEG、PNG、WebP、BMP、HEIC，可多选</p>
-    </div>
+    <!-- 使用 drop-zone 组件，自动处理点击和拖拽事件 -->
+    <drop-zone id="drop-zone" text="点击或拖拽图片到此处" hint="支持 JPEG、PNG、WebP、BMP、HEIC，可多选" accept="image/jpeg,image/png,image/webp,image/bmp,image/heic,image/heif" multiple></drop-zone>
     
     <div id="image-list-section" class="hidden">
       <div class="flex items-center justify-between mb-3">
@@ -50,7 +42,7 @@
           已选图片 <span id="image-count" class="text-[--muted] ml-1"></span>
           <span class="text-xs text-[--muted] ml-2">(长按可拖拽排序)</span>
         </label>
-        <button class="btn btn-ghost text-xs py-1.5 px-3" id="clear-images-btn">全部清除</button>
+        <tool-button id="clear-images-btn" variant="ghost" class="!py-1.5 !px-3 !text-xs">全部清除</tool-button>
       </div>
       <div id="image-list" class="grid grid-cols-4 sm:grid-cols-6 gap-3 mb-8"></div>
       
@@ -86,34 +78,26 @@
         </div>
       </div>
       
-      <button id="convert-btn" class="btn btn-primary w-full py-4 text-base font-medium">
+      <tool-button id="convert-btn" variant="primary" class="w-full py-4 text-base font-medium">
         <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
           <path d="M3 11V13C3 13.55 3.45 14 4 14H12C12.55 14 13 13.55 13 13V11M8 2V10M8 2L5 5M8 2L11 5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
         </svg>
         生成并下载 PDF
-      </button>
+      </tool-button>
     </div>
     
-    <div class="info-card mt-12">
-      <h4 class="text-sm font-semibold text-[--green] mb-3 flex items-center gap-2">
-        <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-          <circle cx="7" cy="7" r="6" stroke="currentColor" stroke-width="1.3"/>
-          <path d="M7 4V7.5M7 9.5V10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-        </svg>
-        使用说明
-      </h4>
-      <ul class="text-xs text-[--ink-soft] space-y-1.5 leading-relaxed">
-        <li>· 所有图片处理均在本地完成，不会上传到任何服务器</li>
-        <li>· HEIC 格式（苹果照片）将自动转换为 JPEG 后嵌入 PDF</li>
-        <li>· <strong>拖拽排序</strong>：在缩略图上长按拖动，可以调整图片在 PDF 中的顺序</li>
-        <li>· <strong>贴合图片</strong>：每页尺寸等于图片尺寸，无白边，跟 iOS 快捷指令效果一致</li>
-        <li>· <strong>压缩等级</strong>：通过 Canvas 重新绘制图片，控制 JPEG 质量，有效减小文件体积</li>
-      </ul>
-    </div>
+    <info-card title="使用说明">
+      <li>· 所有图片处理均在本地完成，不会上传到任何服务器</li>
+      <li>· HEIC 格式（苹果照片）将自动转换为 JPEG 后嵌入 PDF</li>
+      <li>· <strong>拖拽排序</strong>：在缩略图上长按拖动，可以调整图片在 PDF 中的顺序</li>
+      <li>· <strong>贴合图片</strong>：每页尺寸等于图片尺寸，无白边，跟 iOS 快捷指令效果一致</li>
+      <li>· <strong>压缩等级</strong>：通过 Canvas 重新绘制图片，控制 JPEG 质量，有效减小文件体积</li>
+    </info-card>
   </div>
 </div>
 
 <script src="../assets/js/common.js"></script>
+<script src="../assets/js/components.js"></script>
 <script src="../assets/js/image-to-pdf.js"></script>
 </body>
 </html>
