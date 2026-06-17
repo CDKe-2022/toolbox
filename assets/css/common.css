@@ -388,3 +388,11 @@ body::after {
   from { opacity: 0; transform: translateY(16px); }
   to { opacity: 1; transform: translateY(0); }
 }
+
+/* 补充到 common.css 末尾 */
+.btn-primary.disabled, .btn-ghost.disabled, .btn-accent.disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+  transform: none !important;
+  pointer-events: none;
+}
