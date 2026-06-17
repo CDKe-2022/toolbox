@@ -1,60 +1,84 @@
-let currentCategory = 'all';
-let searchKeyword = '';
-
-function renderCategories() {
-  const container = document.getElementById('category-tabs');
-  container.innerHTML = CATEGORIES.map(cat => `
-    <button class="cat-tab ${cat.id === currentCategory ? 'active' : ''}" data-cat="${cat.id}">
-      ${cat.name}
-    </button>
-  `).join('');
-  container.querySelectorAll('.cat-tab').forEach(btn => {
-    btn.addEventListener('click', () => {
-      currentCategory = btn.dataset.cat;
-      renderCategories();
-      renderTools();
-    });
-  });
-}
-
-function renderTools() {
-  const grid = document.getElementById('tools-grid');
-  let filtered = TOOLS_DATA.filter(tool => {
-    const matchCat = currentCategory === 'all' || tool.category === currentCategory;
-    const matchSearch = !searchKeyword || 
-                        tool.name.toLowerCase().includes(searchKeyword) || 
-                        tool.desc.toLowerCase().includes(searchKeyword);
-    return matchCat && matchSearch;
-  });
-  
-  if (filtered.length === 0) {
-    grid.innerHTML = `
-      <div class="col-span-full text-center py-16 text-[--muted]">
-        <p class="text-lg mb-2">没有找到匹配的工具</p>
-        <p class="text-sm">试试其他关键词，或者这个工具还在开发中</p>
-      </div>
-    `;
-    return;
+class HomePage {
+  constructor() {
+    this.currentCategory = '全部';
+    this.searchTerm = '';
+    this.init();
   }
   
-  grid.innerHTML = filtered.map((tool, idx) => {
-    return `
-      <tool-card 
-        href="tools/${tool.id}.html" 
-        status="${tool.status}" 
-        num="${String(idx + 1).padStart(2, '0')}" 
-        name="${tool.name}" 
-        desc="${tool.desc}">
-        ${tool.icon}
-      </tool-card>
-    `;
-  }).join('');
+  init() {
+    this.setupSearch();
+    this.renderCategories();
+    this.renderTools();
+    this.updateToolCount();
+    this.setupEventListeners();
+  }
+  
+  setupEventListeners() {
+    document.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && document.activeElement.tagName !== 'INPUT') {
+        e.preventDefault();
+      }
+    });
+  }
+  
+  setupSearch() {
+    const searchInput = document.getElementById('search-input');
+    if (searchInput) {
+      searchInput.addEventListener('input', (e) => {
+        this.searchTerm = e.target.value.toLowerCase();
+        this.renderTools();
+      });
+    }
+  }
+  
+  renderCategories() {
+    const container = document.getElementById('categories-container');
+    container.innerHTML = '';
+    
+    window.toolData.categories.forEach(cat => {
+      const btn = document.createElement('button');
+      btn.className = 'cat-tab' + (cat === this.currentCategory ? ' active' : '');
+      btn.textContent = cat;
+      btn.onclick = () => {
+        this.currentCategory = cat;
+        this.renderCategories();
+        this.renderTools();
+      };
+      container.appendChild(btn);
+    });
+  }
+  
+  renderTools() {
+    const grid = document.getElementById('tools-grid');
+    grid.innerHTML = '';
+    
+    let filteredTools = this.currentCategory === '全部' 
+      ? window.toolData.tools 
+      : window.toolData.tools.filter(t => t.category === this.currentCategory);
+    
+    // 应用搜索过滤
+    if (this.searchTerm) {
+      filteredTools = filteredTools.filter(tool => 
+        tool.name.toLowerCase().includes(this.searchTerm) ||
+        tool.desc.toLowerCase().includes(this.searchTerm) ||
+        tool.category.toLowerCase().includes(this.searchTerm) ||
+        tool.keywords.some(keyword => keyword.toLowerCase().includes(this.searchTerm))
+      );
+    }
+    
+    filteredTools.forEach(tool => {
+      const card = document.createElement('tool-card');
+      card.setAttribute('num', tool.num);
+      card.setAttribute('name', tool.name);
+      card.setAttribute('desc', tool.desc);
+      card.setAttribute('href', tool.href);
+      card.setAttribute('status', tool.status);
+      card.innerHTML = tool.icon;
+      grid.appendChild(card);
+    });
+  }
+  
+  updateToolCount() {
+    document.getElementById('tool-count').textContent = window.toolData.tools.length;
+  }
 }
-
-document.getElementById('search-input').addEventListener('input', (e) => {
-  searchKeyword = e.target.value.toLowerCase().trim();
-  renderTools();
-});
-
-renderCategories();
-renderTools();
