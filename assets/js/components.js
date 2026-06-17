@@ -1,36 +1,26 @@
-// ============ ToolButton ============
 class ToolButton extends HTMLElement {
   static get observedAttributes() { return ['disabled', 'variant']; }
-  
   connectedCallback() {
     if (this._initialized) return;
     this._initialized = true;
     this.classList.add('btn');
     this.updateVariant();
-    
-    // 拦截 disabled 状态下的点击
     this.addEventListener('click', (e) => {
-      if (this.hasAttribute('disabled')) {
-        e.preventDefault();
-        e.stopPropagation();
-      }
+      if (this.hasAttribute('disabled')) { e.preventDefault(); e.stopPropagation(); }
     });
   }
-  
   updateVariant() {
     const variant = this.getAttribute('variant') || 'primary';
     ['primary', 'ghost', 'accent'].forEach(v => this.classList.remove(`btn-${v}`));
     this.classList.add(`btn-${variant}`);
   }
-  
-  attributeChangedCallback(name, oldVal, newVal) {
+  attributeChangedCallback(name) {
     if (name === 'variant') this.updateVariant();
     if (name === 'disabled') this.classList.toggle('disabled', this.hasAttribute('disabled'));
   }
 }
 customElements.define('tool-button', ToolButton);
 
-// ============ InfoCard ============
 class InfoCard extends HTMLElement {
   connectedCallback() {
     if (this._initialized) return;
@@ -52,17 +42,14 @@ class InfoCard extends HTMLElement {
 }
 customElements.define('info-card', InfoCard);
 
-// ============ DropZone ============
 class DropZone extends HTMLElement {
   connectedCallback() {
     if (this._initialized) return;
     this._initialized = true;
-    
     const text = this.getAttribute('text') || '点击或拖拽文件到此处';
     const hint = this.getAttribute('hint') || '';
     const accept = this.getAttribute('accept') || '*/*';
     const multiple = this.hasAttribute('multiple') ? 'multiple' : '';
-    
     this.classList.add('drop-zone');
     this.innerHTML = `
       <input type="file" class="hidden" ${multiple} accept="${accept}">
@@ -74,21 +61,12 @@ class DropZone extends HTMLElement {
       <p class="font-medium text-[--ink] mb-1 text-base">${text}</p>
       <p class="text-xs text-[--muted]">${hint}</p>
     `;
-    
     const input = this.querySelector('input');
-    
     this.addEventListener('click', () => input.click());
-    this.addEventListener('dragover', (e) => {
-      e.preventDefault(); e.stopPropagation();
-      this.classList.add('dragover');
-    });
-    this.addEventListener('dragleave', (e) => {
-      e.preventDefault(); e.stopPropagation();
-      this.classList.remove('dragover');
-    });
+    this.addEventListener('dragover', (e) => { e.preventDefault(); e.stopPropagation(); this.classList.add('dragover'); });
+    this.addEventListener('dragleave', (e) => { e.preventDefault(); e.stopPropagation(); this.classList.remove('dragover'); });
     this.addEventListener('drop', (e) => {
-      e.preventDefault(); e.stopPropagation();
-      this.classList.remove('dragover');
+      e.preventDefault(); e.stopPropagation(); this.classList.remove('dragover');
       if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
         this.dispatchEvent(new CustomEvent('files-selected', { detail: e.dataTransfer.files }));
       }
@@ -102,19 +80,16 @@ class DropZone extends HTMLElement {
 }
 customElements.define('drop-zone', DropZone);
 
-// ============ ToolCard ============
 class ToolCard extends HTMLElement {
   connectedCallback() {
     if (this._initialized) return;
     this._initialized = true;
-    
     const status = this.getAttribute('status') || 'active';
     const num = this.getAttribute('num') || '···';
     const name = this.getAttribute('name');
     const desc = this.getAttribute('desc');
     const href = this.getAttribute('href');
-    const iconHTML = this.innerHTML; // 标签内的内容作为图标
-    
+    const iconHTML = this.innerHTML;
     if (status === 'coming') {
       this.classList.add('tool-card', 'disabled');
       this.innerHTML = `
@@ -127,7 +102,7 @@ class ToolCard extends HTMLElement {
         <div class="flex items-center gap-2 text-xs text-[--muted] font-medium"><span>敬请期待</span></div>
       `;
     } else {
-      this.classList.add('tool-card', 'block', 'no-underline', 'text-inherit');
+      this.classList.add('tool-card');
       this.innerHTML = `
         <div class="tool-icon">${iconHTML}</div>
         <div class="flex items-center justify-between mb-3">
