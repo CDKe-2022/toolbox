@@ -73,9 +73,6 @@ class PDFSplitMerge {
     
     // 键盘快捷键
     document.addEventListener('keydown', (e) => {
-      // 只在输入框未聚焦时处理
-      if (document.activeElement.tagName === 'INPUT') return;
-
       if (e.key === 'Enter') {
         if (this.mode === 'split' && document.getElementById('split-btn')?.offsetParent) {
           e.preventDefault();
