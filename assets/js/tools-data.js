@@ -10,3 +10,22 @@ const CATEGORIES = [
   { id: 'document', name: '文档处理' },
   { id: 'dev', name: '开发工具' }
 ];
+
+// PDF拆分与合并工具
+const pdfTool = {
+  id: 'pdf-split-merge',
+  name: 'PDF拆分与合并',
+  description: '轻松拆分PDF文件或合并多个PDF文档',
+  icon: `<svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+    <polyline points="14,2 14,8 20,8"/>
+    <line x1="16" y1="13" x2="8" y2="13"/>
+    <line x1="16" y1="17" x2="8" y2="17"/>
+    <polyline points="10,9 9,9 8,9"/>
+  </svg>`,
+  href: 'tools/pdf-split-merge.html'
+};
+
+// 将工具添加到工具列表
+tools.push(pdfTool);
+
