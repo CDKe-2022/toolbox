@@ -39,37 +39,17 @@ function renderTools() {
     return;
   }
   
+  // 直接生成 <tool-card> 标签，组件会自动处理内部结构和样式
   grid.innerHTML = filtered.map((tool, idx) => {
-    if (tool.status === 'coming') {
-      return `
-        <div class="tool-card disabled">
-          <div class="tool-icon">${tool.icon}</div>
-          <div class="flex items-center justify-between mb-3">
-            <h3 class="text-xl font-semibold text-[--ink]">${tool.name}</h3>
-            <span class="tool-num">···</span>
-          </div>
-          <p class="text-sm text-[--ink-soft] leading-relaxed mb-6">${tool.desc}</p>
-          <div class="flex items-center gap-2 text-xs text-[--muted] font-medium">
-            <span>敬请期待</span>
-          </div>
-        </div>
-      `;
-    }
     return `
-      <a href="tools/${tool.id}.html" class="tool-card block no-underline text-inherit">
-        <div class="tool-icon">${tool.icon}</div>
-        <div class="flex items-center justify-between mb-3">
-          <h3 class="text-xl font-semibold text-[--ink]">${tool.name}</h3>
-          <span class="tool-num">${String(idx + 1).padStart(2, '0')}</span>
-        </div>
-        <p class="text-sm text-[--ink-soft] leading-relaxed mb-6">${tool.desc}</p>
-        <div class="flex items-center gap-2 text-xs text-[--green] font-medium">
-          <span>进入工具</span>
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-            <path d="M3 7H11M11 7L7 3M11 7L7 11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-          </svg>
-        </div>
-      </a>
+      <tool-card 
+        href="tools/${tool.id}.html" 
+        status="${tool.status}" 
+        num="${String(idx + 1).padStart(2, '0')}" 
+        name="${tool.name}" 
+        desc="${tool.desc}">
+        ${tool.icon}
+      </tool-card>
     `;
   }).join('');
 }
@@ -79,6 +59,5 @@ document.getElementById('search-input').addEventListener('input', (e) => {
   renderTools();
 });
 
-// 初始化
 renderCategories();
 renderTools();
