@@ -1,0 +1,253 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>PDF拆分与合并 · 工具集</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,600;9..144,700;9..144,900&family=Noto+Sans+SC:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf-lib/1.17.1/pdf-lib.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<link rel="stylesheet" href="../assets/css/common.css">
+</head>
+<body class="page-enter bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen">
+
+<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12 relative z-10">
+  <!-- 头部导航优化 -->
+  <header class="flex items-center justify-between mb-8 md:mb-12">
+    <div class="flex items-center gap-4">
+      <tool-button variant="ghost" onclick="goHome()" class="shrink-0">
+        <svg width="18" height="18" viewBox="0 0 16 16" fill="none">
+          <path d="M10 4L6 8L10 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        返回主页
+      </tool-button>
+      <div class="h-6 w-px bg-[--border] hidden sm:block"></div>
+      <div class="hidden sm:flex items-center gap-2 text-sm text-[--muted]">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+          <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
+        </svg>
+        <span>PDF拆分与合并</span>
+      </div>
+    </div>
+    <span class="tool-num bg-[--green]/10 text-[--green] px-3 py-1 rounded-full">Tool 03</span>
+  </header>
+  
+  <div class="main-layout">
+    <!-- 主要内容区 -->
+    <div class="space-y-8">
+      <!-- 标题区域 -->
+      <div class="mb-8">
+        <div class="deco-line mb-6"></div>
+        <h2 class="font-display text-4xl sm:text-5xl md:text-6xl font-bold text-[--green] mb-4 leading-tight">PDF拆分与合并</h2>
+        <p class="text-[--ink-soft] text-lg font-light max-w-2xl">轻松拆分PDF文件或合并多个PDF文档，所有操作在本地完成，保护您的隐私。</p>
+      </div>
+      
+      <!-- 模式选择 -->
+      <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 md:p-8">
+        <div class="flex flex-wrap gap-4 mb-6">
+          <div class="mode-option active" data-mode="split">
+            <div class="font-medium">拆分PDF</div>
+            <div class="text-xs opacity-75 mt-0.5">按页数或范围拆分</div>
+          </div>
+          <div class="mode-option" data-mode="merge">
+            <div class="font-medium">合并PDF</div>
+            <div class="text-xs opacity-75 mt-0.5">合并多个PDF文件</div>
+          </div>
+        </div>
+        
+        <!-- 拆分模式 -->
+        <div id="split-mode" class="space-y-6">
+          <div class="drop-zone" id="pdf-upload" text="点击或拖拽PDF文件到此处" hint="支持 .pdf 格式，单个文件最大 50MB">
+            <input type="file" class="hidden" accept="application/pdf">
+            <div class="tool-icon mx-auto mb-4" style="width:52px;height:52px;">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                <path d="M12 16V4M12 4L7 9M12 4L17 9M5 20H19" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </div>
+            <p class="font-medium text-[--ink] mb-1 text-base">上传PDF文件</p>
+            <p class="text-xs text-[--muted]">支持 .pdf 格式，单个文件最大 50MB</p>
+          </div>
+          
+          <div id="pdf-preview" class="hidden">
+            <div class="flex items-center justify-between mb-4">
+              <h4 class="font-medium text-[--ink]">文件预览</h4>
+              <tool-button variant="ghost" size="sm" onclick="removePdf()">移除文件</tool-button>
+            </div>
+            <div class="bg-gray-50 rounded-xl p-4 border border-gray-200">
+              <div class="flex items-center gap-4">
+                <div class="w-16 h-20 bg-gray-200 rounded flex items-center justify-center">
+                  <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.5">
+                    <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/>
+                    <polyline points="14,2 14,8 20,8"/>
+                    <line x1="16" y1="13" x2="8" y2="13"/>
+                    <line x1="16" y1="17" x2="8" y2="17"/>
+                    <polyline points="10,9 9,9 8,9"/>
+                  </svg>
+                </div>
+                <div class="flex-1">
+                  <div class="font-medium text-[--ink]">文件名.pdf</div>
+                  <div class="text-sm text-[--muted]">共 <span id="page-count">0</span> 页</div>
+                </div>
+              </div>
+            </div>
+          </div>
+          
+          <div id="split-options" class="hidden">
+            <h4 class="font-medium text-[--ink] mb-4">拆分方式</h4>
+            <div class="space-y-4">
+              <div class="split-method">
+                <label class="flex items-center gap-3">
+                  <input type="radio" name="split-method" value="pages" class="w-4 h-4 text-[--green]">
+                  <div>
+                    <div class="font-medium">按固定页数拆分</div>
+                    <div class="text-xs opacity-75 mt-0.5">每 <input type="number" class="split-pages w-16 px-2 py-1 border border-gray-300 rounded text-sm" value="1" min="1"> 页拆分为一个文件</div>
+                  </div>
+                </label>
+              </div>
+              
+              <div class="split-method">
+                <label class="flex items-center gap-3">
+                  <input type="radio" name="split-method" value="range" class="w-4 h-4 text-[--green]">
+                  <div>
+                    <div class="font-medium">按页码范围拆分</div>
+                    <div class="text-xs opacity-75 mt-0.5">从 <input type="number" class="split-start w-16 px-2 py-1 border border-gray-300 rounded text-sm" value="1" min="1"> 页到 <input type="number" class="split-end w-16 px-2 py-1 border border-gray-300 rounded text-sm" value="1" min="1"> 页</div>
+                  </div>
+                </label>
+              </div>
+            </div>
+          </div>
+        </div>
+        
+        <!-- 合并模式 -->
+        <div id="merge-mode" class="hidden space-y-6">
+          <div class="drop-zone" id="merge-upload" text="点击或拖拽PDF文件到此处" hint="支持 .pdf 格式，可上传多个文件">
+            <input type="file" class="hidden" accept="application/pdf" multiple>
+            <div class="tool-icon mx-auto mb-4" style="width:52px;height:52px;">
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none">
+                <path d="M12 16V4M12 4L7 9M12 4L17 9M5 20H19" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
+              </svg>
+            </div>
+            <p class="font-medium text-[--ink] mb-1 text-base">上传PDF文件</p>
+            <p class="text-xs text-[--muted">支持 .pdf 格式，可上传多个文件</p>
+          </div>
+          
+          <div id="merge-list" class="hidden">
+            <div class="flex items-center justify-between mb-4">
+              <h4 class="font-medium text-[--ink]">文件列表</h4>
+              <tool-button variant="ghost" size="sm" onclick="clearMergeFiles()">清空列表</tool-button>
+            </div>
+            <div id="file-list" class="space-y-3"></div>
+          </div>
+        </div>
+      </div>
+      
+      <!-- 操作按钮 -->
+      <div class="flex flex-wrap gap-3 pt-2">
+        <tool-button id="split-btn" variant="primary" class="hidden">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <path d="M3 3L11 11M11 3L3 11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+          开始拆分
+        </tool-button>
+        
+        <tool-button id="merge-btn" variant="primary" class="hidden">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <path d="M3 3L11 11M11 3L3 11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+          开始合并
+        </tool-button>
+        
+        <tool-button id="clear-btn" variant="ghost">
+          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+            <path d="M3 3L11 11M11 3L3 11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
+          </svg>
+          清空全部
+        </tool-button>
+      </div>
+    </div>
+    
+    <!-- 侧边栏 -->
+    <div class="space-y-6 mt-8 lg:mt-0">
+      <!-- 使用说明 -->
+      <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 sticky top-8">
+        <h3 class="font-display text-lg font-semibold text-[--ink] mb-4 flex items-center gap-2">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+            <circle cx="12" cy="12" r="10"></circle>
+            <line x1="12" y1="16" x2="12" y2="12"></line>
+            <line x1="12" y1="8" x2="12.01" y2="8"></line>
+          </svg>
+          使用说明
+        </h3>
+        <ul class="space-y-3 text-sm text-[--ink-soft]">
+          <li class="flex gap-3">
+            <span class="text-[--green] mt-0.5">•</span>
+            <span>所有PDF处理均在本地完成，不会上传到任何服务器</span>
+          </li>
+          <li class="flex gap-3">
+            <span class="text-[--green] mt-0.5">•</span>
+            <span>支持拆分：按固定页数或自定义页码范围拆分PDF文件</span>
+          </li>
+          <li class="flex gap-3">
+            <span class="text-[--green] mt-0.5">•</span>
+            <span>支持合并：将多个PDF文件合并为一个文档</span>
+          </li>
+          <li class="flex gap-3">
+            <span class="text-[--green] mt-0.5">•</span>
+            <span>文件大小限制：单个文件不超过 50MB，总大小不超过 200MB</span>
+          </li>
+          <li class="flex gap-3">
+            <span class="text-[--green] mt-0.5">•</span>
+            <span>支持拖拽排序：在合并模式下可拖拽调整文件顺序</span>
+          </li>
+        </ul>
+        
+        <!-- 示例卡片 -->
+        <div class="mt-6 p-4 bg-blue-50 rounded-xl border border-blue-100">
+          <h4 class="font-medium text-[--ink] mb-3 text-sm">常见用途</h4>
+          <div class="space-y-2 text-sm text-blue-800">
+            <div class="flex justify-between">
+              <span>拆分合同</span>
+              <span class="text-blue-600">按章节拆分大文件</span>
+            </div>
+            <div class="flex justify-between">
+              <span>合并报告</span>
+              <span class="text-blue-600">将多个章节合并</span>
+            </div>
+            <div class="flex justify-between">
+              <span>提取页面</span>
+              <span class="text-blue-600">获取特定页码内容</span>
+            </div>
+          </div>
+        </div>
+        
+        <!-- 键盘快捷键 -->
+        <div class="mt-6 p-4 bg-gray-50 rounded-xl border border-gray-100">
+          <h4 class="font-medium text-[--ink] mb-3 text-sm">键盘快捷键</h4>
+          <div class="space-y-2 text-xs text-[--muted]">
+            <div class="flex justify-between">
+              <span><kbd class="bg-white px-2 py-1 rounded border">Enter</kbd></span>
+              <span>开始处理</span>
+            </div>
+            <div class="flex justify-between">
+              <span><kbd class="bg-white px-2 py-1 rounded border">Esc</kbd></span>
+              <span>清空输入</span>
+            </div>
+            <div class="flex justify-between">
+              <span><kbd class="bg-white px-2 py-1 rounded border">Ctrl/Cmd + D</kbd></span>
+              <span>删除文件</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="../assets/js/common.js"></script>
+<script src="../assets/js/components.js"></script>
+<script src="../assets/js/pdf-split-merge.js"></script>
+</body>
+</html>
