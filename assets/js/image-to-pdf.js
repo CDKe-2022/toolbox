@@ -1,5 +1,5 @@
 let imageFiles = [];
-let currentOrientation = 'auto';
+let currentMode = 'fit'; // 'fit' = 贴合图片，'a4' = A4标准页
 
 const dropZone = document.getElementById('drop-zone');
 const fileInput = document.getElementById('file-input');
@@ -88,7 +88,6 @@ function renderImageList() {
     `;
   }).join('');
   
-  // 绑定删除按钮
   list.querySelectorAll('.thumb-remove').forEach(btn => {
     btn.addEventListener('click', e => {
       e.stopPropagation();
@@ -105,10 +104,10 @@ function clearImages() {
   fileInput.value = '';
 }
 
-function selectOrientation(orient) {
+function selectMode(mode) {
   document.querySelectorAll('.orient-option').forEach(o => o.classList.remove('active'));
-  document.querySelector(`[data-orient="${orient}"]`).classList.add('active');
-  currentOrientation = orient;
+  document.querySelector(`[data-mode="${mode}"]`).classList.add('active');
+  currentMode = mode;
 }
 
 async function convertToPdf() {
@@ -128,39 +127,56 @@ async function convertToPdf() {
     
     for (let i = 0; i < imageFiles.length; i++) {
       const img = imageFiles[i];
-      let pageOrientation = currentOrientation;
-      
-      if (currentOrientation === 'auto') {
-        pageOrientation = img.width > img.height ? 'landscape' : 'portrait';
-      }
-      
-      if (!pdf) {
-        pdf = new jsPDF({ orientation: pageOrientation, unit: 'mm', format: 'a4' });
-      } else {
-        pdf.addPage('a4', pageOrientation);
-      }
-      
-      const pageWidth = pdf.internal.pageSize.getWidth();
-      const pageHeight = pdf.internal.pageSize.getHeight();
-      
-      const margin = 10;
-      const availWidth = pageWidth - margin * 2;
-      const availHeight = pageHeight - margin * 2;
-      
-      const ratio = Math.min(availWidth / img.width, availHeight / img.height);
-      const renderWidth = img.width * ratio;
-      const renderHeight = img.height * ratio;
-      
-      const x = (pageWidth - renderWidth) / 2;
-      const y = (pageHeight - renderHeight) / 2;
-      
       const isPng = img.dataUrl.startsWith('data:image/png');
       const format = isPng ? 'PNG' : 'JPEG';
       
-      try {
-        pdf.addImage(img.dataUrl, format, x, y, renderWidth, renderHeight, undefined, 'FAST');
-      } catch (e) {
-        pdf.addImage(img.dataUrl, 'JPEG', x, y, renderWidth, renderHeight, undefined, 'FAST');
+      if (currentMode === 'fit') {
+        // ===== 贴合图片模式：页面尺寸 = 图片尺寸，无白边 =====
+        const w = img.width;
+        const h = img.height;
+        const orientation = w >= h ? 'landscape' : 'portrait';
+        
+        if (!pdf) {
+          pdf = new jsPDF({
+            unit: 'pt',
+            format: [w, h],
+            orientation: orientation
+          });
+        } else {
+          pdf.addPage([w, h], orientation);
+        }
+        // 图片铺满整个页面，坐标 (0,0)，尺寸 = 页面尺寸
+        pdf.addImage(img.dataUrl, format, 0, 0, w, h, undefined, 'FAST');
+        
+      } else {
+        // ===== A4 标准页模式：每页 A4，图片居中 =====
+        let pageOrientation = img.width > img.height ? 'landscape' : 'portrait';
+        
+        if (!pdf) {
+          pdf = new jsPDF({ orientation: pageOrientation, unit: 'mm', format: 'a4' });
+        } else {
+          pdf.addPage('a4', pageOrientation);
+        }
+        
+        const pageWidth = pdf.internal.pageSize.getWidth();
+        const pageHeight = pdf.internal.pageSize.getHeight();
+        
+        const margin = 10;
+        const availWidth = pageWidth - margin * 2;
+        const availHeight = pageHeight - margin * 2;
+        
+        const ratio = Math.min(availWidth / img.width, availHeight / img.height);
+        const renderWidth = img.width * ratio;
+        const renderHeight = img.height * ratio;
+        
+        const x = (pageWidth - renderWidth) / 2;
+        const y = (pageHeight - renderHeight) / 2;
+        
+        try {
+          pdf.addImage(img.dataUrl, format, x, y, renderWidth, renderHeight, undefined, 'FAST');
+        } catch (e) {
+          pdf.addImage(img.dataUrl, 'JPEG', x, y, renderWidth, renderHeight, undefined, 'FAST');
+        }
       }
     }
     
@@ -206,5 +222,5 @@ document.getElementById('clear-images-btn').addEventListener('click', clearImage
 document.getElementById('convert-btn').addEventListener('click', convertToPdf);
 
 document.querySelectorAll('.orient-option').forEach(opt => {
-  opt.addEventListener('click', () => selectOrientation(opt.dataset.orient));
+  opt.addEventListener('click', () => selectMode(opt.dataset.mode));
 });
