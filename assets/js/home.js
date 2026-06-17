@@ -8,7 +8,6 @@ function renderCategories() {
       ${cat.name}
     </button>
   `).join('');
-  
   container.querySelectorAll('.cat-tab').forEach(btn => {
     btn.addEventListener('click', () => {
       currentCategory = btn.dataset.cat;
@@ -20,7 +19,6 @@ function renderCategories() {
 
 function renderTools() {
   const grid = document.getElementById('tools-grid');
-  
   let filtered = TOOLS_DATA.filter(tool => {
     const matchCat = currentCategory === 'all' || tool.category === currentCategory;
     const matchSearch = !searchKeyword || 
@@ -39,7 +37,6 @@ function renderTools() {
     return;
   }
   
-  // 直接生成 <tool-card> 标签，组件会自动处理内部结构和样式
   grid.innerHTML = filtered.map((tool, idx) => {
     return `
       <tool-card 
