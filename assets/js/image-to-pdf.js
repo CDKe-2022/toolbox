@@ -1,5 +1,6 @@
 let imageFiles = [];
 let currentMode = 'fit';
+let currentOrientation = 'auto';
 let currentQuality = 0.8;
 
 const dropZone = document.getElementById('drop-zone');
@@ -81,11 +82,19 @@ function renderImageList() {
 }
 
 function clearImages() { imageFiles = []; renderImageList(); }
+
 function selectMode(mode) {
   document.querySelectorAll('[data-mode]').forEach(o => o.classList.remove('active'));
   document.querySelector(`[data-mode="${mode}"]`).classList.add('active');
   currentMode = mode;
 }
+
+function selectOrient(orient) {
+  document.querySelectorAll('[data-orient]').forEach(o => o.classList.remove('active'));
+  document.querySelector(`[data-orient="${orient}"]`).classList.add('active');
+  currentOrientation = orient;
+}
+
 function selectQuality(q) {
   document.querySelectorAll('[data-quality]').forEach(o => o.classList.remove('active'));
   document.querySelector(`[data-quality="${q}"]`).classList.add('active');
@@ -118,16 +127,26 @@ async function convertToPdf() {
     for (let i = 0; i < imageFiles.length; i++) {
       const img = imageFiles[i];
       const compressedDataUrl = await new Promise(resolve => compressImage(img.dataUrl, currentQuality, resolve));
+      
       if (currentMode === 'fit') {
+        // 贴合图片模式：页面尺寸等于图片尺寸，方向由图片本身决定
         const w = img.width, h = img.height;
         const orientation = w >= h ? 'landscape' : 'portrait';
         if (!pdf) pdf = new jsPDF({ unit: 'pt', format: [w, h], orientation });
         else pdf.addPage([w, h], orientation);
         pdf.addImage(compressedDataUrl, 'JPEG', 0, 0, w, h, undefined, 'FAST');
       } else {
-        let pageOrientation = img.width > img.height ? 'landscape' : 'portrait';
+        // A4 标准页模式：根据用户选择的方向决定页面方向
+        let pageOrientation;
+        if (currentOrientation === 'auto') {
+          pageOrientation = img.width > img.height ? 'landscape' : 'portrait';
+        } else {
+          pageOrientation = currentOrientation; // portrait 或 landscape
+        }
+        
         if (!pdf) pdf = new jsPDF({ orientation: pageOrientation, unit: 'mm', format: 'a4' });
         else pdf.addPage('a4', pageOrientation);
+        
         const pageWidth = pdf.internal.pageSize.getWidth();
         const pageHeight = pdf.internal.pageSize.getHeight();
         const margin = 10;
@@ -152,4 +171,5 @@ async function convertToPdf() {
 document.getElementById('clear-images-btn').addEventListener('click', clearImages);
 document.getElementById('convert-btn').addEventListener('click', convertToPdf);
 document.querySelectorAll('[data-mode]').forEach(opt => opt.addEventListener('click', () => selectMode(opt.dataset.mode)));
+document.querySelectorAll('[data-orient]').forEach(opt => opt.addEventListener('click', () => selectOrient(opt.dataset.orient)));
 document.querySelectorAll('[data-quality]').forEach(opt => opt.addEventListener('click', () => selectQuality(opt.dataset.quality)));
