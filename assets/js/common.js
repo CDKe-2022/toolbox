@@ -1,54 +1,47 @@
-let toastTimer = null;
-let toastEl = null;
-
-function ensureToast() {
-  if (toastEl) return toastEl;
-  toastEl = document.createElement('div');
-  toastEl.id = 'toast';
-  toastEl.className = 'toast';
-  toastEl.innerHTML = `
-    <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-      <path d="M4 8L7 11L12 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/>
-    </svg>
-    <span id="toast-msg">已复制</span>
-  `;
-  document.body.appendChild(toastEl);
-  return toastEl;
-}
-
-function showToast(msg, isError = false) {
-  const toast = ensureToast();
-  const msgEl = toast.querySelector('#toast-msg');
-  msgEl.textContent = msg;
-  toast.classList.toggle('error', isError);
-  toast.classList.add('show');
-  if (toastTimer) clearTimeout(toastTimer);
-  toastTimer = setTimeout(() => toast.classList.remove('show'), 2200);
-}
-
-function copyToClipboard(text) {
-  if (navigator.clipboard && window.isSecureContext) {
-    return navigator.clipboard.writeText(text);
-  }
-  return new Promise((resolve, reject) => {
-    const textarea = document.createElement('textarea');
-    textarea.value = text;
-    textarea.style.position = 'fixed';
-    textarea.style.opacity = '0';
-    document.body.appendChild(textarea);
-    textarea.select();
-    try { document.execCommand('copy'); resolve(); } catch (e) { reject(e); }
-    document.body.removeChild(textarea);
-  });
+// 工具函数
+function showToast(message, type = 'success') {
+  const toast = document.createElement('div');
+  toast.className = `fixed top-4 right-4 px-4 py-2 rounded-lg shadow-lg z-50 ${
+    type === 'success' ? 'bg-green-500' : 'bg-red-500'
+  } text-white`;
+  toast.textContent = message;
+  document.body.appendChild(toast);
+  
+  setTimeout(() => {
+    toast.style.opacity = '0';
+    toast.style.transition = 'opacity 0.3s ease';
+    setTimeout(() => toast.remove(), 300);
+  }, 3000);
 }
 
 function goHome() {
-  if (window.history.length > 1 && document.referrer.includes(location.origin)) {
-    window.history.back();
-  } else {
-    window.location.href = '../index.html';
-  }
+  window.location.href = '/';
 }
 
-window.addEventListener('dragover', (e) => e.preventDefault());
-window.addEventListener('drop', (e) => e.preventDefault());
+// 错误处理
+function showError(message = '应用加载失败，请刷新页面') {
+  const errorDiv = document.createElement('div');
+  errorDiv.className = 'error-boundary';
+  errorDiv.innerHTML = `
+    <svg class="w-16 h-16 text-red-500 mb-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+    </svg>
+    <h2 class="text-xl font-bold mb-2">${message}</h2>
+    <button onclick="location.reload()" class="px-4 py-2 bg-red-600 text-white rounded hover:bg-red-700">
+      刷新页面
+    </button>
+  `;
+  document.body.innerHTML = '';
+  document.body.appendChild(errorDiv);
+}
+
+// PWA 支持
+if ('serviceWorker' in navigator) {
+  navigator.serviceWorker.register('/sw.js')
+    .then(registration => {
+      console.log('ServiceWorker registration successful with scope: ', registration.scope);
+    })
+    .catch(error => {
+      console.log('ServiceWorker registration failed: ', error);
+    });
+}
