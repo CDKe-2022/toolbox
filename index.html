@@ -32,7 +32,15 @@
     .btn-primary{background:var(--green);color:#fff}.btn-primary:hover{background:var(--green-2);transform:translateY(-1px)}
     .btn-ghost{background:transparent;color:var(--ink-soft);border-color:var(--border)}.btn-ghost:hover{background:var(--bg-2);color:var(--ink);border-color:var(--ink-soft)}
     .btn[disabled]{opacity:.6;cursor:not-allowed;transform:none!important;pointer-events:none}
-    .tool-card{background:linear-gradient(135deg,#fff 0%,#fdfcf8 100%);border:1px solid var(--border);border-radius:16px;padding:24px;cursor:pointer;transition:all .4s cubic-bezier(.16,1,.3,1);position:relative;overflow:hidden;height:100%}
+    
+    /* 修复：为 <a> 标签补充基础样式，确保表现与 div 一致且无下划线 */
+    .tool-card{
+      background:linear-gradient(135deg,#fff 0%,#fdfcf8 100%);
+      border:1px solid var(--border);border-radius:16px;padding:24px;
+      cursor:pointer;transition:all .4s cubic-bezier(.16,1,.3,1);
+      position:relative;overflow:hidden;height:100%;
+      text-decoration:none;color:inherit;display:block;
+    }
     .tool-card::before{content:'';position:absolute;top:0;left:0;width:4px;height:100%;background:var(--green);transform:scaleY(0);transform-origin:bottom;transition:transform .5s cubic-bezier(.16,1,.3,1)}
     .tool-card:hover{transform:translateY(-2px);box-shadow:var(--shadow-hover);border-color:var(--green-2)}
     .tool-card:hover::before{transform:scaleY(1);transform-origin:top}
@@ -111,8 +119,6 @@ const Utils = {
       timer = setTimeout(() => fn.apply(this, args), delay);
     };
   },
-
-  /** 数字转人民币大写 — 独立纯函数，已验证万亿级边界 */
   numberToChinese(num) {
     const str = String(num).trim();
     if (!str || isNaN(num)) return '';
@@ -161,7 +167,7 @@ const State = {
   pdf:   { files: [], mode: 'split' },
   home:  { cat: '全部', search: '' }
 };
-let sortableInst = null; // 独立于 State
+let sortableInst = null;
 
 // ═══════════════════════════════════════════
 // 3. WEB COMPONENTS — 仅保留高内聚的 DropZone
@@ -210,9 +216,20 @@ const $header = (title, num) => `<header class="max-w-4xl mx-auto px-6 py-8 flex
 
 const $optGroup = (key, cur) => IMG_OPTS[key].map(o => `<div class="orient-option ${String(cur) === o.v ? 'active' : ''}" data-${key}="${o.v}">${o.l}${o.s ? `<br><span class="text-xs opacity-70">${o.s}</span>` : ''}</div>`).join('');
 
-const $toolCard = (t, i) => `<div class="tool-card" data-href="#/${t.id}"><div class="tool-icon">${t.icon}</div><div class="flex items-center justify-between mb-3"><h3 class="text-xl font-semibold text-[--ink]">${t.name}</h3><span class="tool-num">${String(i + 1).padStart(2, '0')}</span></div><p class="text-sm text-[--ink-soft] leading-relaxed mb-6">${t.desc}</p><div class="flex items-center gap-2 text-xs text-[--green] font-medium"><span>进入工具</span><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 7H11M11 7L7 3M11 7L7 11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div></div>`;
+// 修复：改用原生 <a> 标签，彻底解决点击边缘或内部 SVG 导致事件委托失效的问题
+const $toolCard = (t, i) => `<a href="#/${t.id}" class="tool-card">
+  <div class="tool-icon">${t.icon}</div>
+  <div class="flex items-center justify-between mb-3">
+    <h3 class="text-xl font-semibold text-[--ink]">${t.name}</h3>
+    <span class="tool-num">${String(i + 1).padStart(2, '0')}</span>
+  </div>
+  <p class="text-sm text-[--ink-soft] leading-relaxed mb-6">${t.desc}</p>
+  <div class="flex items-center gap-2 text-xs text-[--green] font-medium">
+    <span>进入工具</span>
+    <svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 7H11M11 7L7 3M11 7L7 11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg>
+  </div>
+</a>`;
 
-/** InfoCard 降级为纯函数，无组件行为 */
 const $infoCard = (title, items) => `<div class="info-card mt-12"><h4 class="text-sm font-semibold text-[--green] mb-3 flex items-center gap-2"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="6" stroke="currentColor" stroke-width="1.3"/><path d="M7 4V7.5M7 9.5V10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>${title}</h4><ul class="text-xs text-[--ink-soft] space-y-1.5 leading-relaxed">${items.map(i => `<li>${i}</li>`).join('')}</ul></div>`;
 
 // ═══════════════════════════════════════════
@@ -265,7 +282,6 @@ function renderImageTool() {
     ${$infoCard('使用说明', ['所有图片处理均在本地完成，不会上传到任何服务器', 'HEIC/HEIF 格式将自动转换为 JPEG', '拖拽排序：长按缩略图拖动调整顺序'])}
   </main>`;
   
-  // Sortable 仅在页面初始化时创建一次，确保 DOM 结构稳定
   const list = app.querySelector('#img-list');
   if (!sortableInst && list) {
     sortableInst = Sortable.create(list, {
@@ -289,7 +305,6 @@ function renderImageList() {
   sec.classList.remove('hidden');
   app.querySelector('#img-count').textContent = `(${files.length} 张)`;
   const list = app.querySelector('#img-list');
-  // 仅更新内容，不重新初始化 Sortable
   list.innerHTML = files.map((f, i) => `<div class="thumb" data-idx="${i}"><img src="${f.url}" alt="${f.name}"><span class="thumb-num">${i + 1}</span><span class="thumb-orient">${f.w > f.h ? '横' : '竖'}</span><button class="thumb-remove" data-rm-img="${i}"><svg width="10" height="10" viewBox="0 0 10 10"><path d="M2 2L8 8M8 2L2 8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></button></div>`).join('');
 }
 
@@ -337,7 +352,6 @@ function doConvert() {
   output.textContent = res === '数字超出支持范围' ? '数字超出支持范围（最大16位整数）' : res;
 }
 
-/** Promise.all 保证上传顺序稳定 */
 async function handleImageFiles(fileList) {
   const valid = Array.from(fileList).filter(f => f.type.startsWith('image/') || f.name.match(/\.(jpg|jpeg|png|webp|bmp|heic|heif)$/i));
   if (!valid.length) return;
@@ -439,8 +453,8 @@ app.addEventListener('click', async e => {
 
   // 导航
   if (closest('[data-action="home"]')) return location.hash = '#/';
-  const card = closest('[data-href]');
-  if (card) return location.hash = card.dataset.href;
+  
+  // ❌ 已移除 data-href 的 JS 模拟跳转，改用原生 <a> 标签处理
 
   // 主页分类
   const cat = closest('[data-cat]');
@@ -513,7 +527,6 @@ app.addEventListener('files-selected', async e => {
     const valid = Array.from(e.detail).filter(f => f.type === 'application/pdf' && f.size <= 52428800);
     if (!valid.length) return Utils.showToast('请选择有效的PDF文件', true);
 
-    // 产品级限制：防止内存峰值崩溃
     if (State.pdf.files.length + valid.length > 20) return Utils.showToast('最多支持合并 20 个 PDF 文件', true);
     const currentSize = State.pdf.files.reduce((acc, f) => acc + f.size, 0);
     const addSize = valid.reduce((acc, f) => acc + f.size, 0);
@@ -542,7 +555,6 @@ const ROUTES = {
 };
 
 function router() {
-  // 清理 sortable 实例避免跨页面泄漏
   if (sortableInst) { sortableInst.destroy(); sortableInst = null; }
   const base = (location.hash.slice(1) || '/').split('?')[0];
   (ROUTES[base] || renderHome)();
@@ -554,4 +566,3 @@ window.addEventListener('DOMContentLoaded', () => { if (!location.hash) location
 </script>
 </body>
 </html>
-
