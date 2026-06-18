@@ -62,8 +62,6 @@
     @keyframes spin{to{transform:rotate(360deg)}}
     .tool-num{display:inline-flex;align-items:center;gap:6px;font-family:'Fraunces',serif;font-size:12px;letter-spacing:.15em;color:var(--muted);text-transform:uppercase}
     .info-card{background:linear-gradient(135deg,var(--green-light) 0%,#ecf2ee 100%);border:1px solid var(--border);border-radius:12px;padding:20px}
-    .cat-tab{padding:8px 16px;border-radius:8px;font-size:14px;font-weight:500;color:var(--ink-soft);background:transparent;border:1px solid var(--border);cursor:pointer;transition:all .2s ease;font-family:inherit}
-    .cat-tab.active{background:var(--green);color:#fff;border-color:var(--green)}
     .hidden{display:none!important}
     .result-container{position:relative}.copy-result-btn{position:absolute;top:1rem;right:1rem;opacity:0;transition:opacity .2s}.result-container:hover .copy-result-btn{opacity:1}
     .stat-box{background:var(--bg-2);border-radius:8px;padding:12px;text-align:center}
@@ -162,16 +160,11 @@ const Utils = {
     const w = Math.round(img.width * (opts.scale / 100)), h = Math.round(img.height * (opts.scale / 100));
     const c = document.createElement('canvas'); c.width = w; c.height = h;
     const ctx = c.getContext('2d'); ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, w, h); ctx.drawImage(img, 0, 0, w, h);
-    if (opts.logoUrl) {
-      const logo = new Image(); logo.src = opts.logoUrl; await new Promise(r => logo.onload = r);
-      const lw = w * 0.2, lh = h * 0.2, lx = (w - lw) / 2, ly = (h - lh) / 2;
-      ctx.fillStyle = '#fff'; ctx.fillRect(lx - 8, ly - 8, lw + 16, lh + 16);
-      ctx.drawImage(logo, lx, ly, lw, lh);
-    }
     return new Promise(r => c.toBlob(r, `image/${opts.format}`, opts.quality));
   },
 
-  generateQR(text, logoUrl) {
+  // 修复：改为 async，确保 Logo 加载完成后再返回
+  async generateQR(text, logoUrl) {
     if (!text) return null;
     let qr;
     try { qr = qrcode(0, logoUrl ? 'H' : 'M'); qr.addData(text, 'Byte'); qr.make(); } 
@@ -185,43 +178,45 @@ const Utils = {
     
     if (logoUrl) {
       const img = new Image(); img.src = logoUrl;
-      img.onload = () => {
-        const lw = size * 0.2, lh = size * 0.2, lx = (size - lw) / 2, ly = (size - lh) / 2;
-        ctx.fillStyle = '#fff'; ctx.fillRect(lx - 8, ly - 8, lw + 16, lh + 16);
-        ctx.drawImage(img, lx, ly, lw, lh);
-      };
+      await img.decode(); // 等待图片解码完成
+      const lw = size * 0.2, lh = size * 0.2, lx = (size - lw) / 2, ly = (size - lh) / 2;
+      ctx.fillStyle = '#fff'; ctx.fillRect(lx - 8, ly - 8, lw + 16, lh + 16);
+      ctx.drawImage(img, lx, ly, lw, lh);
     }
     return { canvas, size, count, cell };
   }
 };
 
 // ═══════════════════════════════════════════
-// 2. STATE & RESET SYSTEM (核心重构)
+// 2. STATE & RESET SYSTEM (SSOT)
 // ═══════════════════════════════════════════
 const INITIAL_STATE = {
+  home:  { search: '' },
   number: { input: '' },
   image: { files: [], mode: 'fit', orient: 'auto', quality: 0.8 },
-  pdf:   { files: [], mode: 'split' },
-  compress: { file: null, url: '', name: '', origSize: 0, quality: 0.8, format: 'jpeg', scale: 100, logoUrl: '', resultBlob: null, resultUrl: '' },
+  pdf:   { 
+    files: [], mode: 'split', 
+    splitMethod: 'pages', splitPages: 1, splitStart: 1, splitEnd: 1 
+  },
+  compress: { file: null, url: '', name: '', origSize: 0, quality: 0.8, format: 'jpeg', scale: 100, resultBlob: null, resultUrl: '' },
   text:  { input: '', mode: 'upper' },
   qr:    { text: '', logoUrl: '' }
 };
 
-const State = JSON.parse(JSON.stringify(INITIAL_STATE));
+const State = structuredClone(INITIAL_STATE);
 let sortableInst = null, compressTaskId = 0;
 
-/** 统一的工具重置函数 */
 function resetTool(key) {
   const oldState = State[key];
-  // 1. 内存清理 (防止 ObjectURL 泄漏)
+  // 内存清理
   if (key === 'image') oldState.files.forEach(f => URL.revokeObjectURL(f.url));
-  if (key === 'compress') ['url', 'resultUrl', 'logoUrl'].forEach(k => { if (oldState[k]) URL.revokeObjectURL(oldState[k]); });
+  if (key === 'compress') ['url', 'resultUrl'].forEach(k => { if (oldState[k]) URL.revokeObjectURL(oldState[k]); });
   if (key === 'qr' && oldState.logoUrl) URL.revokeObjectURL(oldState.logoUrl);
   
-  // 2. 状态重置 (深拷贝初始快照)
-  State[key] = JSON.parse(JSON.stringify(INITIAL_STATE[key]));
+  // 状态重置
+  State[key] = structuredClone(INITIAL_STATE[key]);
   
-  // 3. UI 重新渲染
+  // UI 重新渲染
   const base = (location.hash.slice(1) || '/').split('?')[0];
   (ROUTES[base] || renderHome)();
 }
@@ -253,11 +248,10 @@ const TOOLS = [
   { id: 'number-to-chinese', name: '数字转中文大写', desc: '输入阿拉伯数字，自动转换为人民币大写金额格式。', cat: '财务', icon: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>' },
   { id: 'image-to-pdf', name: '图片转 PDF', desc: '将多张图片合并为单个 PDF 文件，支持排序与压缩。', cat: '图片', icon: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21,15 16,10 5,21"/></svg>' },
   { id: 'pdf-split-merge', name: 'PDF拆分与合并', desc: '轻松拆分PDF文件或合并多个PDF文档，本地处理。', cat: 'PDF', icon: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/></svg>' },
-  { id: 'image-compress', name: '图片压缩', desc: '压缩图片体积，支持格式转换、缩放与添加Logo。', cat: '图片', icon: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>' },
+  { id: 'image-compress', name: '图片压缩', desc: '压缩图片体积，支持格式转换与缩放。', cat: '图片', icon: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>' },
   { id: 'text-case', name: '大小写转换', desc: '一键转换英文大小写，支持句首、词首等5种模式。', cat: '文本', icon: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M4 12h10M4 17h16"/></svg>' },
   { id: 'qrcode-generator', name: '二维码生成', desc: '输入文本或链接生成二维码，支持添加Logo与下载。', cat: '工具', icon: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3h-3zM19 14h2v2h-2zM14 19h2v2h-2zM19 19h2v2h-2z"/></svg>' }
 ];
-const CATS = ['全部', ...new Set(TOOLS.map(t => t.cat))];
 const IMG_OPTS = { mode: [{ v: 'fit', l: '贴合图片', s: '无白边' }, { v: 'a4', l: 'A4 标准页', s: '带白边' }], orient: [{ v: 'auto', l: '自动' }, { v: 'portrait', l: '纵向' }, { v: 'landscape', l: '横向' }], quality: [{ v: '1', l: '原图' }, { v: '0.8', l: '平衡' }, { v: '0.5', l: '极限' }] };
 const CASE_OPTS = [{ v: 'upper', l: '全部大写' }, { v: 'lower', l: '全部小写' }, { v: 'sentence', l: '句首大写' }, { v: 'title', l: '词首大写' }, { v: 'first', l: '仅首字母大写' }];
 const COMPRESS_FMTS = [{ v: 'jpeg', l: 'JPEG' }, { v: 'webp', l: 'WebP' }, { v: 'png', l: 'PNG' }];
@@ -275,9 +269,9 @@ const $infoCard = (title, items) => `<div class="info-card mt-12"><h4 class="tex
 // 6. PAGE RENDERERS (State 驱动 UI)
 // ═══════════════════════════════════════════
 function renderHome() {
-  const { cat, search } = State.home || { cat: '全部', search: '' };
-  const list = TOOLS.filter(t => (cat === '全部' || t.cat === cat) && (!search || t.name.includes(search) || t.desc.includes(search)));
-  app.innerHTML = `<main class="max-w-6xl mx-auto px-6 py-16"><div class="text-center mb-12"><h1 class="text-5xl font-bold mb-4" style="background:linear-gradient(135deg,var(--green) 0%,var(--green-2) 50%,var(--accent) 100%);-webkit-background-clip:text;color:transparent">效率工具集</h1><p class="text-[--ink-soft] text-lg mb-8">简洁、纯粹、专注的本地化工具，解决日常需求。</p><div class="flex gap-8 justify-center text-sm text-[--ink-soft]"><div><span class="font-bold text-[--green] text-xl">${TOOLS.length}</span> 个实用工具</div><div><span class="font-bold text-[--green] text-xl">100%</span> 本地运行</div><div><span class="font-bold text-[--green] text-xl">0</span> 数据上传</div></div></div><div class="flex flex-wrap gap-3 mb-6 justify-center">${CATS.map(c => `<button class="cat-tab ${c === cat ? 'active' : ''}" data-cat="${c}">${c}</button>`).join('')}</div><div class="max-w-md mx-auto mb-12"><input type="text" id="search-input" class="input text-center" placeholder="搜索工具..." value="${search}"></div><div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">${list.length ? list.map($toolCard).join('') : '<div class="col-span-full text-center py-16 text-[--muted]">没有找到匹配的工具</div>'}</div></main>`;
+  const { search } = State.home;
+  const list = TOOLS.filter(t => !search || t.name.toLowerCase().includes(search) || t.desc.toLowerCase().includes(search));
+  app.innerHTML = `<main class="max-w-6xl mx-auto px-6 py-16"><div class="text-center mb-12"><h1 class="text-5xl font-bold mb-4" style="background:linear-gradient(135deg,var(--green) 0%,var(--green-2) 50%,var(--accent) 100%);-webkit-background-clip:text;color:transparent">效率工具集</h1><p class="text-[--ink-soft] text-lg mb-8">简洁、纯粹、专注的本地化工具，解决日常需求。</p><div class="flex gap-8 justify-center text-sm text-[--ink-soft]"><div><span class="font-bold text-[--green] text-xl">${TOOLS.length}</span> 个实用工具</div><div><span class="font-bold text-[--green] text-xl">100%</span> 本地运行</div><div><span class="font-bold text-[--green] text-xl">0</span> 数据上传</div></div></div><div class="max-w-md mx-auto mb-12"><input type="text" id="search-input" class="input text-center" placeholder="搜索工具..." value="${search}"></div><div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">${list.length ? list.map($toolCard).join('') : '<div class="col-span-full text-center py-16 text-[--muted]">没有找到匹配的工具</div>'}</div></main>`;
 }
 
 function renderNumberTool() {
@@ -300,26 +294,21 @@ function renderImageList() {
 }
 
 function renderPdfTool() {
-  const m = State.pdf.mode;
-  app.innerHTML = `${$header('PDF拆分与合并', 'Tool 03')}<main class="max-w-4xl mx-auto px-6 pb-16"><div class="flex gap-4 mb-8 justify-center"><button class="btn ${m === 'split' ? 'btn-primary' : 'btn-ghost'}" data-pdf-mode="split">拆分 PDF</button><button class="btn ${m === 'merge' ? 'btn-primary' : 'btn-ghost'}" data-pdf-mode="merge">合并 PDF</button></div><div id="split-view" class="${m !== 'split' ? 'hidden' : ''}"><drop-zone id="split-drop" text="上传 PDF 文件" hint="支持 .pdf 格式，单个文件最大 50MB" accept=".pdf"></drop-zone><div id="split-preview" class="hidden mt-6 p-4 bg-white rounded-xl border border-[--border] flex items-center justify-between"><div><div class="font-medium text-[--ink]" id="split-fname"></div><div class="text-xs text-[--muted]">共 <span id="split-pcount">0</span> 页</div></div><button class="btn btn-ghost btn-sm" id="split-remove">移除文件</button></div><div id="split-opts" class="hidden mt-6 space-y-4"><div class="flex gap-4 items-center"><label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="split-method" value="pages" checked> 按固定页数</label><input type="number" class="input w-24" id="split-pages" value="1" min="1"></div><div class="flex items-center gap-4"><label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="split-method" value="range"> 按页码范围</label><span>从</span><input type="number" class="input w-20" id="split-start" value="1" min="1"><span>到</span><input type="number" class="input w-20" id="split-end" value="1" min="1"></div></div><div class="mt-8 text-center"><button class="btn btn-primary px-10" id="split-btn">开始拆分</button></div></div><div id="merge-view" class="${m !== 'merge' ? 'hidden' : ''}"><drop-zone id="merge-drop" text="上传多个 PDF 文件" hint="支持 .pdf 格式，最多20个或总计200MB" accept=".pdf" multiple></drop-zone><div id="merge-list" class="hidden mt-6 space-y-3"></div><div class="mt-8 flex gap-4 justify-center"><button class="btn btn-primary px-10" id="merge-btn" ${State.pdf.files.length < 2 ? 'disabled' : ''}>开始合并</button><button class="btn btn-ghost" id="reset-pdf">重置</button></div></div>${$infoCard('使用说明', ['所有PDF处理均在本地完成', '支持按固定页数或自定义页码范围拆分', '支持将多个PDF合并为一个文档'])}</main>`;
+  const S = State.pdf;
+  app.innerHTML = `${$header('PDF拆分与合并', 'Tool 03')}<main class="max-w-4xl mx-auto px-6 pb-16"><div class="flex gap-4 mb-8 justify-center"><button class="btn ${S.mode === 'split' ? 'btn-primary' : 'btn-ghost'}" data-pdf-mode="split">拆分 PDF</button><button class="btn ${S.mode === 'merge' ? 'btn-primary' : 'btn-ghost'}" data-pdf-mode="merge">合并 PDF</button></div><div id="split-view" class="${S.mode !== 'split' ? 'hidden' : ''}"><drop-zone id="split-drop" text="上传 PDF 文件" hint="支持 .pdf 格式，单个文件最大 50MB" accept=".pdf"></drop-zone><div id="split-preview" class="hidden mt-6 p-4 bg-white rounded-xl border border-[--border] flex items-center justify-between"><div><div class="font-medium text-[--ink]" id="split-fname"></div><div class="text-xs text-[--muted]">共 <span id="split-pcount">0</span> 页</div></div><button class="btn btn-ghost btn-sm" id="split-remove">移除文件</button></div><div id="split-opts" class="hidden mt-6 space-y-4"><div class="flex gap-4 items-center"><label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="split-method" value="pages" ${S.splitMethod === 'pages' ? 'checked' : ''}> 按固定页数</label><input type="number" class="input w-24" id="split-pages" value="${S.splitPages}" min="1"></div><div class="flex items-center gap-4"><label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="split-method" value="range" ${S.splitMethod === 'range' ? 'checked' : ''}> 按页码范围</label><span>从</span><input type="number" class="input w-20" id="split-start" value="${S.splitStart}" min="1"><span>到</span><input type="number" class="input w-20" id="split-end" value="${S.splitEnd}" min="1"></div></div><div class="mt-8 text-center"><button class="btn btn-primary px-10" id="split-btn">开始拆分</button></div></div><div id="merge-view" class="${S.mode !== 'merge' ? 'hidden' : ''}"><drop-zone id="merge-drop" text="上传多个 PDF 文件" hint="支持 .pdf 格式，最多20个或总计200MB" accept=".pdf" multiple></drop-zone><div id="merge-list" class="hidden mt-6 space-y-3"></div><div class="mt-8 flex gap-4 justify-center"><button class="btn btn-primary px-10" id="merge-btn" ${S.files.length < 2 ? 'disabled' : ''}>开始合并</button><button class="btn btn-ghost" id="reset-pdf">重置</button></div></div>${$infoCard('使用说明', ['所有PDF处理均在本地完成', '支持按固定页数或自定义页码范围拆分', '支持将多个PDF合并为一个文档'])}</main>`;
 }
 function renderMergeList() {
   const el = app.querySelector('#merge-list'); if (!el) return;
   const files = State.pdf.files; if (!files.length) { el.classList.add('hidden'); return; }
   el.classList.remove('hidden');
   el.innerHTML = files.map((f, i) => `<div class="flex items-center justify-between p-3 bg-white rounded-lg border border-[--border]"><div class="flex items-center gap-3"><div class="w-10 h-10 bg-[--bg-2] rounded flex items-center justify-center text-[--muted] text-xs font-bold">PDF</div><div><div class="font-medium text-[--ink] text-sm">${f.name}</div><div class="text-xs text-[--muted]">${(f.size / 1048576).toFixed(2)} MB</div></div></div><button class="btn btn-ghost btn-sm" data-rm-pdf="${i}">移除</button></div>`).join('');
-  
-  // 交互保护：文件不足2个时禁用合并按钮
   const mergeBtn = app.querySelector('#merge-btn');
-  if (mergeBtn) {
-    if (files.length < 2) mergeBtn.setAttribute('disabled', '');
-    else mergeBtn.removeAttribute('disabled');
-  }
+  if (mergeBtn) files.length < 2 ? mergeBtn.setAttribute('disabled', '') : mergeBtn.removeAttribute('disabled');
 }
 
 function renderCompressTool() {
   const S = State.compress;
-  app.innerHTML = `${$header('图片压缩', 'Tool 04')}<main class="max-w-5xl mx-auto px-6 pb-16"><div class="grid grid-cols-1 lg:grid-cols-2 gap-8"><div><drop-zone id="comp-drop" text="点击或拖拽图片到此处" hint="支持 JPG, PNG, WEBP" accept="image/*"></drop-zone><div id="comp-ctrl" class="hidden mt-6 space-y-6"><div><label class="block text-sm font-medium text-[--ink-soft] mb-3">输出格式</label><div class="flex gap-3">${COMPRESS_FMTS.map(f => `<div class="orient-option ${S.format === f.v ? 'active' : ''}" data-cfmt="${f.v}">${f.l}</div>`).join('')}</div></div><div><label class="block text-sm font-medium text-[--ink-soft] mb-2">质量: <span id="comp-q-val">${Math.round(S.quality * 100)}</span>%</label><input type="range" class="range-slider" id="comp-q" min="10" max="100" value="${S.quality * 100}"></div><div><label class="block text-sm font-medium text-[--ink-soft] mb-2">缩放比例: <span id="comp-s-val">${S.scale}</span>%</label><input type="range" class="range-slider" id="comp-s" min="10" max="100" value="${S.scale}"></div><div><label class="block text-sm font-medium text-[--ink-soft] mb-2">添加中心 Logo (可选)</label><drop-zone id="comp-logo-drop" text="点击上传 Logo" hint="建议透明背景 PNG" accept="image/*" style="padding:24px"></drop-zone></div></div></div><div><div class="grid grid-cols-3 gap-4 mb-6"><div class="stat-box"><div class="val" id="comp-orig-size">-</div><div class="lbl">原始大小</div></div><div class="stat-box"><div class="val text-[--accent]" id="comp-new-size">-</div><div class="lbl">压缩后大小</div></div><div class="stat-box"><div class="val" id="comp-ratio">-</div><div class="lbl">压缩率</div></div></div><div class="bg-white rounded-xl border border-[--border] p-4 flex items-center justify-center min-h-[300px]"><img id="comp-preview" class="max-w-full max-h-[400px] rounded-lg hidden" alt="preview"><span id="comp-placeholder" class="text-[--muted]">上传图片后预览</span></div><div class="flex gap-3 mt-6"><button class="btn btn-primary flex-1" id="comp-dl-btn" disabled>下载压缩图片</button><button class="btn btn-ghost" id="reset-compress">重置</button></div></div></div>${$infoCard('使用说明', ['所有压缩处理均在本地浏览器完成，不上传服务器', 'WebP 格式通常比 JPEG 体积更小，推荐优先使用', '添加 Logo 会自动在中心添加白底以防干扰扫描'])}</main>`;
+  app.innerHTML = `${$header('图片压缩', 'Tool 04')}<main class="max-w-5xl mx-auto px-6 pb-16"><div class="grid grid-cols-1 lg:grid-cols-2 gap-8"><div><drop-zone id="comp-drop" text="点击或拖拽图片到此处" hint="支持 JPG, PNG, WEBP" accept="image/*"></drop-zone><div id="comp-ctrl" class="hidden mt-6 space-y-6"><div><label class="block text-sm font-medium text-[--ink-soft] mb-3">输出格式</label><div class="flex gap-3">${COMPRESS_FMTS.map(f => `<div class="orient-option ${S.format === f.v ? 'active' : ''}" data-cfmt="${f.v}">${f.l}</div>`).join('')}</div></div><div><label class="block text-sm font-medium text-[--ink-soft] mb-2">质量: <span id="comp-q-val">${Math.round(S.quality * 100)}</span>%</label><input type="range" class="range-slider" id="comp-q" min="10" max="100" value="${S.quality * 100}"></div><div><label class="block text-sm font-medium text-[--ink-soft] mb-2">缩放比例: <span id="comp-s-val">${S.scale}</span>%</label><input type="range" class="range-slider" id="comp-s" min="10" max="100" value="${S.scale}"></div></div></div><div><div class="grid grid-cols-3 gap-4 mb-6"><div class="stat-box"><div class="val" id="comp-orig-size">-</div><div class="lbl">原始大小</div></div><div class="stat-box"><div class="val text-[--accent]" id="comp-new-size">-</div><div class="lbl">压缩后大小</div></div><div class="stat-box"><div class="val" id="comp-ratio">-</div><div class="lbl">压缩率</div></div></div><div class="bg-white rounded-xl border border-[--border] p-4 flex items-center justify-center min-h-[300px]"><img id="comp-preview" class="max-w-full max-h-[400px] rounded-lg hidden" alt="preview"><span id="comp-placeholder" class="text-[--muted]">上传图片后预览</span></div><div class="flex gap-3 mt-6"><button class="btn btn-primary flex-1" id="comp-dl-btn" disabled>下载压缩图片</button><button class="btn btn-ghost" id="reset-compress">重置</button></div></div></div>${$infoCard('使用说明', ['所有压缩处理均在本地浏览器完成，不上传服务器', 'WebP 格式通常比 JPEG 体积更小，推荐优先使用'])}</main>`;
 }
 
 function renderTextCaseTool() {
@@ -335,13 +324,13 @@ function renderQrTool() {
 }
 
 // ═══════════════════════════════════════════
-// 7. BUSINESS LOGIC
+// 7. BUSINESS LOGIC (纯 State 驱动)
 // ═══════════════════════════════════════════
 function doConvert() {
   const input = app.querySelector('#num-input'), output = app.querySelector('#num-output'); if (!input || !output) return;
   let val = input.value.replace(/[^\d.-]/g, '').replace(/-/g, (m, o) => o === 0 ? '-' : '').replace(/\./g, (m, o, s) => s.indexOf('.') === o ? '.' : '');
   if (val !== input.value) input.value = val;
-  State.number.input = val; // 同步到 State
+  State.number.input = val;
   if (!val || val === '-' || val === '.') { output.innerHTML = '<span class="text-[--muted] text-base font-sans font-normal">结果将显示在这里</span>'; return; }
   const res = Utils.numberToChinese(val);
   output.textContent = res === '数字超出支持范围' ? '数字超出支持范围（最大16位整数）' : res;
@@ -381,23 +370,34 @@ async function convertToPdf() {
   } catch (e) { Utils.showToast('生成失败: ' + e.message, true); } finally { btn.removeAttribute('disabled'); btn.innerHTML = '生成并下载 PDF'; }
 }
 
+// 纯 State 驱动的 PDF 拆分
 async function splitPdf() {
-  if (!State.pdf.files.length) return; const btn = app.querySelector('#split-btn'); btn.setAttribute('disabled', ''); btn.innerHTML = '<div class="spinner"></div> 处理中...';
+  if (!State.pdf.files.length) return; 
+  const { splitMethod, splitPages, splitStart, splitEnd } = State.pdf;
+  const btn = app.querySelector('#split-btn'); btn.setAttribute('disabled', ''); btn.innerHTML = '<div class="spinner"></div> 处理中...';
   try {
-    const doc = await PDFLib.PDFDocument.load(await State.pdf.files[0].arrayBuffer()), method = app.querySelector('input[name="split-method"]:checked')?.value, total = doc.getPageCount();
-    if (method === 'pages') {
-      const per = parseInt(app.querySelector('#split-pages').value); if (!per || per < 1) return Utils.showToast('请输入有效的页数', true);
-      for (let i = 0; i < total; i += per) { const nd = await PDFLib.PDFDocument.create(); (await nd.copyPages(doc, Array.from({ length: Math.min(per, total - i) }, (_, j) => i + j))).forEach(p => nd.addPage(p)); Utils.downloadBlob(await nd.save(), `split_${Math.floor(i / per) + 1}.pdf`); }
+    const doc = await PDFLib.PDFDocument.load(await State.pdf.files[0].arrayBuffer()), total = doc.getPageCount();
+    if (splitMethod === 'pages') {
+      if (!splitPages || splitPages < 1) return Utils.showToast('请输入有效的页数', true);
+      for (let i = 0; i < total; i += splitPages) { 
+        const nd = await PDFLib.PDFDocument.create(); 
+        (await nd.copyPages(doc, Array.from({ length: Math.min(splitPages, total - i) }, (_, j) => i + j))).forEach(p => nd.addPage(p)); 
+        Utils.downloadBlob(await nd.save(), `split_${Math.floor(i / splitPages) + 1}.pdf`); 
+      }
     } else {
-      const s = parseInt(app.querySelector('#split-start').value) - 1, e = parseInt(app.querySelector('#split-end').value); if (s < 0 || e > total || s >= e) return Utils.showToast('页码范围无效', true);
-      const nd = await PDFLib.PDFDocument.create(); (await nd.copyPages(doc, Array.from({ length: e - s }, (_, j) => s + j))).forEach(p => nd.addPage(p)); Utils.downloadBlob(await nd.save(), 'split_range.pdf');
+      const s = splitStart - 1, e = splitEnd; 
+      if (s < 0 || e > total || s >= e) return Utils.showToast('页码范围无效', true);
+      const nd = await PDFLib.PDFDocument.create(); 
+      (await nd.copyPages(doc, Array.from({ length: e - s }, (_, j) => s + j))).forEach(p => nd.addPage(p)); 
+      Utils.downloadBlob(await nd.save(), 'split_range.pdf');
     }
     Utils.showToast('拆分完成！');
   } catch (e) { Utils.showToast('拆分失败: ' + e.message, true); } finally { btn.removeAttribute('disabled'); btn.innerHTML = '开始拆分'; }
 }
 
 async function mergePdf() {
-  if (State.pdf.files.length < 2) return Utils.showToast('请至少选择2个PDF文件', true); const btn = app.querySelector('#merge-btn'); btn.setAttribute('disabled', ''); btn.innerHTML = '<div class="spinner"></div> 处理中...';
+  if (State.pdf.files.length < 2) return Utils.showToast('请至少选择2个PDF文件', true); 
+  const btn = app.querySelector('#merge-btn'); btn.setAttribute('disabled', ''); btn.innerHTML = '<div class="spinner"></div> 处理中...';
   try {
     const merged = await PDFLib.PDFDocument.create();
     for (const f of State.pdf.files) { const doc = await PDFLib.PDFDocument.load(await f.arrayBuffer()); (await merged.copyPages(doc, doc.getPageIndices())).forEach(p => merged.addPage(p)); }
@@ -405,11 +405,12 @@ async function mergePdf() {
   } catch (e) { Utils.showToast('合并失败: ' + e.message, true); } finally { btn.removeAttribute('disabled'); btn.innerHTML = '开始合并'; }
 }
 
+// 增加竞态保护的压缩逻辑
 async function doCompress() {
   const S = State.compress; if (!S.file) return;
   const taskId = ++compressTaskId;
-  const blob = await Utils.compressImage(S.file, { objectUrl: S.url, quality: S.quality, format: S.format, scale: S.scale, logoUrl: S.logoUrl });
-  if (taskId !== compressTaskId) return;
+  const blob = await Utils.compressImage(S.file, { objectUrl: S.url, quality: S.quality, format: S.format, scale: S.scale });
+  if (taskId !== compressTaskId) return; // 任务已过期，丢弃结果
   if (S.resultUrl) URL.revokeObjectURL(S.resultUrl);
   S.resultBlob = blob; S.resultUrl = URL.createObjectURL(blob);
   
@@ -425,26 +426,19 @@ const debouncedCompress = Utils.debounce(doCompress, 300);
 
 function doTextCase() {
   const input = app.querySelector('#tc-input'), output = app.querySelector('#tc-output'); if (!input || !output) return;
-  State.text.input = input.value; // 同步到 State
+  State.text.input = input.value;
   output.value = Utils.convertCase(input.value, State.text.mode);
   const chars = input.value.length, words = input.value.trim() ? input.value.trim().split(/\s+/).length : 0, lines = input.value ? input.value.split('\n').length : 0;
   const cEl = app.querySelector('#tc-chars'), wEl = app.querySelector('#tc-words'), lEl = app.querySelector('#tc-lines');
   if (cEl) cEl.textContent = chars; if (wEl) wEl.textContent = words; if (lEl) lEl.textContent = lines;
 }
 
-function doGenerateQR() {
+async function doGenerateQR() {
   const S = State.qr, box = app.querySelector('#qr-preview-box'); if (!box) return;
   if (!S.text) { box.innerHTML = '<span id="qr-placeholder" class="text-[--muted]">输入内容后生成二维码</span>'; return; }
-  const res = Utils.generateQR(S.text, S.logoUrl);
+  const res = await Utils.generateQR(S.text, S.logoUrl); // 等待异步完成
   if (res.error) { box.innerHTML = `<span class="text-[--accent]">${res.error}</span>`; return; }
   box.innerHTML = ''; box.appendChild(res.canvas);
-  if (S.logoUrl) {
-    const img = new Image(); img.src = S.logoUrl;
-    img.onload = () => {
-      const ctx = res.canvas.getContext('2d'), size = res.size, lw = size * 0.2, lh = size * 0.2, lx = (size - lw) / 2, ly = (size - lh) / 2;
-      ctx.fillStyle = '#fff'; ctx.fillRect(lx - 8, ly - 8, lw + 16, lh + 16); ctx.drawImage(img, lx, ly, lw, lh);
-    };
-  }
 }
 function getQRSvg() {
   const S = State.qr, res = Utils.generateQR(S.text, ''); if (!res || res.error) return null;
@@ -459,13 +453,10 @@ function getQRSvg() {
 app.addEventListener('click', async e => {
   const t = e.target, closest = sel => t.closest(sel);
   if (closest('[data-action="home"]')) return location.hash = '#/';
-  const cat = closest('[data-cat]'); if (cat) { State.home.cat = cat.dataset.cat; return renderHome(); }
-
-  // 统一重置逻辑 (核心优化)
+  
+  // 统一重置逻辑
   const resetMap = { 'reset-number': 'number', 'reset-image': 'image', 'reset-pdf': 'pdf', 'reset-compress': 'compress', 'reset-text': 'text', 'reset-qr': 'qr' };
-  for (const [id, key] of Object.entries(resetMap)) {
-    if (closest(`#${id}`)) return resetTool(key);
-  }
+  for (const [id, key] of Object.entries(resetMap)) { if (closest(`#${id}`)) return resetTool(key); }
 
   // Tool 01
   if (closest('#copy-input-btn')) { const v = State.number.input; if (!v) return Utils.showToast('输入为空', true); Utils.copy(v).then(() => Utils.showToast('已复制输入')); return; }
@@ -525,6 +516,12 @@ app.addEventListener('input', e => {
   if (id === 'qr-input') { State.qr.text = e.target.value; return Utils.debounce(doGenerateQR, 300)(); }
   if (id === 'comp-q') { State.compress.quality = e.target.value / 100; app.querySelector('#comp-q-val').textContent = e.target.value; return debouncedCompress(); }
   if (id === 'comp-s') { State.compress.scale = parseInt(e.target.value); app.querySelector('#comp-s-val').textContent = e.target.value; return debouncedCompress(); }
+  
+  // PDF State 同步 (SSOT)
+  if (id === 'split-pages') State.pdf.splitPages = parseInt(e.target.value);
+  if (id === 'split-start') State.pdf.splitStart = parseInt(e.target.value);
+  if (id === 'split-end') State.pdf.splitEnd = parseInt(e.target.value);
+  if (e.target.name === 'split-method') State.pdf.splitMethod = e.target.value;
 });
 
 app.addEventListener('files-selected', async e => {
@@ -546,17 +543,12 @@ app.addEventListener('files-selected', async e => {
     const file = e.detail[0]; if (!file || !file.type.startsWith('image/')) return Utils.showToast('请选择有效的图片', true);
     if (State.compress.url) URL.revokeObjectURL(State.compress.url); if (State.compress.resultUrl) URL.revokeObjectURL(State.compress.resultUrl);
     const url = URL.createObjectURL(file);
-    Object.assign(State.compress, { file, url, name: file.name, origSize: file.size, quality: 0.8, format: 'jpeg', scale: 100, logoUrl: '', resultBlob: null, resultUrl: '' });
+    Object.assign(State.compress, { file, url, name: file.name, origSize: file.size, quality: 0.8, format: 'jpeg', scale: 100, resultBlob: null, resultUrl: '' });
     app.querySelector('#comp-ctrl')?.classList.remove('hidden'); app.querySelector('#comp-orig-size').textContent = Utils.formatSize(file.size);
     app.querySelector('#comp-new-size').textContent = '计算中...'; app.querySelector('#comp-ratio').textContent = '-';
     const preview = app.querySelector('#comp-preview'), placeholder = app.querySelector('#comp-placeholder');
     if (preview) { preview.src = url; preview.classList.remove('hidden'); placeholder?.classList.add('hidden'); }
     return doCompress();
-  }
-  if (zone.id === 'comp-logo-drop') {
-    const file = e.detail[0]; if (!file || !file.type.startsWith('image/')) return Utils.showToast('请选择有效的图片', true);
-    if (State.compress.logoUrl) URL.revokeObjectURL(State.compress.logoUrl);
-    State.compress.logoUrl = URL.createObjectURL(file); return doCompress();
   }
   if (zone.id === 'qr-logo-drop') {
     const file = e.detail[0]; if (!file || !file.type.startsWith('image/')) return Utils.showToast('请选择有效的图片', true);
@@ -565,20 +557,20 @@ app.addEventListener('files-selected', async e => {
   }
 });
 
-// 兜底清理
 window.addEventListener('beforeunload', () => {
   State.image.files.forEach(f => URL.revokeObjectURL(f.url));
-  ['url', 'resultUrl', 'logoUrl'].forEach(k => { if (State.compress[k]) URL.revokeObjectURL(State.compress[k]); });
+  ['url', 'resultUrl'].forEach(k => { if (State.compress[k]) URL.revokeObjectURL(State.compress[k]); });
   if (State.qr.logoUrl) URL.revokeObjectURL(State.qr.logoUrl);
 });
 
 // ═══════════════════════════════════════════
-// 9. ROUTER
+// 9. ROUTER (智能销毁 Sortable)
 // ═══════════════════════════════════════════
 const ROUTES = { '/': renderHome, '/number-to-chinese': renderNumberTool, '/image-to-pdf': renderImageTool, '/pdf-split-merge': renderPdfTool, '/image-compress': renderCompressTool, '/text-case': renderTextCaseTool, '/qrcode-generator': renderQrTool };
 function router() {
-  if (sortableInst) { sortableInst.destroy(); sortableInst = null; }
   const base = (location.hash.slice(1) || '/').split('?')[0];
+  // 只有在离开图片工具页时才销毁 Sortable
+  if (base !== '/image-to-pdf' && sortableInst) { sortableInst.destroy(); sortableInst = null; }
   (ROUTES[base] || renderHome)(); window.scrollTo(0, 0);
 }
 window.addEventListener('hashchange', router);
