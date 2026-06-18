@@ -1,10 +1,6 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-  <!-- ↓ 新增这两行，彻底告别缓存烦恼 ↓ -->
-  <meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-  <meta http-equiv="Pragma" content="no-cache">
-  <meta http-equiv="Expires" content="0">
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>工具集 · 效率工具箱</title>
@@ -70,8 +66,6 @@
     .cat-tab.active{background:var(--green);color:#fff;border-color:var(--green)}
     .hidden{display:none!important}
     .result-container{position:relative}.copy-result-btn{position:absolute;top:1rem;right:1rem;opacity:0;transition:opacity .2s}.result-container:hover .copy-result-btn{opacity:1}
-    
-    /* 新增工具专属样式 */
     .stat-box{background:var(--bg-2);border-radius:8px;padding:12px;text-align:center}
     .stat-box .val{font-size:20px;font-weight:700;color:var(--green)}
     .stat-box .lbl{font-size:12px;color:var(--muted);margin-top:4px}
@@ -114,9 +108,7 @@ const Utils = {
     return new Promise((res, rej) => {
       canvas.toBlob(blob => {
         if (!blob) return rej('Canvas to Blob failed');
-        try {
-          navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]).then(res).catch(rej);
-        } catch (e) { rej(e); }
+        try { navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]).then(res).catch(rej); } catch (e) { rej(e); }
       }, 'image/png');
     });
   },
@@ -193,7 +185,6 @@ const Utils = {
     
     if (logoUrl) {
       const img = new Image(); img.src = logoUrl;
-      // 同步绘制 logo 需要预先加载，这里简化处理：返回 canvas 后异步绘制
       img.onload = () => {
         const lw = size * 0.2, lh = size * 0.2, lx = (size - lw) / 2, ly = (size - lh) / 2;
         ctx.fillStyle = '#fff'; ctx.fillRect(lx - 8, ly - 8, lw + 16, lh + 16);
@@ -302,85 +293,20 @@ function renderMergeList() {
   el.innerHTML = files.map((f, i) => `<div class="flex items-center justify-between p-3 bg-white rounded-lg border border-[--border]"><div class="flex items-center gap-3"><div class="w-10 h-10 bg-[--bg-2] rounded flex items-center justify-center text-[--muted] text-xs font-bold">PDF</div><div><div class="font-medium text-[--ink] text-sm">${f.name}</div><div class="text-xs text-[--muted]">${(f.size / 1048576).toFixed(2)} MB</div></div></div><button class="btn btn-ghost btn-sm" data-rm-pdf="${i}">移除</button></div>`).join('');
 }
 
-// --- Tool 04: Image Compress ---
 function renderCompressTool() {
   const S = State.compress;
-  app.innerHTML = `${$header('图片压缩', 'Tool 04')}<main class="max-w-5xl mx-auto px-6 pb-16">
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-      <div>
-        <drop-zone id="comp-drop" text="点击或拖拽图片到此处" hint="支持 JPG, PNG, WEBP" accept="image/*"></drop-zone>
-        <div id="comp-ctrl" class="hidden mt-6 space-y-6">
-          <div><label class="block text-sm font-medium text-[--ink-soft] mb-3">输出格式</label><div class="flex gap-3">${COMPRESS_FMTS.map(f => `<div class="orient-option ${S.format === f.v ? 'active' : ''}" data-cfmt="${f.v}">${f.l}</div>`).join('')}</div></div>
-          <div><label class="block text-sm font-medium text-[--ink-soft] mb-2">质量: <span id="comp-q-val">${Math.round(S.quality * 100)}</span>%</label><input type="range" class="range-slider" id="comp-q" min="10" max="100" value="${S.quality * 100}"></div>
-          <div><label class="block text-sm font-medium text-[--ink-soft] mb-2">缩放比例: <span id="comp-s-val">${S.scale}</span>%</label><input type="range" class="range-slider" id="comp-s" min="10" max="100" value="${S.scale}"></div>
-          <div><label class="block text-sm font-medium text-[--ink-soft] mb-2">添加中心 Logo (可选)</label><drop-zone id="comp-logo-drop" text="点击上传 Logo" hint="建议透明背景 PNG" accept="image/*" style="padding:24px"></drop-zone></div>
-        </div>
-      </div>
-      <div>
-        <div class="grid grid-cols-3 gap-4 mb-6">
-          <div class="stat-box"><div class="val" id="comp-orig-size">-</div><div class="lbl">原始大小</div></div>
-          <div class="stat-box"><div class="val text-[--accent]" id="comp-new-size">-</div><div class="lbl">压缩后大小</div></div>
-          <div class="stat-box"><div class="val" id="comp-ratio">-</div><div class="lbl">压缩率</div></div>
-        </div>
-        <div class="bg-white rounded-xl border border-[--border] p-4 flex items-center justify-center min-h-[300px]">
-          <img id="comp-preview" class="max-w-full max-h-[400px] rounded-lg hidden" alt="preview">
-          <span id="comp-placeholder" class="text-[--muted]">上传图片后预览</span>
-        </div>
-        <div class="flex gap-3 mt-6">
-          <button class="btn btn-primary flex-1" id="comp-dl-btn" disabled>下载压缩图片</button>
-          <button class="btn btn-ghost" id="comp-reset-btn">重置</button>
-        </div>
-      </div>
-    </div>
-    ${$infoCard('使用说明', ['所有压缩处理均在本地浏览器完成，不上传服务器', 'WebP 格式通常比 JPEG 体积更小，推荐优先使用', '添加 Logo 会自动在中心添加白底以防干扰扫描'])}
-  </main>`;
+  app.innerHTML = `${$header('图片压缩', 'Tool 04')}<main class="max-w-5xl mx-auto px-6 pb-16"><div class="grid grid-cols-1 lg:grid-cols-2 gap-8"><div><drop-zone id="comp-drop" text="点击或拖拽图片到此处" hint="支持 JPG, PNG, WEBP" accept="image/*"></drop-zone><div id="comp-ctrl" class="hidden mt-6 space-y-6"><div><label class="block text-sm font-medium text-[--ink-soft] mb-3">输出格式</label><div class="flex gap-3">${COMPRESS_FMTS.map(f => `<div class="orient-option ${S.format === f.v ? 'active' : ''}" data-cfmt="${f.v}">${f.l}</div>`).join('')}</div></div><div><label class="block text-sm font-medium text-[--ink-soft] mb-2">质量: <span id="comp-q-val">${Math.round(S.quality * 100)}</span>%</label><input type="range" class="range-slider" id="comp-q" min="10" max="100" value="${S.quality * 100}"></div><div><label class="block text-sm font-medium text-[--ink-soft] mb-2">缩放比例: <span id="comp-s-val">${S.scale}</span>%</label><input type="range" class="range-slider" id="comp-s" min="10" max="100" value="${S.scale}"></div><div><label class="block text-sm font-medium text-[--ink-soft] mb-2">添加中心 Logo (可选)</label><drop-zone id="comp-logo-drop" text="点击上传 Logo" hint="建议透明背景 PNG" accept="image/*" style="padding:24px"></drop-zone></div></div></div><div><div class="grid grid-cols-3 gap-4 mb-6"><div class="stat-box"><div class="val" id="comp-orig-size">-</div><div class="lbl">原始大小</div></div><div class="stat-box"><div class="val text-[--accent]" id="comp-new-size">-</div><div class="lbl">压缩后大小</div></div><div class="stat-box"><div class="val" id="comp-ratio">-</div><div class="lbl">压缩率</div></div></div><div class="bg-white rounded-xl border border-[--border] p-4 flex items-center justify-center min-h-[300px]"><img id="comp-preview" class="max-w-full max-h-[400px] rounded-lg hidden" alt="preview"><span id="comp-placeholder" class="text-[--muted]">上传图片后预览</span></div><div class="flex gap-3 mt-6"><button class="btn btn-primary flex-1" id="comp-dl-btn" disabled>下载压缩图片</button><button class="btn btn-ghost" id="comp-reset-btn">重置</button></div></div></div>${$infoCard('使用说明', ['所有压缩处理均在本地浏览器完成，不上传服务器', 'WebP 格式通常比 JPEG 体积更小，推荐优先使用', '添加 Logo 会自动在中心添加白底以防干扰扫描'])}</main>`;
 }
 
-// --- Tool 05: Text Case ---
 function renderTextCaseTool() {
   const S = State.text;
-  app.innerHTML = `${$header('大小写转换', 'Tool 05')}<main class="max-w-5xl mx-auto px-6 pb-16">
-    <div class="flex flex-wrap gap-3 mb-6 justify-center">${CASE_OPTS.map(o => `<button class="btn ${S.mode === o.v ? 'btn-primary' : 'btn-ghost'}" data-case-mode="${o.v}">${o.l}</button>`).join('')}</div>
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      <div><label class="block text-sm font-medium text-[--ink-soft] mb-2">输入文本</label><textarea id="tc-input" class="textarea" placeholder="在此输入或粘贴文本...">${S.input}</textarea></div>
-      <div><label class="block text-sm font-medium text-[--ink-soft] mb-2">转换结果</label><textarea id="tc-output" class="textarea bg-[--green-light] text-[--green]" readonly></textarea></div>
-    </div>
-    <div class="flex gap-3 mt-6 justify-center">
-      <button class="btn btn-primary" id="tc-copy-btn">复制结果</button>
-      <button class="btn btn-ghost" id="tc-clear-btn">清空</button>
-    </div>
-    <div class="grid grid-cols-3 gap-4 mt-8 max-w-md mx-auto">
-      <div class="stat-box"><div class="val" id="tc-chars">0</div><div class="lbl">字符数</div></div>
-      <div class="stat-box"><div class="val" id="tc-words">0</div><div class="lbl">单词数</div></div>
-      <div class="stat-box"><div class="val" id="tc-lines">0</div><div class="lbl">行数</div></div>
-    </div>
-    ${$infoCard('使用说明', ['全部大写/小写：转换所有英文字母', '句首大写：每句话的第一个字母大写（支持中英文标点）', '词首大写：每个单词的首字母大写', '仅首字母大写：整个文本的第一个字母大写，其余小写'])}
-  </main>`;
+  app.innerHTML = `${$header('大小写转换', 'Tool 05')}<main class="max-w-5xl mx-auto px-6 pb-16"><div class="flex flex-wrap gap-3 mb-6 justify-center">${CASE_OPTS.map(o => `<button class="btn ${S.mode === o.v ? 'btn-primary' : 'btn-ghost'}" data-case-mode="${o.v}">${o.l}</button>`).join('')}</div><div class="grid grid-cols-1 lg:grid-cols-2 gap-6"><div><label class="block text-sm font-medium text-[--ink-soft] mb-2">输入文本</label><textarea id="tc-input" class="textarea" placeholder="在此输入或粘贴文本...">${S.input}</textarea></div><div><label class="block text-sm font-medium text-[--ink-soft] mb-2">转换结果</label><textarea id="tc-output" class="textarea bg-[--green-light] text-[--green]" readonly></textarea></div></div><div class="flex gap-3 mt-6 justify-center"><button class="btn btn-primary" id="tc-copy-btn">复制结果</button><button class="btn btn-ghost" id="tc-clear-btn">清空</button></div><div class="grid grid-cols-3 gap-4 mt-8 max-w-md mx-auto"><div class="stat-box"><div class="val" id="tc-chars">0</div><div class="lbl">字符数</div></div><div class="stat-box"><div class="val" id="tc-words">0</div><div class="lbl">单词数</div></div><div class="stat-box"><div class="val" id="tc-lines">0</div><div class="lbl">行数</div></div></div>${$infoCard('使用说明', ['全部大写/小写：转换所有英文字母', '句首大写：每句话的第一个字母大写（支持中英文标点）', '词首大写：每个单词的首字母大写', '仅首字母大写：整个文本的第一个字母大写，其余小写'])}</main>`;
   doTextCase();
 }
 
-// --- Tool 06: QR Code ---
 function renderQrTool() {
   const S = State.qr;
-  app.innerHTML = `${$header('二维码生成', 'Tool 06')}<main class="max-w-5xl mx-auto px-6 pb-16">
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-      <div class="space-y-6">
-        <div><label class="block text-sm font-medium text-[--ink-soft] mb-2">输入文本或链接</label><textarea id="qr-input" class="textarea" placeholder="输入网址、文本或名片信息...">${S.text}</textarea></div>
-        <div><label class="block text-sm font-medium text-[--ink-soft] mb-2">添加中心 Logo (可选)</label><drop-zone id="qr-logo-drop" text="点击上传 Logo" hint="建议透明背景 PNG" accept="image/*" style="padding:24px"></drop-zone></div>
-        <div class="flex gap-3">
-          <button class="btn btn-primary flex-1" id="qr-dl-png">下载 PNG</button>
-          <button class="btn btn-ghost flex-1" id="qr-dl-svg">下载 SVG</button>
-          <button class="btn btn-ghost" id="qr-copy-img" title="复制图片">复制</button>
-        </div>
-      </div>
-      <div>
-        <div class="qr-preview" id="qr-preview-box">
-          <span id="qr-placeholder" class="text-[--muted]">输入内容后生成二维码</span>
-        </div>
-      </div>
-    </div>
-    ${$infoCard('使用说明', ['支持任意文本、网址、WiFi 密码等生成二维码', '添加 Logo 会自动启用最高容错率 (H级)，确保可扫描', '支持下载高清 PNG 或无限放大不失真的 SVG 矢量图', '可一键复制二维码图片到剪贴板，方便分享'])}
-  </main>`;
+  app.innerHTML = `${$header('二维码生成', 'Tool 06')}<main class="max-w-5xl mx-auto px-6 pb-16"><div class="grid grid-cols-1 lg:grid-cols-2 gap-8"><div class="space-y-6"><div><label class="block text-sm font-medium text-[--ink-soft] mb-2">输入文本或链接</label><textarea id="qr-input" class="textarea" placeholder="输入网址、文本或名片信息...">${S.text}</textarea></div><div><label class="block text-sm font-medium text-[--ink-soft] mb-2">添加中心 Logo (可选)</label><drop-zone id="qr-logo-drop" text="点击上传 Logo" hint="建议透明背景 PNG" accept="image/*" style="padding:24px"></drop-zone></div><div class="flex gap-3"><button class="btn btn-primary flex-1" id="qr-dl-png">下载 PNG</button><button class="btn btn-ghost flex-1" id="qr-dl-svg">下载 SVG</button><button class="btn btn-ghost" id="qr-copy-img" title="复制图片">复制</button></div></div><div><div class="qr-preview" id="qr-preview-box"><span id="qr-placeholder" class="text-[--muted]">输入内容后生成二维码</span></div></div></div>${$infoCard('使用说明', ['支持任意文本、网址、WiFi 密码等生成二维码', '添加 Logo 会自动启用最高容错率 (H级)，确保可扫描', '支持下载高清 PNG 或无限放大不失真的 SVG 矢量图', '可一键复制二维码图片到剪贴板，方便分享'])}</main>`;
   doGenerateQR();
 }
 
@@ -454,12 +380,11 @@ async function mergePdf() {
   } catch (e) { Utils.showToast('合并失败: ' + e.message, true); } finally { btn.removeAttribute('disabled'); btn.innerHTML = '开始合并'; }
 }
 
-// Tool 04 Logic
 async function doCompress() {
   const S = State.compress; if (!S.file) return;
   const taskId = ++compressTaskId;
   const blob = await Utils.compressImage(S.file, { objectUrl: S.url, quality: S.quality, format: S.format, scale: S.scale, logoUrl: S.logoUrl });
-  if (taskId !== compressTaskId) return; // 丢弃过期任务
+  if (taskId !== compressTaskId) return;
   if (S.resultUrl) URL.revokeObjectURL(S.resultUrl);
   S.resultBlob = blob; S.resultUrl = URL.createObjectURL(blob);
   
@@ -473,7 +398,6 @@ async function doCompress() {
 }
 const debouncedCompress = Utils.debounce(doCompress, 300);
 
-// Tool 05 Logic
 function doTextCase() {
   const input = app.querySelector('#tc-input'), output = app.querySelector('#tc-output'); if (!input || !output) return;
   State.text.input = input.value;
@@ -483,14 +407,13 @@ function doTextCase() {
   if (cEl) cEl.textContent = chars; if (wEl) wEl.textContent = words; if (lEl) lEl.textContent = lines;
 }
 
-// Tool 06 Logic
 function doGenerateQR() {
   const S = State.qr, box = app.querySelector('#qr-preview-box'); if (!box) return;
   if (!S.text) { box.innerHTML = '<span id="qr-placeholder" class="text-[--muted]">输入内容后生成二维码</span>'; return; }
   const res = Utils.generateQR(S.text, S.logoUrl);
   if (res.error) { box.innerHTML = `<span class="text-[--accent]">${res.error}</span>`; return; }
   box.innerHTML = ''; box.appendChild(res.canvas);
-  if (S.logoUrl) { // 异步绘制 logo
+  if (S.logoUrl) {
     const img = new Image(); img.src = S.logoUrl;
     img.onload = () => {
       const ctx = res.canvas.getContext('2d'), size = res.size, lw = size * 0.2, lh = size * 0.2, lx = (size - lw) / 2, ly = (size - lh) / 2;
@@ -513,18 +436,15 @@ app.addEventListener('click', async e => {
   if (closest('[data-action="home"]')) return location.hash = '#/';
   const cat = closest('[data-cat]'); if (cat) { State.home.cat = cat.dataset.cat; return renderHome(); }
 
-  // Tool 01
   if (closest('#clear-btn')) { const inp = app.querySelector('#num-input'); inp.value = ''; doConvert(); inp.focus(); return; }
   if (closest('#copy-input-btn')) { const v = app.querySelector('#num-input').value; if (!v) return Utils.showToast('输入为空', true); Utils.copy(v).then(() => Utils.showToast('已复制输入')); return; }
   if (closest('#copy-output-btn')) { const v = app.querySelector('#num-output').textContent; if (!v || v.includes('显示在这里')) return Utils.showToast('结果为空', true); Utils.copy(v).then(() => Utils.showToast('已复制结果')); return; }
 
-  // Tool 02
   for (const key of ['mode', 'orient', 'quality']) { const opt = closest(`[data-${key}]`); if (opt && app.querySelector('#convert-img-btn')) { app.querySelectorAll(`[data-${key}]`).forEach(o => o.classList.remove('active')); opt.classList.add('active'); State.image[key] = key === 'quality' ? parseFloat(opt.dataset[key]) : opt.dataset[key]; return; } }
   const rmImg = closest('[data-rm-img]'); if (rmImg) { const i = +rmImg.dataset.rmImg; URL.revokeObjectURL(State.image.files[i].url); State.image.files.splice(i, 1); return renderImageList(); }
   if (closest('#clear-img-btn')) { State.image.files.forEach(f => URL.revokeObjectURL(f.url)); State.image.files = []; return renderImageList(); }
   if (closest('#convert-img-btn')) return convertToPdf();
 
-  // Tool 03
   const pm = closest('[data-pdf-mode]'); if (pm) { State.pdf.mode = pm.dataset.pdfMode; return renderPdfTool(); }
   if (closest('#split-remove')) { State.pdf.files = []; app.querySelector('#split-preview')?.classList.add('hidden'); app.querySelector('#split-opts')?.classList.add('hidden'); return; }
   if (closest('#split-btn')) return splitPdf();
@@ -532,34 +452,58 @@ app.addEventListener('click', async e => {
   if (closest('#merge-clear')) { State.pdf.files = []; return renderMergeList(); }
   if (closest('#merge-btn')) return mergePdf();
 
-  // Tool 04
   const cfmt = closest('[data-cfmt]'); if (cfmt && app.querySelector('#comp-ctrl')) { app.querySelectorAll('[data-cfmt]').forEach(o => o.classList.remove('active')); cfmt.classList.add('active'); State.compress.format = cfmt.dataset.cfmt; return debouncedCompress(); }
   if (closest('#comp-dl-btn')) { if (State.compress.resultUrl) Utils.downloadDataURL(State.compress.resultUrl, `compressed_${Date.now()}.${State.compress.format}`); return; }
   if (closest('#comp-reset-btn')) { if (State.compress.url) URL.revokeObjectURL(State.compress.url); if (State.compress.resultUrl) URL.revokeObjectURL(State.compress.resultUrl); Object.assign(State.compress, { file: null, url: '', name: '', origSize: 0, quality: 0.8, format: 'jpeg', scale: 100, logoUrl: '', resultBlob: null, resultUrl: '' }); return renderCompressTool(); }
 
-  // Tool 05
   const cm = closest('[data-case-mode]'); if (cm && app.querySelector('#tc-input')) { State.text.mode = cm.dataset.caseMode; app.querySelectorAll('[data-case-mode]').forEach(b => b.className = `btn ${b.dataset.caseMode === State.text.mode ? 'btn-primary' : 'btn-ghost'}`); return doTextCase(); }
   if (closest('#tc-copy-btn')) { const v = app.querySelector('#tc-output').value; if (!v) return Utils.showToast('结果为空', true); Utils.copy(v).then(() => Utils.showToast('已复制结果')); return; }
   if (closest('#tc-clear-btn')) { State.text.input = ''; app.querySelector('#tc-input').value = ''; return doTextCase(); }
 
-  // Tool 06
   if (closest('#qr-dl-png')) { const canvas = app.querySelector('#qr-preview-box canvas'); if (canvas) Utils.downloadDataURL(canvas.toDataURL('image/png'), `qrcode_${Date.now()}.png`); else Utils.showToast('请先生成二维码', true); return; }
   if (closest('#qr-dl-svg')) { const svg = getQRSvg(); if (svg) Utils.downloadBlob(svg, `qrcode_${Date.now()}.svg`, 'image/svg+xml'); else Utils.showToast('请先生成二维码', true); return; }
   if (closest('#qr-copy-img')) { const canvas = app.querySelector('#qr-preview-box canvas'); if (!canvas) return Utils.showToast('请先生成二维码', true); Utils.copyImage(canvas).then(() => Utils.showToast('图片已复制到剪贴板')).catch(() => Utils.showToast('复制失败，请尝试下载', true)); return; }
 });
 
-app.addEventListener('input', e => {
-  if (e.target.id === 'search-input') { State.home.search = Utils.debounce(() => { renderHome(); app.querySelector('#search-input')?.focus(); }, 150)(); return; } // 简化防抖
-  if (e.target.id === 'num-input') return doConvert();
-  if (e.target.id === 'tc-input') return doTextCase();
-  if (e.target.id === 'qr-input') { State.qr.text = e.target.value; return Utils.debounce(doGenerateQR, 300)(); }
-  if (e.target.id === 'comp-q') { State.compress.quality = e.target.value / 100; app.querySelector('#comp-q-val').textContent = e.target.value; return debouncedCompress(); }
-  if (e.target.id === 'comp-s') { State.compress.scale = parseInt(e.target.value); app.querySelector('#comp-s-val').textContent = e.target.value; return debouncedCompress(); }
+// ═══════════════════════════════════════════
+// 8b. INPUT & IME (完美解决中文输入法冲突)
+// ═══════════════════════════════════════════
+let isComposing = false;
+
+// 监听输入法开始与结束
+app.addEventListener('compositionstart', () => { isComposing = true; });
+app.addEventListener('compositionend', (e) => { 
+  isComposing = false; 
+  // 拼音上屏后，立即触发对应的处理逻辑
+  const id = e.target.id;
+  if (id === 'search-input') handleSearch(e.target.value);
+  else if (id === 'num-input') doConvert();
+  else if (id === 'tc-input') doTextCase();
+  else if (id === 'qr-input') { State.qr.text = e.target.value; doGenerateQR(); }
 });
 
-// 修复 search 防抖
-const handleSearch = Utils.debounce((val) => { State.home.search = val.toLowerCase(); renderHome(); app.querySelector('#search-input')?.focus(); }, 150);
-app.addEventListener('input', e => { if (e.target.id === 'search-input') return handleSearch(e.target.value); }); // 覆盖上面的简写
+const handleSearch = Utils.debounce((val) => { 
+  State.home.search = val.toLowerCase(); 
+  renderHome(); 
+  // 重新渲染后恢复焦点，并将光标定位到末尾
+  const input = app.querySelector('#search-input');
+  if (input) {
+    input.focus();
+    input.setSelectionRange(input.value.length, input.value.length);
+  }
+}, 150);
+
+app.addEventListener('input', e => {
+  if (isComposing) return; // 核心：输入法组合期间，拦截所有 input 事件，防止 DOM 重建打断输入
+  
+  const id = e.target.id;
+  if (id === 'search-input') return handleSearch(e.target.value);
+  if (id === 'num-input') return doConvert();
+  if (id === 'tc-input') return doTextCase();
+  if (id === 'qr-input') { State.qr.text = e.target.value; return Utils.debounce(doGenerateQR, 300)(); }
+  if (id === 'comp-q') { State.compress.quality = e.target.value / 100; app.querySelector('#comp-q-val').textContent = e.target.value; return debouncedCompress(); }
+  if (id === 'comp-s') { State.compress.scale = parseInt(e.target.value); app.querySelector('#comp-s-val').textContent = e.target.value; return debouncedCompress(); }
+});
 
 app.addEventListener('files-selected', async e => {
   const zone = e.target;
