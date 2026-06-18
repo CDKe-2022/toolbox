@@ -4,11 +4,19 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>数字转中文大写 · 工具集</title>
+    
+    <!-- 1. 引入 Tailwind CSS (解决布局失效问题) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- 2. 引入你的自定义样式和字体 -->
     <link rel="stylesheet" href="../common.css">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+    
+    <!-- 3. 引入 Web Components -->
     <script src="../components.js" defer></script>
+    
     <style>
         /* 页面专属微调 */
         .example-item {
@@ -114,7 +122,7 @@
             <!-- 常用示例 -->
             <div class="info-card">
                 <h4 class="text-sm font-semibold text-[--green] mb-4 flex items-center gap-2">
-                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
                     常用示例
                 </h4>
                 <div class="space-y-2">
