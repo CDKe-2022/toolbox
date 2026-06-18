@@ -1,242 +1,165 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>数字转中文大写 · 工具集</title>
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,300;9..144,400;9..144,600;9..144,700;9..144,900&family=Noto+Sans+SC:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-<script src="https://cdn.tailwindcss.com"></script>
-<link rel="stylesheet" href="../assets/css/common.css">
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>数字转中文大写 · 工具集</title>
+    <link rel="stylesheet" href="../common.css">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400&family=Noto+Sans+SC:wght@400;500;700&display=swap" rel="stylesheet">
+    <script src="../components.js" defer></script>
+    <style>
+        /* 页面专属微调 */
+        .example-item {
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 10px 12px; background: white; border-radius: 8px;
+            border: 1px solid var(--border); margin-bottom: 8px;
+            cursor: pointer; transition: all 0.2s;
+        }
+        .example-item:hover { border-color: var(--green); background: var(--green-light); }
+        .example-item:last-child { margin-bottom: 0; }
+    </style>
 </head>
-<body class="page-enter bg-gradient-to-br from-gray-50 to-gray-100 min-h-screen">
+<body>
 
-<div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12 relative z-10">
-  <!-- 头部导航优化 -->
-  <header class="flex items-center justify-between mb-8 md:mb-12">
-    <div class="flex items-center gap-4">
-      <tool-button variant="ghost" onclick="goHome()" class="shrink-0">
-        <svg width="18" height="18" viewBox="0 0 16 16" fill="none">
-          <path d="M10 4L6 8L10 12" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
-        </svg>
-        返回主页
-      </tool-button>
-      <div class="h-6 w-px bg-[--border] hidden sm:block"></div>
-      <div class="hidden sm:flex items-center gap-2 text-sm text-[--muted]">
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-          <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
-        </svg>
-        <span>数字转中文大写</span>
-      </div>
-    </div>
-    <span class="tool-num bg-[--green]/10 text-[--green] px-3 py-1 rounded-full">Tool 01</span>
-  </header>
-  
-  <div class="main-layout">
-    <!-- 主要内容区 -->
-    <div class="space-y-8">
-      <!-- 标题区域 -->
-      <div class="mb-8">
-        <div class="deco-line mb-6"></div>
-        <h2 class="font-display text-4xl sm:text-5xl md:text-6xl font-bold text-[--green] mb-4 leading-tight">数字转中文大写</h2>
-        <p class="text-[--ink-soft] text-lg font-light max-w-2xl">输入阿拉伯数字，自动转换为人民币大写金额格式。</p>
-      </div>
-      
-      <!-- 输入区域 -->
-      <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 md:p-8">
-        <label class="block text-sm font-medium text-[--ink-soft] mb-4">输入数字</label>
-        <div class="relative mb-6">
-          <input type="text" id="num-input" class="input font-display text-2xl md:text-3xl w-full py-4 px-5 pr-16" placeholder="例如 1234.56" inputmode="decimal">
-          <div class="absolute right-4 top-1/2 -translate-y-1/2 text-[--muted] font-mono text-sm">
-            ¥
-          </div>
-        </div>
-      </div>
-      
-      <!-- 输出区域 -->
-      <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 md:p-8">
-        <label class="block text-sm font-medium text-[--ink-soft] mb-4">中文大写</label>
-        <div id="num-output" class="result-box w-full min-h-[120px] p-5">
-          <span class="text-[--muted] text-base font-sans font-normal">结果将显示在这里</span>
-        </div>
-      </div>
-      
-      <!-- 底部操作按钮 -->
-      <div class="flex flex-wrap gap-3 pt-2">
-        <tool-button id="copy-input-btn" variant="primary">
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-            <rect x="4" y="4" width="8" height="8" rx="1.5" stroke="currentColor" stroke-width="1.3"/>
-            <path d="M3 9V3C3 2.45 3.45 2 4 2H9" stroke="currentColor" stroke-width="1.3"/>
-          </svg>
-          复制输入
-        </tool-button>
-        
-        <tool-button id="copy-output-btn" variant="accent" size="sm">
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-            <rect x="4" y="4" width="8" height="8" rx="1.5" stroke="currentColor" stroke-width="1.3"/>
-            <path d="M3 9V3C3 2.45 3.45 2 4 2H9" stroke="currentColor" stroke-width="1.3"/>
-          </svg>
-          复制结果
-        </tool-button>
-        
-        <tool-button id="clear-all-btn" variant="ghost">
-          <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
-            <path d="M3 3L11 11M11 3L3 11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/>
-          </svg>
-          清空全部
-        </tool-button>
-      </div>
-    </div>
+<div class="min-h-screen p-8 max-w-7xl mx-auto page-enter">
     
-    <!-- 侧边栏 -->
-    <div class="space-y-6 mt-8 lg:mt-0">
-      <!-- 使用说明 -->
-      <div class="bg-white rounded-2xl shadow-sm border border-gray-100 p-6 sticky top-8">
-        <h3 class="font-display text-lg font-semibold text-[--ink] mb-4 flex items-center gap-2">
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
-            <circle cx="12" cy="12" r="10"></circle>
-            <line x1="12" y1="16" x2="12" y2="12"></line>
-            <line x1="12" y1="8" x2="12.01" y2="8"></line>
-          </svg>
-          使用说明
-        </h3>
-        <ul class="space-y-3 text-sm text-[--ink-soft]">
-          <li class="flex gap-3">
-            <span class="text-[--green] mt-0.5">•</span>
-            <span>支持整数、小数（最多两位，对应角分）、负数</span>
-          </li>
-          <li class="flex gap-3">
-            <span class="text-[--green] mt-0.5">•</span>
-            <span>转换为标准人民币大写金额格式，如"壹仟贰佰叁拾肆元伍角陆分"</span>
-          </li>
-          <li class="flex gap-3">
-            <span class="text-[--green] mt-0.5">•</span>
-            <span>可一键复制原始输入或转换后的结果</span>
-          </li>
-          <li class="flex gap-3">
-            <span class="text-[--green] mt-0.5">•</span>
-            <span>所有计算在本地完成，不会发送任何数据</span>
-          </li>
-          <li class="flex gap-3">
-            <span class="text-[--green] mt-0.5">•</span>
-            <span>支持 URL 参数自动计算：<code class="bg-gray-100 px-1 py-0.5 rounded text-xs">?v=12345.67</code></span>
-          </li>
-        </ul>
-        
-        <!-- 简化示例卡片 -->
-        <div class="mt-6 p-4 bg-blue-50 rounded-xl border border-blue-100">
-          <h4 class="font-medium text-[--ink] mb-3 text-sm">常用示例</h4>
-          <div class="space-y-2 text-sm text-blue-800">
-            <div class="flex justify-between">
-              <span>12.34</span>
-              <span class="text-blue-600">壹拾贰元叁角肆分</span>
-            </div>
-            <div class="flex justify-between">
-              <span>10000</span>
-              <span class="text-blue-600">壹万元整</span>
-            </div>
-            <div class="flex justify-between">
-              <span>0.05</span>
-              <span class="text-blue-600">伍分</span>
-            </div>
-          </div>
+    <!-- 顶部导航 -->
+    <header class="flex items-center justify-between mb-12">
+        <div class="flex items-center gap-4">
+            <a href="../index.html" class="btn btn-ghost btn-sm">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M15 18l-6-6 6-6"/></svg>
+                返回主页
+            </a>
+            <div class="h-4 w-px bg-[--border]"></div>
+            <span class="text-sm text-[--muted] flex items-center gap-2">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>
+                数字转中文大写
+            </span>
         </div>
+        <span class="tool-num">Tool 01</span>
+    </header>
+
+    <!-- 主布局：左侧内容 + 右侧侧边栏 -->
+    <div class="main-layout">
         
-        <!-- 键盘快捷键 -->
-        <div class="mt-6 p-4 bg-gray-50 rounded-xl border border-gray-100">
-          <h4 class="font-medium text-[--ink] mb-3 text-sm">键盘快捷键</h4>
-          <div class="space-y-2 text-xs text-[--muted]">
-            <div class="flex justify-between">
-              <span><kbd class="bg-white px-2 py-1 rounded border">Enter</kbd></span>
-              <span>复制结果</span>
+        <!-- 左侧：核心操作区 -->
+        <main class="space-y-8">
+            
+            <!-- 标题区 -->
+            <div class="mb-8">
+                <div class="deco-line mb-6"></div>
+                <h1 class="text-5xl font-bold text-[--ink] mb-4 font-display tracking-tight">
+                    数字转中文大写
+                </h1>
+                <p class="text-lg text-[--ink-soft]">输入阿拉伯数字，自动转换为人民币大写金额格式。</p>
             </div>
-            <div class="flex justify-between">
-              <span><kbd class="bg-white px-2 py-1 rounded border">Esc</kbd></span>
-              <span>清空输入</span>
+
+            <!-- 输入模块 -->
+            <div class="bg-[--card] rounded-2xl p-8 shadow-[--shadow] border border-[--border]">
+                <label class="block text-sm font-medium text-[--ink-soft] mb-3">输入数字</label>
+                <div class="relative">
+                    <!-- 必须保留 id="num-input" 以兼容 JS -->
+                    <input type="text" id="num-input" class="input text-3xl font-display py-6 pl-6 pr-12" placeholder="例如 1234.56" autocomplete="off" spellcheck="false">
+                    <span class="absolute right-6 top-1/2 -translate-y-1/2 text-2xl text-[--muted] font-display">¥</span>
+                </div>
             </div>
-            <div class="flex justify-between">
-              <span><kbd class="bg-white px-2 py-1 rounded border">Ctrl/Cmd + C</kbd></span>
-              <span>复制输入</span>
+
+            <!-- 结果模块 (利用 CSS 实现 hover 显示复制按钮) -->
+            <div class="bg-[--card] rounded-2xl p-8 shadow-[--shadow] border border-[--border]">
+                <label class="block text-sm font-medium text-[--ink-soft] mb-3">中文大写</label>
+                
+                <div class="result-container">
+                    <!-- 必须保留 id="num-output" 以兼容 JS -->
+                    <div id="num-output" class="result-box text-3xl min-h-[120px]">
+                        <span class="text-[--muted] text-xl font-sans font-normal">结果将显示在这里</span>
+                    </div>
+                    <!-- 悬浮复制按钮 (CSS 控制默认隐藏，hover 显示) -->
+                    <button id="copy-output-btn" class="copy-result-btn btn btn-primary btn-sm shadow-lg">
+                        <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"/><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"/></svg>
+                        复制结果
+                    </button>
+                </div>
             </div>
-          </div>
-        </div>
-      </div>
+
+            <!-- 底部操作栏 -->
+            <div class="flex items-center gap-4 pt-2">
+                <!-- 必须保留对应的 id 以兼容 JS -->
+                <tool-button id="copy-input-btn" variant="ghost">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"/><rect x="8" y="2" width="8" height="4" rx="1" ry="1"/></svg>
+                    复制输入
+                </tool-button>
+                
+                <tool-button id="clear-all-btn" variant="ghost" style="color: var(--accent); border-color: rgba(194, 65, 12, 0.2);">
+                    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+                    清空全部
+                </tool-button>
+            </div>
+
+        </main>
+
+        <!-- 右侧：侧边栏信息 -->
+        <aside class="space-y-6">
+            
+            <!-- 使用说明 (使用 Web Component) -->
+            <info-card title="使用说明">
+                <li>支持整数、小数（最多两位，对应角分）、负数</li>
+                <li>转换为标准人民币大写金额格式，如"壹仟贰佰叁拾肆元伍角陆分"</li>
+                <li>可一键复制原始输入或转换后的结果</li>
+                <li>所有计算在本地完成，不会发送任何数据</li>
+                <li>支持 URL 参数自动计算：<code class="bg-white px-1.5 py-0.5 rounded text-[--accent] text-[11px]">?v=12345.67</code></li>
+            </info-card>
+
+            <!-- 常用示例 -->
+            <div class="info-card">
+                <h4 class="text-sm font-semibold text-[--green] mb-4 flex items-center gap-2">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg>
+                    常用示例
+                </h4>
+                <div class="space-y-2">
+                    <div class="example-item" onclick="document.getElementById('num-input').value='12.34'; document.getElementById('num-input').dispatchEvent(new Event('input'))">
+                        <span class="font-display text-[--ink] font-medium text-lg">12.34</span>
+                        <span class="text-xs text-[--green] font-medium">壹拾贰元叁角肆分</span>
+                    </div>
+                    <div class="example-item" onclick="document.getElementById('num-input').value='10000'; document.getElementById('num-input').dispatchEvent(new Event('input'))">
+                        <span class="font-display text-[--ink] font-medium text-lg">10000</span>
+                        <span class="text-xs text-[--green] font-medium">壹万元整</span>
+                    </div>
+                    <div class="example-item" onclick="document.getElementById('num-input').value='0.05'; document.getElementById('num-input').dispatchEvent(new Event('input'))">
+                        <span class="font-display text-[--ink] font-medium text-lg">0.05</span>
+                        <span class="text-xs text-[--green] font-medium">伍分</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- 键盘快捷键 -->
+            <div class="info-card">
+                <h4 class="text-sm font-semibold text-[--green] mb-4 flex items-center gap-2">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="2" y="4" width="20" height="16" rx="2" ry="2"/><path d="M6 8h.01M10 8h.01M14 8h.01M18 8h.01M8 12h.01M12 12h.01M16 12h.01M7 16h10"/></svg>
+                    键盘快捷键
+                </h4>
+                <div class="space-y-3">
+                    <div class="flex justify-between items-center text-xs text-[--ink-soft]">
+                        <span>复制结果</span>
+                        <div class="keypad-hint" style="margin:0">
+                            <button style="cursor:default">Enter</button>
+                        </div>
+                    </div>
+                    <div class="flex justify-between items-center text-xs text-[--ink-soft]">
+                        <span>清空输入</span>
+                        <div class="keypad-hint" style="margin:0">
+                            <button style="cursor:default">Esc</button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </aside>
     </div>
-  </div>
 </div>
 
-<script src="../assets/js/common.js"></script>
-<script src="../assets/js/components.js"></script>
-<script src="../assets/js/number-to-chinese.js"></script>
-<script>
-  // 添加键盘快捷键支持
-  document.addEventListener('DOMContentLoaded', function() {
-    const input = document.getElementById('num-input');
-    const output = document.getElementById('num-output');
-    
-    if (input) {
-      // 输入框实时转换
-      input.addEventListener('input', function() {
-        const value = this.value.trim();
-        if (value) {
-          // 这里应该调用转换函数，假设 numberToChinese 是转换函数
-          const chinese = numberToChinese(value);
-          output.textContent = chinese;
-        } else {
-          output.textContent = '结果将显示在这里';
-        }
-      });
-      
-      input.addEventListener('keydown', function(e) {
-        // Enter键复制结果
-        if (e.key === 'Enter') {
-          e.preventDefault();
-          const copyBtn = document.getElementById('copy-output-btn');
-          if (copyBtn) copyBtn.click();
-        }
-        
-        // Esc键清空输入
-        if (e.key === 'Escape') {
-          e.preventDefault();
-          const clearBtn = document.getElementById('clear-all-btn');
-          if (clearBtn) clearBtn.click();
-        }
-      });
-      
-      // 自动聚焦到输入框
-      input.focus();
-    }
-    
-    // 复制输入按钮
-    document.getElementById('copy-input-btn')?.addEventListener('click', function() {
-      const input = document.getElementById('num-input');
-      if (input && input.value) {
-        navigator.clipboard.writeText(input.value).then(() => {
-          showToast('已复制输入内容');
-        });
-      }
-    });
-    
-    // 复制结果按钮
-    document.getElementById('copy-output-btn')?.addEventListener('click', function() {
-      const output = document.getElementById('num-output');
-      if (output && output.textContent !== '结果将显示在这里') {
-        navigator.clipboard.writeText(output.textContent).then(() => {
-          showToast('已复制结果内容');
-        });
-      }
-    });
-    
-    // 清空全部按钮
-    document.getElementById('clear-all-btn')?.addEventListener('click', function() {
-      const input = document.getElementById('num-input');
-      const output = document.getElementById('num-output');
-      if (input) input.value = '';
-      if (output) output.textContent = '结果将显示在这里';
-      showToast('已清空所有内容');
-    });
-  });
-</script>
+<script src="number-to-chinese.js"></script>
 </body>
 </html>
+
