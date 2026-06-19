@@ -12,70 +12,158 @@
   <script src="https://unpkg.com/heic2any@0.0.4/dist/heic2any.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&family=Noto+Serif+SC:wght@600;700&family=Fraunces:wght@400;600&display=swap" rel="stylesheet">
   <style>
     :root {
       --bg: #faf8f3; --bg-2: #f0ebe0; --ink: #1a2e2a; --ink-soft: #4a5a55; --muted: #8b9690;
-      --accent: #c2410c; --border: #e8e2d5; --green: #1a3a32; --green-2: #2d5247; --green-light: #f0f4f2;
-      --shadow: 0 1px 2px rgba(26,46,42,.04), 0 8px 24px rgba(26,46,42,.06);
-      --shadow-hover: 0 4px 12px rgba(26,46,42,.08), 0 20px 48px rgba(26,46,42,.12);
+      --accent: #c2410c; --accent-soft: #fde4d4; --border: #e8e2d5; --green: #1a3a32; --green-2: #2d5247; --green-light: #f0f4f2;
+      --shadow-sm: 0 1px 2px rgba(26,46,42,.04), 0 4px 12px rgba(26,46,42,.06);
+      --shadow-md: 0 4px 12px rgba(26,46,42,.08), 0 12px 32px rgba(26,46,42,.1);
+      --shadow-lg: 0 8px 24px rgba(26,46,42,.1), 0 24px 56px rgba(26,46,42,.15);
+      --transition: all .3s cubic-bezier(.4,0,.2,1);
     }
-    *{box-sizing:border-box} html,body{margin:0;padding:0}
-    body{font-family:'Noto Sans SC',system-ui,sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;-webkit-font-smoothing:antialiased}
-    drop-zone{display:block}
-    .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:10px 20px;border-radius:10px;font-size:14px;font-weight:500;cursor:pointer;border:1px solid transparent;transition:all .2s ease;font-family:inherit;white-space:nowrap;line-height:1.5}
-    .btn-sm{padding:6px 12px;font-size:12px}
-    .btn-primary{background:var(--green);color:#fff}.btn-primary:hover{background:var(--green-2);transform:translateY(-1px)}
-    .btn-ghost{background:transparent;color:var(--ink-soft);border-color:var(--border)}.btn-ghost:hover{background:var(--bg-2);color:var(--ink);border-color:var(--ink-soft)}
+    *{box-sizing:border-box} 
+    html,body{margin:0;padding:0}
+    body{font-family:'Noto Sans SC',system-ui,sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+    
+    /* 滚动条美化 */
+    ::-webkit-scrollbar{width:8px;height:8px}
+    ::-webkit-scrollbar-track{background:var(--bg-2)}
+    ::-webkit-scrollbar-thumb{background:var(--muted);border-radius:4px}
+    ::-webkit-scrollbar-thumb:hover{background:var(--ink-soft)}
+    
+    /* 按钮系统 */
+    .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:10px 20px;border-radius:12px;font-size:14px;font-weight:500;cursor:pointer;border:1px solid transparent;transition:var(--transition);font-family:inherit;white-space:nowrap;line-height:1.5;position:relative;overflow:hidden}
+    .btn::after{content:'';position:absolute;top:50%;left:50%;width:0;height:0;border-radius:50%;background:rgba(255,255,255,.2);transform:translate(-50%,-50%);transition:width .6s,height .6s}
+    .btn:active::after{width:300px;height:300px}
+    .btn-sm{padding:6px 12px;font-size:12px;border-radius:8px}
+    .btn-primary{background:var(--green);color:#fff;box-shadow:var(--shadow-sm)}
+    .btn-primary:hover{background:var(--green-2);transform:translateY(-2px);box-shadow:var(--shadow-md)}
+    .btn-ghost{background:transparent;color:var(--ink-soft);border-color:var(--border)}
+    .btn-ghost:hover{background:var(--bg-2);color:var(--ink);border-color:var(--ink-soft);transform:translateY(-1px)}
     .btn[disabled]{opacity:.6;cursor:not-allowed;transform:none!important;pointer-events:none}
-    .tool-card{background:#fff;border:1px solid var(--border);border-radius:16px;padding:24px;cursor:pointer;transition:all .3s ease;height:100%;text-decoration:none;color:inherit;display:block}
-    .tool-card:hover{transform:translateY(-4px);box-shadow:var(--shadow-hover);border-color:var(--green-2)}
-    .tool-icon{width:56px;height:56px;background:var(--green-light);border-radius:14px;display:flex;align-items:center;justify-content:center;color:var(--green);margin-bottom:24px;transition:all .3s ease}
-    .tool-card:hover .tool-icon{background:var(--green);color:#fff;transform:scale(1.05)}
-    .input,.textarea{width:100%;padding:16px 20px;border:1px solid var(--border);border-radius:12px;background:#fff;font-family:inherit;font-size:16px;color:var(--ink);transition:all .2s ease}
+    
+    /* 卡片系统 */
+    .tool-card{background:#fff;border:1px solid var(--border);border-radius:20px;padding:28px;cursor:pointer;transition:var(--transition);height:100%;text-decoration:none;color:inherit;display:block;position:relative;overflow:hidden}
+    .tool-card::before{content:'';position:absolute;top:0;left:0;width:100%;height:4px;background:linear-gradient(90deg,var(--green),var(--green-2));transform:scaleX(0);transform-origin:left;transition:transform .4s ease}
+    .tool-card:hover{transform:translateY(-6px);box-shadow:var(--shadow-lg);border-color:var(--green-2)}
+    .tool-card:hover::before{transform:scaleX(1)}
+    .tool-icon{width:56px;height:56px;background:var(--green-light);border-radius:16px;display:flex;align-items:center;justify-content:center;color:var(--green);margin-bottom:24px;transition:var(--transition)}
+    .tool-card:hover .tool-icon{background:var(--green);color:#fff;transform:scale(1.08) rotate(-5deg)}
+    
+    /* 输入系统 */
+    .input,.textarea{width:100%;padding:16px 20px;border:1px solid var(--border);border-radius:12px;background:#fff;font-family:inherit;font-size:16px;color:var(--ink);transition:var(--transition)}
     .textarea{min-height:200px;resize:vertical;line-height:1.6}
     .input:focus,.textarea:focus{outline:none;border-color:var(--green);box-shadow:0 0 0 4px rgba(26,58,50,.08)}
-    .result-box{background:var(--green-light);border:1px solid var(--border);border-radius:12px;padding:24px;min-height:96px;font-family:'Noto Serif SC',serif;font-size:24px;color:var(--green);font-weight:600;line-height:1.6;word-break:break-all;display:flex;align-items:center}
-    .drop-zone{border:2px dashed var(--border);border-radius:16px;padding:56px 32px;text-align:center;background:#fff;transition:all .3s ease;cursor:pointer}
+    
+    /* 结果展示 */
+    .result-box{background:var(--green-light);border:1px solid var(--border);border-radius:12px;padding:24px;min-height:96px;font-family:'Noto Serif SC',serif;font-size:24px;color:var(--green);font-weight:600;line-height:1.6;word-break:break-all;display:flex;align-items:center;transition:var(--transition)}
+    
+    /* 拖拽区域 */
+    .drop-zone{border:2px dashed var(--border);border-radius:20px;padding:56px 32px;text-align:center;background:#fff;transition:var(--transition);cursor:pointer;position:relative;overflow:hidden}
+    .drop-zone::before{content:'';position:absolute;top:0;left:0;width:100%;height:100%;background:radial-gradient(circle at center,rgba(26,58,50,.03) 0%,transparent 70%);opacity:0;transition:opacity .3s ease}
     .drop-zone.dragover{border-color:var(--green);background:var(--green-light);transform:scale(1.01)}
+    .drop-zone.dragover::before{opacity:1}
     .drop-zone:hover{border-color:var(--ink-soft);background:var(--bg-2)}
-    .thumb{position:relative;width:100%;aspect-ratio:1;background:var(--bg-2);border-radius:10px;overflow:hidden;border:1px solid var(--border);transition:transform .2s ease;cursor:grab}
-    .thumb:hover{transform:translateY(-2px);box-shadow:0 4px 12px rgba(0,0,0,.1)}
+    
+    /* 缩略图 */
+    .thumb{position:relative;width:100%;aspect-ratio:1;background:var(--bg-2);border-radius:12px;overflow:hidden;border:1px solid var(--border);transition:var(--transition);cursor:grab}
+    .thumb:hover{transform:translateY(-3px);box-shadow:var(--shadow-md)}
     .thumb img{width:100%;height:100%;object-fit:cover;pointer-events:none}
-    .thumb-remove{position:absolute;top:6px;right:6px;width:22px;height:22px;background:rgba(0,0,0,.65);color:#fff;border:none;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .2s}
+    .thumb-remove{position:absolute;top:6px;right:6px;width:24px;height:24px;background:rgba(0,0,0,.65);color:#fff;border:none;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .2s}
     .thumb:hover .thumb-remove{opacity:1}
     .thumb-orient{position:absolute;bottom:6px;left:6px;background:rgba(0,0,0,.65);color:#fff;font-size:10px;padding:2px 6px;border-radius:4px}
     .thumb-num{position:absolute;top:6px;left:6px;background:var(--green);color:#fff;font-size:10px;padding:2px 6px;border-radius:4px;font-weight:600}
     .thumb.dragging{opacity:.4}
-    .orient-option{flex:1;padding:16px 12px;border:1px solid var(--border);border-radius:12px;background:#fff;cursor:pointer;text-align:center;transition:all .2s ease;font-size:14px;color:var(--ink-soft)}
+    
+    /* 选项卡片 */
+    .orient-option{flex:1;padding:16px 12px;border:1px solid var(--border);border-radius:12px;background:#fff;cursor:pointer;text-align:center;transition:var(--transition);font-size:14px;color:var(--ink-soft)}
+    .orient-option:hover{border-color:var(--ink-soft);transform:translateY(-2px)}
     .orient-option.active{background:var(--green);color:#fff;border-color:var(--green);box-shadow:0 4px 12px rgba(26,50,50,.2)}
-    .toast{position:fixed;top:24px;left:50%;transform:translateX(-50%) translateY(-100px);background:var(--green);color:#fff;padding:12px 24px;border-radius:10px;font-size:14px;box-shadow:var(--shadow-hover);z-index:1000;transition:transform .4s cubic-bezier(.16,1,.3,1);display:flex;align-items:center;gap:8px;font-weight:500}
-    .toast.show{transform:translateX(-50%) translateY(0)}.toast.error{background:var(--accent)}
+    
+    /* 提示框 */
+    .toast{position:fixed;top:24px;left:50%;transform:translateX(-50%) translateY(-100px);background:var(--green);color:#fff;padding:14px 28px;border-radius:12px;font-size:14px;box-shadow:var(--shadow-lg);z-index:1000;transition:transform .4s cubic-bezier(.16,1,.3,1);display:flex;align-items:center;gap:8px;font-weight:500}
+    .toast.show{transform:translateX(-50%) translateY(0)}
+    .toast.error{background:var(--accent)}
+    
+    /* 加载动画 */
     .spinner{width:16px;height:16px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite;display:inline-block}
     @keyframes spin{to{transform:rotate(360deg)}}
+    
+    /* 工具编号 */
     .tool-num{display:inline-flex;align-items:center;gap:6px;font-family:'Fraunces',serif;font-size:12px;letter-spacing:.15em;color:var(--muted);text-transform:uppercase}
-    .info-card{background:var(--green-light);border:1px solid var(--border);border-radius:12px;padding:20px}
+    
+    /* 信息卡片 */
+    .info-card{background:var(--green-light);border:1px solid var(--border);border-radius:16px;padding:24px;transition:var(--transition)}
+    .info-card:hover{box-shadow:var(--shadow-sm)}
+    
+    /* 隐藏类 */
     .hidden{display:none!important}
-    .result-container{position:relative}.copy-result-btn{position:absolute;top:1rem;right:1rem;opacity:0;transition:opacity .2s}.result-container:hover .copy-result-btn{opacity:1}
-    .stat-box{background:var(--bg-2);border-radius:8px;padding:12px;text-align:center}
-    .stat-box .val{font-size:20px;font-weight:700;color:var(--green)}
+    
+    /* 结果容器 */
+    .result-container{position:relative}
+    .copy-result-btn{position:absolute;top:1rem;right:1rem;opacity:0;transition:opacity .2s}
+    .result-container:hover .copy-result-btn{opacity:1}
+    
+    /* 统计盒子 */
+    .stat-box{background:var(--bg-2);border-radius:12px;padding:16px;text-align:center;transition:var(--transition)}
+    .stat-box:hover{transform:translateY(-2px);box-shadow:var(--shadow-sm)}
+    .stat-box .val{font-size:24px;font-weight:700;color:var(--green)}
     .stat-box .lbl{font-size:12px;color:var(--muted);margin-top:4px}
+    
+    /* 滑块 */
     .range-slider{-webkit-appearance:none;width:100%;height:6px;border-radius:3px;background:var(--border);outline:none}
-    .range-slider::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:var(--green);cursor:pointer;border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.2)}
-    .qr-preview{background:#fff;padding:24px;border-radius:16px;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;min-height:300px}
+    .range-slider::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;border-radius:50%;background:var(--green);cursor:pointer;border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.2);transition:transform .2s}
+    .range-slider::-webkit-slider-thumb:hover{transform:scale(1.2)}
+    
+    /* 二维码预览 */
+    .qr-preview{background:#fff;padding:24px;border-radius:20px;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;min-height:300px;transition:var(--transition)}
+    .qr-preview:hover{box-shadow:var(--shadow-sm)}
     .qr-preview canvas,.qr-preview img{max-width:100%;max-height:400px;image-rendering:pixelated}
-    .format-card{cursor:pointer;border:2px solid transparent;transition:all .2s}
+    
+    /* 格式卡片 */
+    .format-card{cursor:pointer;border:2px solid transparent;transition:var(--transition);border-radius:12px}
+    .format-card:hover{transform:translateY(-2px);box-shadow:var(--shadow-sm)}
     .format-card.active{border-color:var(--green);background:var(--green-light)}
+    
+    /* 模拟结果 */
     .mock-result{font-family:monospace;font-size:14px;line-height:1.8;white-space:pre-wrap;background:var(--bg-2);padding:20px;border-radius:12px;min-height:300px;max-height:500px;overflow-y:auto;border:1px solid var(--border)}
-    .date-result-card{background:var(--green-light);border:1px solid var(--border);border-radius:16px;padding:32px;text-align:center}
+    
+    /* 日期结果卡片 */
+    .date-result-card{background:var(--green-light);border:1px solid var(--border);border-radius:20px;padding:32px;text-align:center;transition:var(--transition)}
+    .date-result-card:hover{box-shadow:var(--shadow-md)}
     .date-result-card .big-num{font-size:48px;font-weight:800;color:var(--green);line-height:1}
     .date-result-card .big-lbl{font-size:14px;color:var(--ink-soft);margin-top:8px}
+    
+    /* 页面过渡动画 */
+    .page-enter{animation:pageEnter .4s ease forwards}
+    @keyframes pageEnter{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+    
+    /* 响应式调整 */
+    @media (max-width: 768px) {
+      .tool-card{padding:20px}
+      .tool-icon{width:48px;height:48px;margin-bottom:16px}
+      .btn{padding:8px 16px;font-size:13px}
+      .input,.textarea{padding:12px 16px;font-size:14px}
+      .result-box{font-size:20px;padding:16px}
+      .drop-zone{padding:32px 16px}
+    }
+    
+    /* 无障碍焦点样式 */
+    :focus-visible{outline:2px solid var(--green);outline-offset:2px}
+    
+    /* 背景装饰 */
+    .bg-decoration{position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;pointer-events:none;overflow:hidden}
+    .bg-decoration::before{content:'';position:absolute;top:-20%;right:-10%;width:50%;height:50%;background:radial-gradient(circle,rgba(26,58,50,.05) 0%,transparent 70%);border-radius:50%}
+    .bg-decoration::after{content:'';position:absolute;bottom:-20%;left:-10%;width:50%;height:50%;background:radial-gradient(circle,rgba(194,65,12,.03) 0%,transparent 70%);border-radius:50%}
   </style>
 </head>
 <body>
+<div class="bg-decoration"></div>
 <div id="app" class="relative z-10"></div>
 <script>
 // ═══════════════════════════════════════════
-// 1. UTILS & ICONS
+// 1. 工具函数与图标系统
 // ═══════════════════════════════════════════
 const Icons = {
   tool1: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>',
@@ -101,7 +189,7 @@ const Utils = {
     this._toastEl.classList.toggle('error', isError);
     this._toastEl.classList.add('show');
     clearTimeout(this._toastTimer);
-    this._toastTimer = setTimeout(() => this._toastEl.classList.remove('show'), 2200);
+    this._toastTimer = setTimeout(() => this._toastEl.classList.remove('show'), 2500);
   },
   copy(text) {
     if (navigator.clipboard && window.isSecureContext) return navigator.clipboard.writeText(text);
@@ -171,7 +259,7 @@ const Utils = {
 };
 
 // ═══════════════════════════════════════════
-// 2. STORES
+// 2. 状态管理
 // ═══════════════════════════════════════════
 const createStore = (initial) => {
   let state = structuredClone(initial);
@@ -186,8 +274,6 @@ const pdfStore = createStore({ mode: 'split', split: { file: null, fileName: '',
 const compressStore = createStore({ file: null, url: '', name: '', origSize: 0, quality: 0.8, format: 'jpeg', scale: 100, resultBlob: null, resultUrl: '', estimates: { jpeg: 0, webp: 0, png: 0 } });
 const textStore = createStore({ input: '', mode: 'upper' });
 const qrStore = createStore({ text: '', logoUrl: '', mode: 'generate', parseResult: '' });
-
-// 新增 Store
 const mockStore = createStore({
   type: 'uuid', count: 10,
   pwdLen: 12, pwdOpts: { upper: true, lower: true, num: true, sym: true },
@@ -216,7 +302,7 @@ function resetStore(store, initial) {
 }
 
 // ═══════════════════════════════════════════
-// 3. WEB COMPONENTS
+// 3. Web组件
 // ═══════════════════════════════════════════
 class DropZone extends HTMLElement {
   connectedCallback() {
@@ -236,103 +322,48 @@ class DropZone extends HTMLElement {
 customElements.define('drop-zone', DropZone);
 
 // ═══════════════════════════════════════════
-// 4. CONFIG
+// 4. 配置 (按拼音首字母排序)
 // ═══════════════════════════════════════════
 const TOOLS = [
-  { id: 'number-to-chinese', name: '数字转中文大写', desc: '输入阿拉伯数字，自动转换为人民币大写金额格式。', icon: 'tool1' },
-  { id: 'image-to-pdf', name: '图片转 PDF', desc: '将多张图片合并为单个 PDF 文件，支持排序与压缩。', icon: 'tool2' },
-  { id: 'pdf-split-merge', name: 'PDF拆分与合并', desc: '轻松拆分PDF文件或合并多个PDF文档，本地处理。', icon: 'tool3' },
-  { id: 'image-compress', name: '图片压缩', desc: '智能压缩图片体积，支持格式转换与多格式预估。', icon: 'tool4' },
   { id: 'text-case', name: '大小写转换', desc: '一键转换英文大小写，支持句首、词首等5种模式。', icon: 'tool5' },
   { id: 'qrcode-generator', name: '二维码生成与解析', desc: '生成高清二维码，或上传图片识别二维码内容。', icon: 'tool6' },
+  { id: 'pdf-split-merge', name: 'PDF拆分与合并', desc: '轻松拆分PDF文件或合并多个PDF文档，本地处理。', icon: 'tool3' },
+  { id: 'date-calculator', name: '日期计算器', desc: '计算日期差值、工作日天数，或推算合同到期日。', icon: 'tool8' },
+  { id: 'number-to-chinese', name: '数字转中文大写', desc: '输入阿拉伯数字，自动转换为人民币大写金额格式。', icon: 'tool1' },
   { id: 'mock-generator', name: '随机数据生成', desc: '批量生成UUID、随机密码、测试数据或幸运抽签。', icon: 'tool7' },
-  { id: 'date-calculator', name: '日期计算器', desc: '计算日期差值、工作日天数，或推算合同到期日。', icon: 'tool8' }
+  { id: 'image-compress', name: '图片压缩', desc: '智能压缩图片体积，支持格式转换与多格式预估。', icon: 'tool4' },
+  { id: 'image-to-pdf', name: '图片转 PDF', desc: '将多张图片合并为单个 PDF 文件，支持排序与压缩。', icon: 'tool2' }
 ];
 const IMG_OPTS = { mode: [{ v: 'fit', l: '贴合图片', s: '无白边' }, { v: 'a4', l: 'A4 标准页', s: '带白边' }], orient: [{ v: 'auto', l: '自动' }, { v: 'portrait', l: '纵向' }, { v: 'landscape', l: '横向' }], quality: [{ v: '1', l: '原图' }, { v: '0.8', l: '平衡' }, { v: '0.5', l: '极限' }] };
 const CASE_OPTS = [{ v: 'upper', l: '全部大写' }, { v: 'lower', l: '全部小写' }, { v: 'sentence', l: '句首大写' }, { v: 'title', l: '词首大写' }, { v: 'first', l: '仅首字母大写' }];
 
 // ═══════════════════════════════════════════
-// 5. RENDER HELPERS
+// 5. 渲染辅助函数
 // ═══════════════════════════════════════════
 const app = document.getElementById('app');
-const $header = (title, num) => `<header class="max-w-5xl mx-auto px-6 py-8 flex items-center gap-4"><button class="btn btn-ghost btn-sm" data-action="home"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M10 12L6 8L10 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg> 返回</button><div><div class="tool-num">${num}</div><h1 class="text-2xl font-bold text-[--ink]">${title}</h1></div></header>`;
-const $optGroup = (key, cur) => IMG_OPTS[key].map(o => `<div class="orient-option ${String(cur) === o.v ? 'active' : ''}" data-${key}="${o.v}">${o.l}${o.s ? `<br><span class="text-xs opacity-70">${o.s}</span>` : ''}</div>`).join('');
-const $toolCard = (t, i) => `<a href="#/${t.id}" class="tool-card"><div class="tool-icon">${Icons.get(t.icon)}</div><div class="flex items-center justify-between mb-3"><h3 class="text-xl font-semibold text-[--ink]">${t.name}</h3><span class="tool-num">${String(i + 1).padStart(2, '0')}</span></div><p class="text-sm text-[--ink-soft] leading-relaxed mb-6">${t.desc}</p><div class="flex items-center gap-2 text-xs text-[--green] font-medium"><span>进入工具</span><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 7H11M11 7L7 3M11 7L7 11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div></a>`;
+const $header = (title, num) => `<header class="max-w-5xl mx-auto px-6 py-8 flex items-center gap-4 page-enter"><button class="btn btn-ghost btn-sm" data-action="home" aria-label="返回首页"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M10 12L6 8L10 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg> 返回</button><div><div class="tool-num">${num}</div><h1 class="text-2xl font-bold text-[--ink]">${title}</h1></div></header>`;
+const $optGroup = (key, cur) => IMG_OPTS[key].map(o => `<div class="orient-option ${String(cur) === o.v ? 'active' : ''}" data-${key}="${o.v}" role="button" tabindex="0">${o.l}${o.s ? `<br><span class="text-xs opacity-70">${o.s}</span>` : ''}</div>`).join('');
+const $toolCard = (t, i) => `<a href="#/${t.id}" class="tool-card page-enter" style="animation-delay:${i * 0.05}s"><div class="tool-icon">${Icons.get(t.icon)}</div><div class="flex items-center justify-between mb-3"><h3 class="text-xl font-semibold text-[--ink]">${t.name}</h3><span class="tool-num">${String(i + 1).padStart(2, '0')}</span></div><p class="text-sm text-[--ink-soft] leading-relaxed mb-6">${t.desc}</p><div class="flex items-center gap-2 text-xs text-[--green] font-medium"><span>进入工具</span><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 7H11M11 7L7 3M11 7L7 11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div></a>`;
 const $infoCard = (title, items) => `<div class="info-card mt-12"><h4 class="text-sm font-semibold text-[--green] mb-3 flex items-center gap-2"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="6" stroke="currentColor" stroke-width="1.3"/><path d="M7 4V7.5M7 9.5V10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>${title}</h4><ul class="text-xs text-[--ink-soft] space-y-1.5 leading-relaxed">${items.map(i => `<li>${i}</li>`).join('')}</ul></div>`;
 
 // ═══════════════════════════════════════════
-// 6. PAGE RENDERERS
+// 6. 页面渲染器
 // ═══════════════════════════════════════════
 function renderHome() {
-  app.innerHTML = `<main class="max-w-6xl mx-auto px-6 py-16"><div class="text-center mb-12"><h1 class="text-5xl font-bold mb-4" style="background:linear-gradient(135deg,var(--green) 0%,var(--green-2) 50%,var(--accent) 100%);-webkit-background-clip:text;color:transparent">效率工具集</h1><p class="text-[--ink-soft] text-lg mb-8">简洁、纯粹、专注的本地化工具，解决日常办公需求。</p><div class="flex gap-8 justify-center text-sm text-[--ink-soft]"><div><span class="font-bold text-[--green] text-xl">${TOOLS.length}</span> 个实用工具</div><div><span class="font-bold text-[--green] text-xl">100%</span> 本地运行</div><div><span class="font-bold text-[--green] text-xl">0</span> 数据上传</div></div></div><div id="tools-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">${TOOLS.map($toolCard).join('')}</div></main>`;
+  app.innerHTML = `<main class="max-w-6xl mx-auto px-6 py-16"><div class="text-center mb-12 page-enter"><h1 class="text-5xl font-bold mb-4" style="background:linear-gradient(135deg,var(--green) 0%,var(--green-2) 50%,var(--accent) 100%);-webkit-background-clip:text;color:transparent">效率工具集</h1><p class="text-[--ink-soft] text-lg mb-8">简洁、纯粹、专注的本地化工具，解决日常办公需求。</p><div class="flex gap-8 justify-center text-sm text-[--ink-soft]"><div><span class="font-bold text-[--green] text-xl">${TOOLS.length}</span> 个实用工具</div><div><span class="font-bold text-[--green] text-xl">100%</span> 本地运行</div><div><span class="font-bold text-[--green] text-xl">0</span> 数据上传</div></div></div><div id="tools-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">${TOOLS.map($toolCard).join('')}</div></main>`;
 }
 
-function renderNumberTool() {
-  app.innerHTML = `${$header('数字转中文大写', 'Tool 01')}<main class="max-w-4xl mx-auto px-6 pb-16"><div class="grid grid-cols-1 lg:grid-cols-2 gap-8"><div><label class="block text-sm font-medium text-[--ink-soft] mb-2">输入数字</label><div class="relative"><span class="absolute left-4 top-1/2 -translate-y-1/2 text-[--muted] text-xl">¥</span><input type="text" id="num-input" class="input pl-10 text-xl" placeholder="请输入金额" value=""></div><div class="flex gap-3 mt-4"><button class="btn btn-ghost flex-1" id="reset-number">重置</button></div></div><div><label class="block text-sm font-medium text-[--ink-soft] mb-2">中文大写结果</label><div class="result-container"><div id="num-output" class="result-box">结果将显示在这里</div><button class="btn btn-sm btn-primary copy-result-btn" id="copy-output-btn">复制结果</button></div></div></div>${$infoCard('使用说明', ['支持整数、小数（最多两位）、负数', '转换为标准人民币大写金额格式', '所有计算在本地完成'])}</main>`;
-}
-
-function renderImageTool() {
-  const S = imageStore.get();
-  app.innerHTML = `${$header('图片转 PDF', 'Tool 02')}<main class="max-w-4xl mx-auto px-6 pb-16"><drop-zone id="img-drop" text="点击或拖拽图片到此处" hint="支持 JPG, PNG, WEBP, HEIC" accept="image/*,.heic,.heif" multiple></drop-zone><div id="img-section" class="hidden mt-8"><div class="flex items-center justify-between mb-4"><h3 class="text-lg font-semibold text-[--ink]">已选图片 <span id="img-count" class="text-[--muted] font-normal text-sm"></span></h3><button class="btn btn-ghost btn-sm" id="reset-image">重置</button></div><div id="img-list" class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-4"></div></div><div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8"><div><label class="block text-sm font-medium text-[--ink-soft] mb-3">页面模式</label><div class="flex gap-3">${$optGroup('mode', S.mode)}</div></div><div><label class="block text-sm font-medium text-[--ink-soft] mb-3">页面方向</label><div class="flex gap-3">${$optGroup('orient', S.orient)}</div></div><div><label class="block text-sm font-medium text-[--ink-soft] mb-3">压缩等级</label><div class="flex gap-3">${$optGroup('quality', S.quality)}</div></div></div><div class="mt-10 text-center"><button class="btn btn-primary text-lg px-12 py-4" id="convert-img-btn">生成并下载 PDF</button></div>${$infoCard('使用说明', ['所有图片处理均在本地完成', 'HEIC/HEIF 格式将自动转换为 JPEG', '拖拽排序：长按缩略图拖动调整顺序'])}</main>`;
-  const list = app.querySelector('#img-list');
-  if (sortableInst) sortableInst.destroy();
-  sortableInst = Sortable.create(list, { animation: 150, ghostClass: 'dragging', onEnd: e => { const files = imageStore.get().files; const movedItem = files.splice(e.oldIndex, 1)[0]; files.splice(e.newIndex, 0, movedItem); imageStore.set(s => ({ ...s, files })); } });
-  syncImageListDOM();
-}
-
-function syncImageListDOM() {
-  const files = imageStore.get().files;
-  const list = app.querySelector('#img-list');
-  const sec = app.querySelector('#img-section');
-  if (!list || !sec) return;
-  if (!files.length) { sec.classList.add('hidden'); list.innerHTML = ''; return; }
-  sec.classList.remove('hidden');
-  app.querySelector('#img-count').textContent = `(${files.length} 张)`;
-  list.innerHTML = files.map((f, i) => `<div class="thumb" data-idx="${i}"><img src="${f.url}" alt="${f.name}"><span class="thumb-num">${i + 1}</span><span class="thumb-orient">${f.w > f.h ? '横' : '竖'}</span><button class="thumb-remove" data-rm-img="${i}"><svg width="10" height="10" viewBox="0 0 10 10"><path d="M2 2L8 8M8 2L2 8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></button></div>`).join('');
-}
-
-function renderPdfTool() {
-  const S = pdfStore.get(), split = S.split;
-  app.innerHTML = `${$header('PDF拆分与合并', 'Tool 03')}<main class="max-w-4xl mx-auto px-6 pb-16"><div class="flex gap-4 mb-8 justify-center"><button class="btn ${S.mode === 'split' ? 'btn-primary' : 'btn-ghost'}" data-pdf-mode="split">拆分 PDF</button><button class="btn ${S.mode === 'merge' ? 'btn-primary' : 'btn-ghost'}" data-pdf-mode="merge">合并 PDF</button></div><div id="split-view" class="${S.mode !== 'split' ? 'hidden' : ''}"><drop-zone id="split-drop" text="上传 PDF 文件" hint="支持 .pdf 格式，单个文件最大 50MB" accept=".pdf"></drop-zone><div id="split-preview" class="${split.file ? '' : 'hidden'} mt-6 p-4 bg-white rounded-xl border border-[--border] flex items-center justify-between"><div><div class="font-medium text-[--ink]" id="split-fname">${split.fileName}</div><div class="text-xs text-[--muted]">共 <span id="split-pcount">${split.pageCount}</span> 页</div></div><button class="btn btn-ghost btn-sm" id="split-remove">移除文件</button></div><div id="split-opts" class="${split.file ? '' : 'hidden'} mt-6 space-y-4"><div class="flex gap-4 items-center"><label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="split-method" value="pages" ${split.method === 'pages' ? 'checked' : ''}> 按固定页数</label><input type="number" class="input w-24" id="split-pages" value="${split.pages}" min="1"></div><div class="flex items-center gap-4"><label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="split-method" value="range" ${split.method === 'range' ? 'checked' : ''}> 按页码范围</label><span>从</span><input type="number" class="input w-20" id="split-start" value="${split.start}" min="1"><span>到</span><input type="number" class="input w-20" id="split-end" value="${split.end}" min="1"></div></div><div class="mt-8 text-center"><button class="btn btn-primary px-10" id="split-btn">开始拆分</button></div></div><div id="merge-view" class="${S.mode !== 'merge' ? 'hidden' : ''}"><drop-zone id="merge-drop" text="上传多个 PDF 文件" hint="支持 .pdf 格式，最多20个或总计200MB" accept=".pdf" multiple></drop-zone><div id="merge-list" class="hidden mt-6 space-y-3"></div><div class="mt-8 flex gap-4 justify-center"><button class="btn btn-primary px-10" id="merge-btn" ${S.merge.files.length < 2 ? 'disabled' : ''}>开始合并</button><button class="btn btn-ghost" id="reset-pdf">重置</button></div></div>${$infoCard('使用说明', ['所有PDF处理均在本地完成', '支持按固定页数或自定义页码范围拆分', '支持将多个PDF合并为一个文档'])}</main>`;
-  if (S.mode === 'merge') renderMergeList();
-}
-
-function renderMergeList() {
-  const el = app.querySelector('#merge-list'); if (!el) return;
-  const files = pdfStore.get().merge.files; if (!files.length) { el.classList.add('hidden'); return; }
-  el.classList.remove('hidden');
-  el.innerHTML = files.map((f, i) => `<div class="flex items-center justify-between p-3 bg-white rounded-lg border border-[--border]"><div class="flex items-center gap-3"><div class="w-10 h-10 bg-[--bg-2] rounded flex items-center justify-center text-[--muted] text-xs font-bold">PDF</div><div><div class="font-medium text-[--ink] text-sm">${f.name}</div><div class="text-xs text-[--muted]">${(f.size / 1048576).toFixed(2)} MB</div></div></div><button class="btn btn-ghost btn-sm" data-rm-pdf="${i}">移除</button></div>`).join('');
-  const mergeBtn = app.querySelector('#merge-btn');
-  if (mergeBtn) files.length < 2 ? mergeBtn.setAttribute('disabled', '') : mergeBtn.removeAttribute('disabled');
-}
-
-function renderCompressTool() {
-  const S = compressStore.get();
-  app.innerHTML = `${$header('图片压缩', 'Tool 04')}<main class="max-w-5xl mx-auto px-6 pb-16"><div class="grid grid-cols-1 lg:grid-cols-2 gap-8"><div><drop-zone id="comp-drop" text="点击或拖拽图片到此处" hint="支持 JPG, PNG, WEBP" accept="image/*"></drop-zone><div id="comp-ctrl" class="hidden mt-6 space-y-6"><div><label class="block text-sm font-medium text-[--ink-soft] mb-3">选择格式 (智能预估)</label><div class="grid grid-cols-3 gap-3" id="format-cards"></div></div><div><label class="block text-sm font-medium text-[--ink-soft] mb-2">质量: <span id="comp-q-val">${Math.round(S.quality * 100)}</span>%</label><input type="range" class="range-slider" id="comp-q" min="10" max="100" value="${S.quality * 100}"></div><div><label class="block text-sm font-medium text-[--ink-soft] mb-2">缩放比例: <span id="comp-s-val">${S.scale}</span>%</label><input type="range" class="range-slider" id="comp-s" min="10" max="100" value="${S.scale}"></div></div></div><div><div class="grid grid-cols-2 gap-4 mb-6"><div class="stat-box"><div class="val" id="comp-orig-size">-</div><div class="lbl">原始大小</div></div><div class="stat-box"><div class="val text-[--accent]" id="comp-new-size">-</div><div class="lbl">压缩后大小</div></div></div><div class="bg-white rounded-xl border border-[--border] p-4 flex items-center justify-center min-h-[300px]"><img id="comp-preview" class="max-w-full max-h-[400px] rounded-lg hidden" alt="preview"><span id="comp-placeholder" class="text-[--muted]">上传图片后预览</span></div><div class="flex gap-3 mt-6"><button class="btn btn-primary flex-1" id="comp-dl-btn" disabled>下载压缩图片</button><button class="btn btn-ghost" id="reset-compress">重置</button></div></div></div>${$infoCard('使用说明', ['所有压缩处理均在本地浏览器完成，不上传服务器', '上传图片后会自动计算各格式预估大小', '点击格式卡片即可切换，WebP 通常体积最小'])}</main>`;
-  renderFormatCards();
-}
-
-function renderFormatCards() {
-  const S = compressStore.get();
-  const container = app.querySelector('#format-cards');
-  if (!container) return;
-  const formats = ['jpeg', 'webp', 'png'];
-  container.innerHTML = formats.map(f => {
-    const size = S.estimates[f];
-    const isActive = S.format === f;
-    return `<div class="format-card p-4 border border-[--border] rounded-xl text-center ${isActive ? 'active' : ''}" data-cfmt="${f}"><div class="font-bold text-[--ink] uppercase">${f}</div><div class="text-sm text-[--muted] mt-1">${size ? Utils.formatSize(size) : '计算中...'}</div></div>`;
-  }).join('');
-}
-
+// Tool 01: 大小写转换
 function renderTextCaseTool() {
   const S = textStore.get();
-  app.innerHTML = `${$header('大小写转换', 'Tool 05')}<main class="max-w-5xl mx-auto px-6 pb-16"><div class="flex flex-wrap gap-3 mb-6 justify-center">${CASE_OPTS.map(o => `<button class="btn ${S.mode === o.v ? 'btn-primary' : 'btn-ghost'}" data-case-mode="${o.v}">${o.l}</button>`).join('')}</div><div class="grid grid-cols-1 lg:grid-cols-2 gap-6"><div><label class="block text-sm font-medium text-[--ink-soft] mb-2">输入文本</label><textarea id="tc-input" class="textarea" placeholder="在此输入或粘贴文本...">${S.input}</textarea></div><div><label class="block text-sm font-medium text-[--ink-soft] mb-2">转换结果</label><textarea id="tc-output" class="textarea bg-[--green-light] text-[--green]" readonly></textarea></div></div><div class="flex gap-3 mt-6 justify-center"><button class="btn btn-primary" id="tc-copy-btn">复制结果</button><button class="btn btn-ghost" id="reset-text">重置</button></div><div class="grid grid-cols-3 gap-4 mt-8 max-w-md mx-auto"><div class="stat-box"><div class="val" id="tc-chars">0</div><div class="lbl">字符数</div></div><div class="stat-box"><div class="val" id="tc-words">0</div><div class="lbl">单词数</div></div><div class="stat-box"><div class="val" id="tc-lines">0</div><div class="lbl">行数</div></div></div>${$infoCard('使用说明', ['全部大写/小写：转换所有英文字母', '句首大写：每句话的第一个字母大写', '词首大写：每个单词的首字母大写', '仅首字母大写：整个文本的第一个字母大写，其余小写'])}</main>`;
+  app.innerHTML = `${$header('大小写转换', 'Tool 01')}<main class="max-w-5xl mx-auto px-6 pb-16 page-enter"><div class="flex flex-wrap gap-3 mb-6 justify-center">${CASE_OPTS.map(o => `<button class="btn ${S.mode === o.v ? 'btn-primary' : 'btn-ghost'}" data-case-mode="${o.v}">${o.l}</button>`).join('')}</div><div class="grid grid-cols-1 lg:grid-cols-2 gap-6"><div><label class="block text-sm font-medium text-[--ink-soft] mb-2">输入文本</label><textarea id="tc-input" class="textarea" placeholder="在此输入或粘贴文本...">${S.input}</textarea></div><div><label class="block text-sm font-medium text-[--ink-soft] mb-2">转换结果</label><textarea id="tc-output" class="textarea bg-[--green-light] text-[--green]" readonly></textarea></div></div><div class="flex gap-3 mt-6 justify-center"><button class="btn btn-primary" id="tc-copy-btn">复制结果</button><button class="btn btn-ghost" id="reset-text">重置</button></div><div class="grid grid-cols-3 gap-4 mt-8 max-w-md mx-auto"><div class="stat-box"><div class="val" id="tc-chars">0</div><div class="lbl">字符数</div></div><div class="stat-box"><div class="val" id="tc-words">0</div><div class="lbl">单词数</div></div><div class="stat-box"><div class="val" id="tc-lines">0</div><div class="lbl">行数</div></div></div>${$infoCard('使用说明', ['全部大写/小写：转换所有英文字母', '句首大写：每句话的第一个字母大写', '词首大写：每个单词的首字母大写', '仅首字母大写：整个文本的第一个字母大写，其余小写'])}</main>`;
   doTextCase();
 }
 
+// Tool 02: 二维码生成与解析
 function renderQrTool() {
   const S = qrStore.get();
-  app.innerHTML = `${$header('二维码生成与解析', 'Tool 06')}<main class="max-w-5xl mx-auto px-6 pb-16">
+  app.innerHTML = `${$header('二维码生成与解析', 'Tool 02')}<main class="max-w-5xl mx-auto px-6 pb-16 page-enter">
     <div class="flex gap-4 mb-8 justify-center">
       <button class="btn ${S.mode === 'generate' ? 'btn-primary' : 'btn-ghost'}" data-qr-mode="generate">生成二维码</button>
       <button class="btn ${S.mode === 'parse' ? 'btn-primary' : 'btn-ghost'}" data-qr-mode="parse">解析二维码</button>
@@ -359,10 +390,74 @@ function renderQrTool() {
   if (S.mode === 'generate') doGenerateQR();
 }
 
-// ================= 新增 Tool 07 =================
+// Tool 03: PDF拆分与合并
+function renderPdfTool() {
+  const S = pdfStore.get(), split = S.split;
+  app.innerHTML = `${$header('PDF拆分与合并', 'Tool 03')}<main class="max-w-4xl mx-auto px-6 pb-16 page-enter"><div class="flex gap-4 mb-8 justify-center"><button class="btn ${S.mode === 'split' ? 'btn-primary' : 'btn-ghost'}" data-pdf-mode="split">拆分 PDF</button><button class="btn ${S.mode === 'merge' ? 'btn-primary' : 'btn-ghost'}" data-pdf-mode="merge">合并 PDF</button></div><div id="split-view" class="${S.mode !== 'split' ? 'hidden' : ''}"><drop-zone id="split-drop" text="上传 PDF 文件" hint="支持 .pdf 格式，单个文件最大 50MB" accept=".pdf"></drop-zone><div id="split-preview" class="${split.file ? '' : 'hidden'} mt-6 p-4 bg-white rounded-xl border border-[--border] flex items-center justify-between"><div><div class="font-medium text-[--ink]" id="split-fname">${split.fileName}</div><div class="text-xs text-[--muted]">共 <span id="split-pcount">${split.pageCount}</span> 页</div></div><button class="btn btn-ghost btn-sm" id="split-remove">移除文件</button></div><div id="split-opts" class="${split.file ? '' : 'hidden'} mt-6 space-y-4"><div class="flex gap-4 items-center"><label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="split-method" value="pages" ${split.method === 'pages' ? 'checked' : ''}> 按固定页数</label><input type="number" class="input w-24" id="split-pages" value="${split.pages}" min="1"></div><div class="flex items-center gap-4"><label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="split-method" value="range" ${split.method === 'range' ? 'checked' : ''}> 按页码范围</label><span>从</span><input type="number" class="input w-20" id="split-start" value="${split.start}" min="1"><span>到</span><input type="number" class="input w-20" id="split-end" value="${split.end}" min="1"></div></div><div class="mt-8 text-center"><button class="btn btn-primary px-10" id="split-btn">开始拆分</button></div></div><div id="merge-view" class="${S.mode !== 'merge' ? 'hidden' : ''}"><drop-zone id="merge-drop" text="上传多个 PDF 文件" hint="支持 .pdf 格式，最多20个或总计200MB" accept=".pdf" multiple></drop-zone><div id="merge-list" class="hidden mt-6 space-y-3"></div><div class="mt-8 flex gap-4 justify-center"><button class="btn btn-primary px-10" id="merge-btn" ${S.merge.files.length < 2 ? 'disabled' : ''}>开始合并</button><button class="btn btn-ghost" id="reset-pdf">重置</button></div></div>${$infoCard('使用说明', ['所有PDF处理均在本地完成', '支持按固定页数或自定义页码范围拆分', '支持将多个PDF合并为一个文档'])}</main>`;
+  if (S.mode === 'merge') renderMergeList();
+}
+
+// Tool 04: 日期计算器
+function renderDateTool() {
+  const S = dateStore.get();
+  const today = new Date().toISOString().split('T')[0];
+  app.innerHTML = `${$header('日期计算器', 'Tool 04')}<main class="max-w-4xl mx-auto px-6 pb-16 page-enter">
+    <div class="flex gap-4 mb-8 justify-center">
+      <button class="btn ${S.mode==='diff'?'btn-primary':'btn-ghost'}" data-date-mode="diff">计算日期差 (间隔)</button>
+      <button class="btn ${S.mode==='calc'?'btn-primary':'btn-ghost'}" data-date-mode="calc">推算日期 (加减)</button>
+    </div>
+    
+    <div id="date-diff-view" class="${S.mode!=='diff'?'hidden':''}">
+      <div class="bg-white p-8 rounded-2xl border border-[--border] space-y-6">
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div><label class="block text-sm font-medium text-[--ink-soft] mb-2">开始日期</label><input type="date" id="date-start" class="input" value="${S.startDate || today}"></div>
+          <div><label class="block text-sm font-medium text-[--ink-soft] mb-2">结束日期</label><input type="date" id="date-end" class="input" value="${S.endDate || today}"></div>
+        </div>
+        <button class="btn btn-primary w-full" id="date-calc-diff-btn">计算间隔</button>
+        <div id="date-diff-result" class="hidden mt-6"></div>
+      </div>
+    </div>
+
+    <div id="date-calc-view" class="${S.mode!=='calc'?'hidden':''}">
+      <div class="bg-white p-8 rounded-2xl border border-[--border] space-y-6">
+        <div><label class="block text-sm font-medium text-[--ink-soft] mb-2">基准日期</label><input type="date" id="date-base" class="input" value="${S.baseDate || today}"></div>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+          <div>
+            <label class="block text-sm font-medium text-[--ink-soft] mb-2">增加/减少</label>
+            <input type="number" id="date-offset" class="input" value="${S.offset}">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-[--ink-soft] mb-2">时间单位</label>
+            <select id="date-unit" class="input">
+              <option value="days" ${S.unit==='days'?'selected':''}>天</option>
+              <option value="weeks" ${S.unit==='weeks'?'selected':''}>周</option>
+              <option value="months" ${S.unit==='months'?'selected':''}>月</option>
+              <option value="years" ${S.unit==='years'?'selected':''}>年</option>
+            </select>
+          </div>
+        </div>
+        <button class="btn btn-primary w-full" id="date-calc-offset-btn">推算日期</button>
+        <div id="date-calc-result" class="hidden mt-6"></div>
+      </div>
+    </div>
+
+    <div class="flex gap-3 mt-8 justify-center"><button class="btn btn-ghost" id="reset-date">重置工具</button></div>
+    ${$infoCard('办公场景', ['HR：计算员工入职天数、年假剩余、合同到期日', '法务/行政：计算租房到期日、执照有效期', '财务：计算账期、利息天数、发票到期日', '注意：月份加减已自动处理"月末溢出"问题（如1月31日加1个月为2月28日）'])}
+  </main>`;
+  
+  if (S.result && S.mode === 'diff') renderDateDiffResult(S.result);
+  if (S.result && S.mode === 'calc') renderDateCalcResult(S.result);
+}
+
+// Tool 05: 数字转中文大写
+function renderNumberTool() {
+  app.innerHTML = `${$header('数字转中文大写', 'Tool 05')}<main class="max-w-4xl mx-auto px-6 pb-16 page-enter"><div class="grid grid-cols-1 lg:grid-cols-2 gap-8"><div><label class="block text-sm font-medium text-[--ink-soft] mb-2">输入数字</label><div class="relative"><span class="absolute left-4 top-1/2 -translate-y-1/2 text-[--muted] text-xl">¥</span><input type="text" id="num-input" class="input pl-10 text-xl" placeholder="请输入金额" value=""></div><div class="flex gap-3 mt-4"><button class="btn btn-ghost flex-1" id="reset-number">重置</button></div></div><div><label class="block text-sm font-medium text-[--ink-soft] mb-2">中文大写结果</label><div class="result-container"><div id="num-output" class="result-box">结果将显示在这里</div><button class="btn btn-sm btn-primary copy-result-btn" id="copy-output-btn">复制结果</button></div></div></div>${$infoCard('使用说明', ['支持整数、小数（最多两位）、负数', '转换为标准人民币大写金额格式', '所有计算在本地完成'])}</main>`;
+}
+
+// Tool 06: 随机数据生成
 function renderMockTool() {
   const S = mockStore.get();
-  app.innerHTML = `${$header('随机数据生成', 'Tool 07')}<main class="max-w-5xl mx-auto px-6 pb-16">
+  app.innerHTML = `${$header('随机数据生成', 'Tool 06')}<main class="max-w-5xl mx-auto px-6 pb-16 page-enter">
     <div class="flex gap-2 mb-8 justify-center flex-wrap">
       <button class="btn ${S.type==='uuid'?'btn-primary':'btn-ghost'}" data-mock-type="uuid">UUID 序列</button>
       <button class="btn ${S.type==='password'?'btn-primary':'btn-ghost'}" data-mock-type="password">随机密码</button>
@@ -407,69 +502,61 @@ function renderMockTool() {
             <button class="btn btn-sm btn-ghost" id="mock-clear-btn">清空</button>
           </div>
         </div>
-        <div id="mock-result" class="mock-result flex-1">${S.result || '点击“立即生成”查看结果...'}</div>
+        <div id="mock-result" class="mock-result flex-1">${S.result || '点击"立即生成"查看结果...'}</div>
       </div>
     </div>
+    <div class="flex gap-3 mt-8 justify-center"><button class="btn btn-ghost" id="reset-mock">重置工具</button></div>
     ${$infoCard('使用场景', ['UUID：生成系统测试用的唯一订单号、用户ID', '密码：生成高强度的随机初始密码', '数字：生成财务/销售测试用的随机金额', '抽签：从名单中随机抽取幸运儿或分配任务'])}
   </main>`;
 }
 
-// ================= 新增 Tool 08 =================
-function renderDateTool() {
-  const S = dateStore.get();
-  const today = new Date().toISOString().split('T')[0];
-  app.innerHTML = `${$header('日期计算器', 'Tool 08')}<main class="max-w-4xl mx-auto px-6 pb-16">
-    <div class="flex gap-4 mb-8 justify-center">
-      <button class="btn ${S.mode==='diff'?'btn-primary':'btn-ghost'}" data-date-mode="diff">计算日期差 (间隔)</button>
-      <button class="btn ${S.mode==='calc'?'btn-primary':'btn-ghost'}" data-date-mode="calc">推算日期 (加减)</button>
-    </div>
-    
-    <div id="date-diff-view" class="${S.mode!=='diff'?'hidden':''}">
-      <div class="bg-white p-8 rounded-2xl border border-[--border] space-y-6">
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div><label class="block text-sm font-medium text-[--ink-soft] mb-2">开始日期</label><input type="date" id="date-start" class="input" value="${S.startDate || today}"></div>
-          <div><label class="block text-sm font-medium text-[--ink-soft] mb-2">结束日期</label><input type="date" id="date-end" class="input" value="${S.endDate || today}"></div>
-        </div>
-        <div class="flex items-center gap-2"><input type="checkbox" id="date-exclude-weekend" ${S.excludeWeekends?'checked':''}><label for="date-exclude-weekend" class="text-sm text-[--ink-soft]">排除周末 (仅计算工作日)</label></div>
-        <button class="btn btn-primary w-full" id="date-calc-diff-btn">计算间隔</button>
-        
-        <div id="date-diff-result" class="hidden mt-6">
-          <!-- 结果由 JS 填充 -->
-        </div>
-      </div>
-    </div>
+// Tool 07: 图片压缩
+function renderCompressTool() {
+  const S = compressStore.get();
+  app.innerHTML = `${$header('图片压缩', 'Tool 07')}<main class="max-w-5xl mx-auto px-6 pb-16 page-enter"><div class="grid grid-cols-1 lg:grid-cols-2 gap-8"><div><drop-zone id="comp-drop" text="点击或拖拽图片到此处" hint="支持 JPG, PNG, WEBP" accept="image/*"></drop-zone><div id="comp-ctrl" class="hidden mt-6 space-y-6"><div><label class="block text-sm font-medium text-[--ink-soft] mb-3">选择格式 (智能预估)</label><div class="grid grid-cols-3 gap-3" id="format-cards"></div></div><div><label class="block text-sm font-medium text-[--ink-soft] mb-2">质量: <span id="comp-q-val">${Math.round(S.quality * 100)}</span>%</label><input type="range" class="range-slider" id="comp-q" min="10" max="100" value="${S.quality * 100}"></div><div><label class="block text-sm font-medium text-[--ink-soft] mb-2">缩放比例: <span id="comp-s-val">${S.scale}</span>%</label><input type="range" class="range-slider" id="comp-s" min="10" max="100" value="${S.scale}"></div></div></div><div><div class="grid grid-cols-2 gap-4 mb-6"><div class="stat-box"><div class="val" id="comp-orig-size">-</div><div class="lbl">原始大小</div></div><div class="stat-box"><div class="val text-[--accent]" id="comp-new-size">-</div><div class="lbl">压缩后大小</div></div></div><div class="bg-white rounded-xl border border-[--border] p-4 flex items-center justify-center min-h-[300px]"><img id="comp-preview" class="max-w-full max-h-[400px] rounded-lg hidden" alt="preview"><span id="comp-placeholder" class="text-[--muted]">上传图片后预览</span></div><div class="flex gap-3 mt-6"><button class="btn btn-primary flex-1" id="comp-dl-btn" disabled>下载压缩图片</button><button class="btn btn-ghost" id="reset-compress">重置</button></div></div></div>${$infoCard('使用说明', ['所有压缩处理均在本地浏览器完成，不上传服务器', '上传图片后会自动计算各格式预估大小', '点击格式卡片即可切换，WebP 通常体积最小'])}</main>`;
+  renderFormatCards();
+}
 
-    <div id="date-calc-view" class="${S.mode!=='calc'?'hidden':''}">
-      <div class="bg-white p-8 rounded-2xl border border-[--border] space-y-6">
-        <div><label class="block text-sm font-medium text-[--ink-soft] mb-2">基准日期</label><input type="date" id="date-base" class="input" value="${S.baseDate || today}"></div>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <label class="block text-sm font-medium text-[--ink-soft] mb-2">增加/减少</label>
-            <input type="number" id="date-offset" class="input" value="${S.offset}">
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-[--ink-soft] mb-2">时间单位</label>
-            <select id="date-unit" class="input">
-              <option value="days" ${S.unit==='days'?'selected':''}>天</option>
-              <option value="weeks" ${S.unit==='weeks'?'selected':''}>周</option>
-              <option value="months" ${S.unit==='months'?'selected':''}>月</option>
-              <option value="years" ${S.unit==='years'?'selected':''}>年</option>
-            </select>
-          </div>
-        </div>
-        <button class="btn btn-primary w-full" id="date-calc-offset-btn">推算日期</button>
-        
-        <div id="date-calc-result" class="hidden mt-6">
-          <!-- 结果由 JS 填充 -->
-        </div>
-      </div>
-    </div>
+// Tool 08: 图片转 PDF
+function renderImageTool() {
+  const S = imageStore.get();
+  app.innerHTML = `${$header('图片转 PDF', 'Tool 08')}<main class="max-w-4xl mx-auto px-6 pb-16 page-enter"><drop-zone id="img-drop" text="点击或拖拽图片到此处" hint="支持 JPG, PNG, WEBP, HEIC" accept="image/*,.heic,.heif" multiple></drop-zone><div id="img-section" class="hidden mt-8"><div class="flex items-center justify-between mb-4"><h3 class="text-lg font-semibold text-[--ink]">已选图片 <span id="img-count" class="text-[--muted] font-normal text-sm"></span></h3><button class="btn btn-ghost btn-sm" id="reset-image">重置</button></div><div id="img-list" class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-4"></div></div><div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8"><div><label class="block text-sm font-medium text-[--ink-soft] mb-3">页面模式</label><div class="flex gap-3">${$optGroup('mode', S.mode)}</div></div><div><label class="block text-sm font-medium text-[--ink-soft] mb-3">页面方向</label><div class="flex gap-3">${$optGroup('orient', S.orient)}</div></div><div><label class="block text-sm font-medium text-[--ink-soft] mb-3">压缩等级</label><div class="flex gap-3">${$optGroup('quality', S.quality)}</div></div></div><div class="mt-10 text-center"><button class="btn btn-primary text-lg px-12 py-4" id="convert-img-btn">生成并下载 PDF</button></div>${$infoCard('使用说明', ['所有图片处理均在本地完成', 'HEIC/HEIF 格式将自动转换为 JPEG', '拖拽排序：长按缩略图拖动调整顺序'])}</main>`;
+  const list = app.querySelector('#img-list');
+  if (sortableInst) sortableInst.destroy();
+  sortableInst = Sortable.create(list, { animation: 150, ghostClass: 'dragging', onEnd: e => { const files = imageStore.get().files; const movedItem = files.splice(e.oldIndex, 1)[0]; files.splice(e.newIndex, 0, movedItem); imageStore.set(s => ({ ...s, files })); } });
+  syncImageListDOM();
+}
 
-    ${$infoCard('办公场景', ['HR：计算员工入职天数、年假剩余、合同到期日', '法务/行政：计算租房到期日、执照有效期', '财务：计算账期、利息天数、发票到期日', '注意：月份加减已自动处理“月末溢出”问题（如1月31日加1个月为2月28日）'])}
-  </main>`;
-  
-  if (S.result && S.mode === 'diff') renderDateDiffResult(S.result);
-  if (S.result && S.mode === 'calc') renderDateCalcResult(S.result);
+function renderMergeList() {
+  const el = app.querySelector('#merge-list'); if (!el) return;
+  const files = pdfStore.get().merge.files; if (!files.length) { el.classList.add('hidden'); return; }
+  el.classList.remove('hidden');
+  el.innerHTML = files.map((f, i) => `<div class="flex items-center justify-between p-3 bg-white rounded-lg border border-[--border]"><div class="flex items-center gap-3"><div class="w-10 h-10 bg-[--bg-2] rounded flex items-center justify-center text-[--muted] text-xs font-bold">PDF</div><div><div class="font-medium text-[--ink] text-sm">${f.name}</div><div class="text-xs text-[--muted]">${(f.size / 1048576).toFixed(2)} MB</div></div></div><button class="btn btn-ghost btn-sm" data-rm-pdf="${i}">移除</button></div>`).join('');
+  const mergeBtn = app.querySelector('#merge-btn');
+  if (mergeBtn) files.length < 2 ? mergeBtn.setAttribute('disabled', '') : mergeBtn.removeAttribute('disabled');
+}
+
+function renderFormatCards() {
+  const S = compressStore.get();
+  const container = app.querySelector('#format-cards');
+  if (!container) return;
+  const formats = ['jpeg', 'webp', 'png'];
+  container.innerHTML = formats.map(f => {
+    const size = S.estimates[f];
+    const isActive = S.format === f;
+    return `<div class="format-card p-4 border border-[--border] rounded-xl text-center ${isActive ? 'active' : ''}" data-cfmt="${f}"><div class="font-bold text-[--ink] uppercase">${f}</div><div class="text-sm text-[--muted] mt-1">${size ? Utils.formatSize(size) : '计算中...'}</div></div>`;
+  }).join('');
+}
+
+function syncImageListDOM() {
+  const files = imageStore.get().files;
+  const list = app.querySelector('#img-list');
+  const sec = app.querySelector('#img-section');
+  if (!list || !sec) return;
+  if (!files.length) { sec.classList.add('hidden'); list.innerHTML = ''; return; }
+  sec.classList.remove('hidden');
+  app.querySelector('#img-count').textContent = `(${files.length} 张)`;
+  list.innerHTML = files.map((f, i) => `<div class="thumb" data-idx="${i}"><img src="${f.url}" alt="${f.name}"><span class="thumb-num">${i + 1}</span><span class="thumb-orient">${f.w > f.h ? '横' : '竖'}</span><button class="thumb-remove" data-rm-img="${i}"><svg width="10" height="10" viewBox="0 0 10 10"><path d="M2 2L8 8M8 2L2 8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></button></div>`).join('');
 }
 
 function renderDateDiffResult(res) {
@@ -506,7 +593,7 @@ function renderDateCalcResult(res) {
 }
 
 // ═══════════════════════════════════════════
-// 7. BUSINESS LOGIC
+// 7. 业务逻辑
 // ═══════════════════════════════════════════
 function doConvert() {
   const input = app.querySelector('#num-input'), output = app.querySelector('#num-output'); if (!input || !output) return;
@@ -644,7 +731,6 @@ async function doParseQR(file) {
   else { qrStore.set(s => ({ ...s, parseResult: '' })); output.innerHTML = '<span class="text-[--accent]">未识别到二维码内容</span>'; Utils.showToast('未识别到二维码', true); }
 }
 
-// ================= 新增 Logic =================
 function doGenerateMock() {
   const S = mockStore.get();
   const count = Math.max(1, Math.min(1000, S.count));
@@ -696,38 +782,41 @@ function doGenerateMock() {
 function doCalculateDateDiff() {
   const startStr = app.querySelector('#date-start').value;
   const endStr = app.querySelector('#date-end').value;
-  const excludeWeekends = app.querySelector('#date-exclude-weekend').checked;
   
   if (!startStr || !endStr) return Utils.showToast('请选择完整的日期', true);
   
   const start = new Date(startStr);
   const end = new Date(endStr);
+  start.setHours(0,0,0,0);
+  end.setHours(0,0,0,0);
   
   if (isNaN(start) || isNaN(end)) return Utils.showToast('日期格式无效', true);
   
-  const diffTime = Math.abs(end - start);
-  const totalDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+  const totalDays = Math.abs(Math.round((end - start) / (1000 * 60 * 60 * 24)));
   
   let workDays = 0, weekendDays = 0;
-  let current = new Date(start);
-  const step = start <= end ? 1 : -1;
+  const s = start <= end ? start : end;
+  const e = start <= end ? end : start;
+  let current = new Date(s);
   
-  while ((step === 1 && current <= end) || (step === -1 && current >= end)) {
+  while (current < e) {
     const day = current.getDay();
     if (day !== 0 && day !== 6) workDays++;
     else weekendDays++;
-    current.setDate(current.getDate() + step);
+    current.setDate(current.getDate() + 1);
   }
   
-  // 计算 年月日 差值
-  let years = end.getFullYear() - start.getFullYear();
-  let months = end.getMonth() - start.getMonth();
-  let days = end.getDate() - start.getDate();
-  if (days < 0) { months--; days += new Date(end.getFullYear(), end.getMonth(), 0).getDate(); }
+  const later = start <= end ? end : start;
+  const earlier = start <= end ? start : end;
+  
+  let years = later.getFullYear() - earlier.getFullYear();
+  let months = later.getMonth() - earlier.getMonth();
+  let days = later.getDate() - earlier.getDate();
+  if (days < 0) { months--; days += new Date(later.getFullYear(), later.getMonth(), 0).getDate(); }
   if (months < 0) { years--; months += 12; }
   
   const res = { totalDays, workDays, weekendDays, years, months, days };
-  dateStore.set(s => ({ ...s, startDate: startStr, endDate: endStr, excludeWeekends, result: res }));
+  dateStore.set(s => ({ ...s, startDate: startStr, endDate: endStr, result: res }));
   renderDateDiffResult(res);
 }
 
@@ -747,12 +836,11 @@ function doCalculateDateOffset() {
   else if (unit === 'weeks') resultDate.setDate(resultDate.getDate() + (offset * 7));
   else if (unit === 'years') resultDate.setFullYear(resultDate.getFullYear() + offset);
   else if (unit === 'months') {
-    // 处理月末溢出问题
     const dayOfMonth = resultDate.getDate();
     resultDate.setMonth(resultDate.getMonth() + offset + 1);
-    resultDate.setDate(0); // 设为目标月份的最后一天
+    resultDate.setDate(0);
     const targetMonthLastDay = resultDate.getDate();
-    resultDate.setMonth(resultDate.getMonth() + 1); // 回到目标月份
+    resultDate.setMonth(resultDate.getMonth() + 1);
     resultDate.setDate(Math.min(dayOfMonth, targetMonthLastDay));
   }
   
@@ -772,7 +860,7 @@ function doCalculateDateOffset() {
 }
 
 // ═══════════════════════════════════════════
-// 8. EVENT DELEGATION
+// 8. 事件委托
 // ═══════════════════════════════════════════
 app.addEventListener('click', async e => {
   const t = e.target, closest = sel => t.closest(sel);
@@ -818,7 +906,6 @@ app.addEventListener('click', async e => {
   if (closest('#qr-copy-img')) { const canvas = app.querySelector('#qr-preview-box canvas'); if (!canvas) return Utils.showToast('请先生成二维码', true); Utils.copyImage(canvas).then(() => Utils.showToast('图片已复制到剪贴板')).catch(() => Utils.showToast('复制失败，请尝试下载', true)); return; }
   if (closest('#qr-parse-copy')) { const v = qrStore.get().parseResult; if (!v) return Utils.showToast('结果为空', true); Utils.copy(v).then(() => Utils.showToast('已复制结果')); return; }
 
-  // Mock Events
   const mt = closest('[data-mock-type]'); 
   if (mt) { 
     mockStore.set(s => ({ ...s, type: mt.dataset.mockType })); 
@@ -826,9 +913,8 @@ app.addEventListener('click', async e => {
   }
   if (closest('#mock-gen-btn')) return doGenerateMock();
   if (closest('#mock-copy-btn')) { const v = mockStore.get().result; if (!v) return Utils.showToast('结果为空', true); Utils.copy(v).then(() => Utils.showToast('已复制结果')); return; }
-  if (closest('#mock-clear-btn')) { mockStore.set(s => ({ ...s, result: '' })); const el = app.querySelector('#mock-result'); if(el) el.textContent = '点击“立即生成”查看结果...'; return; }
+  if (closest('#mock-clear-btn')) { mockStore.set(s => ({ ...s, result: '' })); const el = app.querySelector('#mock-result'); if(el) el.textContent = '点击"立即生成"查看结果...'; return; }
 
-  // Date Events
   const dm = closest('[data-date-mode]'); if (dm) { dateStore.set(s => ({ ...s, mode: dm.dataset.dateMode, result: null })); return renderDateTool(); }
   if (closest('#date-calc-diff-btn')) return doCalculateDateDiff();
   if (closest('#date-calc-offset-btn')) return doCalculateDateOffset();
@@ -847,7 +933,6 @@ app.addEventListener('input', e => {
   if (id === 'split-end') pdfStore.set(s => ({ ...s, split: { ...s.split, end: parseInt(e.target.value) } }));
   if (e.target.name === 'split-method') pdfStore.set(s => ({ ...s, split: { ...s.split, method: e.target.value } }));
 
-  // Mock Inputs
   if (id === 'mock-count') mockStore.set(s => ({ ...s, count: parseInt(e.target.value) }));
   if (id === 'mock-pwd-len') { mockStore.set(s => ({ ...s, pwdLen: parseInt(e.target.value) })); e.target.previousElementSibling.textContent = `密码长度: ${e.target.value}`; }
   if (id === 'pwd-upper') mockStore.set(s => ({ ...s, pwdOpts: { ...s.pwdOpts, upper: e.target.checked } }));
@@ -912,18 +997,18 @@ window.addEventListener('beforeunload', () => {
 });
 
 // ═══════════════════════════════════════════
-// 9. ROUTER
+// 9. 路由
 // ═══════════════════════════════════════════
 const ROUTES = { 
   '/': renderHome, 
-  '/number-to-chinese': renderNumberTool, 
-  '/image-to-pdf': renderImageTool, 
-  '/pdf-split-merge': renderPdfTool, 
-  '/image-compress': renderCompressTool, 
-  '/text-case': renderTextCaseTool, 
+  '/text-case': renderTextCaseTool,
   '/qrcode-generator': renderQrTool,
+  '/pdf-split-merge': renderPdfTool,
+  '/date-calculator': renderDateTool,
+  '/number-to-chinese': renderNumberTool,
   '/mock-generator': renderMockTool,
-  '/date-calculator': renderDateTool
+  '/image-compress': renderCompressTool,
+  '/image-to-pdf': renderImageTool
 };
 
 function router() {
