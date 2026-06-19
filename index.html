@@ -283,8 +283,7 @@ function renderImageTool() {
       const files = imageStore.get().files;
       const movedItem = files.splice(e.oldIndex, 1)[0];
       files.splice(e.newIndex, 0, movedItem);
-      imageStore.set(files);
-      // 不重绘 DOM，由 SortableJS 接管
+      imageStore.set(s => ({ ...s, files }));
     } 
   });
   syncImageListDOM();
@@ -300,14 +299,10 @@ function syncImageListDOM() {
   sec.classList.remove('hidden');
   app.querySelector('#img-count').textContent = `(${files.length} 张)`;
   
-  // 局部更新逻辑
   const existingNodes = Array.from(list.children);
   if (existingNodes.length !== files.length) {
-    // 数量不一致，全量重建（兜底）
     list.innerHTML = files.map((f, i) => `<div class="thumb" data-idx="${i}"><img src="${f.url}" alt="${f.name}"><span class="thumb-num">${i + 1}</span><span class="thumb-orient">${f.w > f.h ? '横' : '竖'}</span><button class="thumb-remove" data-rm-img="${i}"><svg width="10" height="10" viewBox="0 0 10 10"><path d="M2 2L8 8M8 2L2 8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></button></div>`).join('');
   } else {
-    // 检查是否需要更新（例如新增）
-    // 这里简化处理：如果 URL 不匹配，则更新
     files.forEach((f, i) => {
       if (!existingNodes[i] || existingNodes[i].querySelector('img').src !== f.url) {
         const div = document.createElement('div');
@@ -413,13 +408,17 @@ async function handleImageFiles(fileList) {
   const valid = Array.from(fileList).filter(f => f.type.startsWith('image/') || f.name.match(/\.(jpg|jpeg|png|webp|bmp|heic|heif)$/i)); if (!valid.length) return;
   const results = await Promise.all(valid.map(async file => {
     try {
-      let blob = file; if (Utils.isHeic(file)) blob = await heic2any({ blob: file, toType: 'image/jpeg', quality: 0.92 });
+      let blob = file; 
+      if (Utils.isHeic(file)) {
+        const res = await heic2any({ blob: file, toType: 'image/jpeg', quality: 0.92 });
+        blob = Array.isArray(res) ? res[0] : res; // 处理动图返回数组的情况
+      }
       const url = URL.createObjectURL(blob);
       const { w, h } = await new Promise((res, rej) => { const img = new Image(); img.onload = () => res({ w: img.width, h: img.height }); img.onerror = rej; img.src = url; });
       return { url, blob, w, h, name: file.name };
     } catch { Utils.showToast('处理失败: ' + file.name, true); return null; }
   }));
-  imageStore.set(s => [...s, ...results.filter(Boolean)]);
+  imageStore.set(s => ({ ...s, files: [...s.files, ...results.filter(Boolean)] })); // 修复状态污染
   syncImageListDOM();
 }
 
@@ -486,7 +485,11 @@ async function mergePdf() {
 }
 
 async function calculateEstimates(file) {
-  const img = new Image(); img.src = URL.createObjectURL(file); await new Promise(r => img.onload = r);
+  const url = URL.createObjectURL(file);
+  const img = new Image(); img.src = url; 
+  await new Promise(r => img.onload = r);
+  URL.revokeObjectURL(url); // 修复内存泄漏
+  
   const c = document.createElement('canvas'); c.width = img.width; c.height = img.height;
   const ctx = c.getContext('2d'); ctx.drawImage(img, 0, 0);
   
@@ -556,8 +559,11 @@ async function doGenerateQR() {
 }
 
 async function doParseQR(file) {
-  const img = new Image(); img.src = URL.createObjectURL(file);
+  const url = URL.createObjectURL(file);
+  const img = new Image(); img.src = url;
   await new Promise(r => img.onload = r);
+  URL.revokeObjectURL(url); // 修复内存泄漏
+  
   const c = document.createElement('canvas'); c.width = img.width; c.height = img.height;
   const ctx = c.getContext('2d'); ctx.drawImage(img, 0, 0);
   const imageData = ctx.getImageData(0, 0, c.width, c.height);
@@ -582,18 +588,36 @@ app.addEventListener('click', async e => {
   const t = e.target, closest = sel => t.closest(sel);
   if (closest('[data-action="home"]')) return location.hash = '#/';
   
-  // 统一重置
-  if (closest('#reset-number')) return resetStore(imageStore, { files: [], mode: 'fit', orient: 'auto', quality: 0.8 }); // 修正：应该是重置 numberStore，这里简化处理
-  if (closest('#reset-image')) { imageStore.get().files.forEach(f => URL.revokeObjectURL(f.url)); imageStore.set([]); return renderImageTool(); }
-  if (closest('#reset-pdf')) { pdfStore.set(structuredClone({ mode: 'split', split: { file: null, fileName: '', pageCount: 0, method: 'pages', pages: 1, start: 1, end: 1 }, merge: { files: [] } })); return renderPdfTool(); }
-  if (closest('#reset-compress')) { const s = compressStore.get(); if(s.url) URL.revokeObjectURL(s.url); if(s.resultUrl) URL.revokeObjectURL(s.resultUrl); compressStore.set({ file: null, url: '', name: '', origSize: 0, quality: 0.8, format: 'jpeg', scale: 100, resultBlob: null, resultUrl: '', estimates: { jpeg: 0, webp: 0, png: 0 } }); return renderCompressTool(); }
-  if (closest('#reset-text')) { textStore.set({ input: '', mode: 'upper' }); return renderTextCaseTool(); }
-  if (closest('#reset-qr')) { const s = qrStore.get(); if(s.logoUrl) URL.revokeObjectURL(s.logoUrl); qrStore.set({ text: '', logoUrl: '', mode: 'generate', parseResult: '' }); return renderQrTool(); }
+  // 统一重置逻辑
+  if (closest('#reset-number')) {
+    const input = app.querySelector('#num-input');
+    const output = app.querySelector('#num-output');
+    if (input) input.value = '';
+    if (output) output.innerHTML = '<span class="text-[--muted] text-base font-sans font-normal">结果将显示在这里</span>';
+    return;
+  }
+  if (closest('#reset-image')) return resetStore(imageStore, { files: [], mode: 'fit', orient: 'auto', quality: 0.8 });
+  if (closest('#reset-pdf')) return resetStore(pdfStore, { mode: 'split', split: { file: null, fileName: '', pageCount: 0, method: 'pages', pages: 1, start: 1, end: 1 }, merge: { files: [] } });
+  if (closest('#reset-compress')) return resetStore(compressStore, { file: null, url: '', name: '', origSize: 0, quality: 0.8, format: 'jpeg', scale: 100, resultBlob: null, resultUrl: '', estimates: { jpeg: 0, webp: 0, png: 0 } });
+  if (closest('#reset-text')) return resetStore(textStore, { input: '', mode: 'upper' });
+  if (closest('#reset-qr')) return resetStore(qrStore, { text: '', logoUrl: '', mode: 'generate', parseResult: '' });
 
   if (closest('#copy-output-btn')) { const v = app.querySelector('#num-output').textContent; if (!v || v.includes('显示在这里')) return Utils.showToast('结果为空', true); Utils.copy(v).then(() => Utils.showToast('已复制结果')); return; }
 
   for (const key of ['mode', 'orient', 'quality']) { const opt = closest(`[data-${key}]`); if (opt && app.querySelector('#convert-img-btn')) { app.querySelectorAll(`[data-${key}]`).forEach(o => o.classList.remove('active')); opt.classList.add('active'); imageStore.set(s => ({ ...s, [key]: key === 'quality' ? parseFloat(opt.dataset[key]) : opt.dataset[key] })); return; } }
-  const rmImg = closest('[data-rm-img]'); if (rmImg) { const i = +rmImg.dataset.rmImg; const files = imageStore.get().files; URL.revokeObjectURL(files[i].url); files.splice(i, 1); imageStore.set(files); const list = app.querySelector('#img-list'); if(list.children[i]) list.children[i].remove(); syncImageListDOM(); return; }
+  
+  const rmImg = closest('[data-rm-img]'); 
+  if (rmImg) { 
+    const i = +rmImg.dataset.rmImg; 
+    const files = imageStore.get().files; 
+    URL.revokeObjectURL(files[i].url); 
+    files.splice(i, 1); 
+    imageStore.set(s => ({ ...s, files })); // 修复状态污染
+    const list = app.querySelector('#img-list'); 
+    if(list.children[i]) list.children[i].remove(); 
+    syncImageListDOM(); 
+    return; 
+  }
   if (closest('#convert-img-btn')) return convertToPdf();
 
   const pm = closest('[data-pdf-mode]'); if (pm) { pdfStore.set(s => ({ ...s, mode: pm.dataset.pdfMode })); return renderPdfTool(); }
@@ -680,7 +704,7 @@ app.addEventListener('files-selected', async e => {
     app.querySelector('#comp-new-size').textContent = '计算中...';
     const preview = app.querySelector('#comp-preview'), placeholder = app.querySelector('#comp-placeholder');
     if (preview) { preview.src = url; preview.classList.remove('hidden'); placeholder?.classList.add('hidden'); }
-    calculateEstimates(file); // 异步计算预估
+    calculateEstimates(file);
     return doCompress();
   }
   if (zone.id === 'qr-logo-drop') {
