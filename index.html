@@ -13,211 +13,61 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
   <style>
-    /* ═══════════════════════════════════════════
-       极简苹果风 (iOS Vision)
-       ═══════════════════════════════════════════ */
     :root {
-      --bg: #f8f8f8;
-      --bg-2: #f0f0f0;
-      --ink: #1d1d1f;
-      --ink-soft: #515154;
-      --muted: #86868b;
-      --accent: #007aff;
-      --green: #34c759;
-      --green-2: #30b753;
-      --green-light: rgba(52, 199, 89, 0.08);
-      --border: rgba(0, 0, 0, 0.1);
-      --shadow: 0 1px 3px rgba(0,0,0,0.04), 0 10px 20px rgba(0,0,0,0.04);
-      --shadow-hover: 0 10px 30px rgba(0,0,0,0.08), 0 20px 40px rgba(0,0,0,0.06);
-      --radius-sm: 10px;
-      --radius-md: 14px;
-      --radius-lg: 20px;
+      --bg: #faf8f3; --bg-2: #f0ebe0; --ink: #1a2e2a; --ink-soft: #4a5a55; --muted: #8b9690;
+      --accent: #c2410c; --border: #e8e2d5; --green: #1a3a32; --green-2: #2d5247; --green-light: #f0f4f2;
+      --shadow: 0 1px 2px rgba(26,46,42,.04), 0 8px 24px rgba(26,46,42,.06);
+      --shadow-hover: 0 4px 12px rgba(26,46,42,.08), 0 20px 48px rgba(26,46,42,.12);
     }
-
-    * { box-sizing: border-box; }
-    html, body { margin: 0; padding: 0; }
-
-    body {
-      font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Noto Sans SC", system-ui, sans-serif;
-      background: var(--bg);
-      color: var(--ink);
-      min-height: 100vh;
-      -webkit-font-smoothing: antialiased;
-      scroll-behavior: smooth;
-    }
-
-    drop-zone { display: block; }
-
-    /* 按钮：液态玻璃 + 细边框 */
-    .btn {
-      display: inline-flex;
-      align-items: center;
-      justify-content: center;
-      gap: 8px;
-      padding: 10px 20px;
-      border-radius: var(--radius-sm);
-      font-size: 14px;
-      font-weight: 500;
-      cursor: pointer;
-      border: 0.5px solid transparent;
-      transition: all .25s ease;
-      font-family: inherit;
-      white-space: nowrap;
-      line-height: 1.5;
-      backdrop-filter: blur(10px);
-      -webkit-backdrop-filter: blur(10px);
-    }
-    .btn-sm { padding: 6px 12px; font-size: 12px; }
-    .btn-primary { background: var(--ink); color: #fff; border-color: var(--ink); }
-    .btn-primary:hover { background: #000; transform: scale(1.02); }
-    .btn-ghost { background: rgba(255, 255, 255, 0.6); color: var(--ink-soft); border-color: var(--border); }
-    .btn-ghost:hover { background: rgba(0, 0, 0, 0.05); color: var(--ink); border-color: rgba(0,0,0,0.2); }
-    .btn[disabled] { opacity: .5; cursor: not-allowed; transform: none !important; pointer-events: none; }
-
-    /* 卡片：轻盈悬浮 */
-    .tool-card {
-      background: rgba(255, 255, 255, 0.7);
-      border: 0.5px solid var(--border);
-      border-radius: var(--radius-lg);
-      padding: 28px;
-      cursor: pointer;
-      transition: all .35s cubic-bezier(0.25, 0.8, 0.25, 1);
-      height: 100%;
-      text-decoration: none;
-      color: inherit;
-      display: block;
-      backdrop-filter: blur(20px);
-      -webkit-backdrop-filter: blur(20px);
-    }
-    .tool-card:hover { transform: translateY(-6px); box-shadow: var(--shadow-hover); border-color: rgba(0,0,0,0.15); }
-    .tool-icon {
-      width: 56px; height: 56px;
-      background: rgba(0,0,0,0.05);
-      border-radius: 16px;
-      display: flex; align-items: center; justify-content: center;
-      color: var(--ink); margin-bottom: 24px;
-      transition: all .3s ease;
-    }
-    .tool-card:hover .tool-icon { background: var(--ink); color: #fff; }
-
-    /* 表单：轻拟物 */
-    .input, .textarea {
-      width: 100%; padding: 16px 20px;
-      border: 0.5px solid var(--border);
-      border-radius: var(--radius-md);
-      background: rgba(255, 255, 255, 0.8);
-      font-family: inherit; font-size: 16px; color: var(--ink);
-      transition: all .2s ease;
-      backdrop-filter: blur(10px);
-    }
-    .textarea { min-height: 200px; resize: vertical; line-height: 1.6; }
-    .input:focus, .textarea:focus {
-      outline: none; border-color: var(--accent);
-      box-shadow: 0 0 0 4px rgba(0, 122, 255, 0.1);
-    }
-
-    /* 结果展示：等宽字体 + 大字号 */
-    .result-box {
-      background: rgba(0,0,0,0.02);
-      border: 0.5px solid var(--border);
-      border-radius: var(--radius-md);
-      padding: 24px; min-height: 96px;
-      font-family: "SF Mono", "JetBrains Mono", "Noto Sans SC", monospace;
-      font-size: 26px; color: var(--ink); font-weight: 600;
-      line-height: 1.5; word-break: break-all;
-      display: flex; align-items: center; letter-spacing: -0.5px;
-    }
-
-    /* 拖拽区域 */
-    .drop-zone {
-      border: 1.5px dashed var(--border);
-      border-radius: var(--radius-lg);
-      padding: 56px 32px; text-align: center;
-      background: rgba(255,255,255,0.5);
-      transition: all .3s ease; cursor: pointer;
-    }
-    .drop-zone.dragover { border-color: var(--accent); background: rgba(0, 122, 255, 0.05); transform: scale(1.01); }
-    .drop-zone:hover { border-color: var(--ink-soft); background: rgba(0,0,0,0.02); }
-
-    /* 图片缩略图 */
-    .thumb {
-      position: relative; width: 100%; aspect-ratio: 1;
-      background: var(--bg-2); border-radius: var(--radius-sm);
-      overflow: hidden; border: 0.5px solid var(--border);
-      transition: transform .2s ease; cursor: grab;
-    }
-    .thumb:hover { transform: translateY(-2px); box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
-    .thumb img { width: 100%; height: 100%; object-fit: cover; pointer-events: none; }
-    .thumb-remove {
-      position: absolute; top: 6px; right: 6px; width: 22px; height: 22px;
-      background: rgba(0,0,0,.65); color: #fff; border: none; border-radius: 50%;
-      cursor: pointer; display: flex; align-items: center; justify-content: center;
-      opacity: 0; transition: opacity .2s;
-    }
-    .thumb:hover .thumb-remove { opacity: 1; }
+    *{box-sizing:border-box} html,body{margin:0;padding:0}
+    body{font-family:'Noto Sans SC',system-ui,sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;-webkit-font-smoothing:antialiased}
+    drop-zone{display:block}
+    .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:10px 20px;border-radius:10px;font-size:14px;font-weight:500;cursor:pointer;border:1px solid transparent;transition:all .2s ease;font-family:inherit;white-space:nowrap;line-height:1.5}
+    .btn-sm{padding:6px 12px;font-size:12px}
+    .btn-primary{background:var(--green);color:#fff}.btn-primary:hover{background:var(--green-2);transform:translateY(-1px)}
+    .btn-ghost{background:transparent;color:var(--ink-soft);border-color:var(--border)}.btn-ghost:hover{background:var(--bg-2);color:var(--ink);border-color:var(--ink-soft)}
+    .btn[disabled]{opacity:.6;cursor:not-allowed;transform:none!important;pointer-events:none}
     
-    /* 补充：缩略图角标 (适配苹果风胶囊样式) */
-    .thumb-num {
-      position: absolute; top: 6px; left: 6px;
-      background: rgba(0,0,0,.65); color: #fff; font-size: 10px;
-      padding: 2px 6px; border-radius: 999px; font-weight: 600;
-      backdrop-filter: blur(4px);
-    }
-    .thumb-orient {
-      position: absolute; bottom: 6px; left: 6px;
-      background: rgba(0,0,0,.65); color: #fff; font-size: 10px;
-      padding: 2px 6px; border-radius: 999px;
-      backdrop-filter: blur(4px);
-    }
-    .thumb.dragging { opacity: 0.4; }
-
-    /* 选项卡片（单选组） */
-    .orient-option {
-      flex: 1; padding: 14px 12px;
-      border: 0.5px solid var(--border);
-      border-radius: 999px; /* 胶囊状 */
-      background: rgba(255,255,255,0.7);
-      cursor: pointer; text-align: center;
-      transition: all .2s ease; font-size: 14px; color: var(--ink-soft);
-      backdrop-filter: blur(10px);
-    }
-    .orient-option.active {
-      background: var(--ink); color: #fff;
-      border-color: var(--ink); box-shadow: 0 4px 12px rgba(0,0,0,0.15);
-    }
-
-    /* Toast 提示 */
-    .toast {
-      position: fixed; top: 24px; left: 50%;
-      transform: translateX(-50%) translateY(-100px);
-      background: rgba(0,0,0,0.85); color: #fff;
-      padding: 12px 24px; border-radius: 999px;
-      font-size: 14px; box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-      z-index: 1000; transition: transform .5s cubic-bezier(0.34, 1.56, 0.64, 1);
-      display: flex; align-items: center; gap: 8px; font-weight: 500;
-      backdrop-filter: blur(20px);
-    }
-    .toast.show { transform: translateX(-50%) translateY(0); }
-    .toast.error { background: rgba(255, 59, 48, 0.9); }
-
-    /* 辅助样式 */
-    .spinner { width: 16px; height: 16px; border: 2px solid rgba(255,255,255,.3); border-top-color: #fff; border-radius: 50%; animation: spin .8s linear infinite; display: inline-block; }
-    @keyframes spin { to { transform: rotate(360deg); } }
-    .tool-num { display: inline-flex; align-items: center; gap: 6px; font-family: "SF Mono", "JetBrains Mono", serif; font-size: 11px; letter-spacing: .15em; color: var(--muted); text-transform: uppercase; }
-    .info-card { background: rgba(0,0,0,0.02); border: 0.5px solid var(--border); border-radius: var(--radius-md); padding: 20px; }
-    .hidden { display: none !important; }
-    .result-container { position: relative; }
-    .copy-result-btn { position: absolute; top: 1rem; right: 1rem; opacity: 0; transition: opacity .2s; }
-    .result-container:hover .copy-result-btn { opacity: 1; }
-    .stat-box { background: rgba(0,0,0,0.03); border-radius: 10px; padding: 12px; text-align: center; }
-    .stat-box .val { font-size: 20px; font-weight: 700; color: var(--ink); font-family: "SF Mono", monospace; }
-    .stat-box .lbl { font-size: 12px; color: var(--muted); margin-top: 4px; }
-    .range-slider { -webkit-appearance: none; width: 100%; height: 6px; border-radius: 3px; background: var(--border); outline: none; }
-    .range-slider::-webkit-slider-thumb { -webkit-appearance: none; width: 20px; height: 20px; border-radius: 50%; background: var(--ink); cursor: pointer; border: 2px solid #fff; box-shadow: 0 2px 6px rgba(0,0,0,0.2); }
-    .qr-preview { background: #fff; padding: 24px; border-radius: var(--radius-md); border: 0.5px solid var(--border); display: flex; align-items: center; justify-content: center; min-height: 300px; }
-    .qr-preview canvas, .qr-preview img { max-width: 100%; max-height: 400px; image-rendering: pixelated; }
-    .format-card { cursor: pointer; border: 0.5px solid var(--border); border-radius: var(--radius-md); transition: all .2s; background: rgba(255,255,255,0.7); }
-    .format-card.active { border-color: var(--ink); background: rgba(0,0,0,0.03); }
+    /* 简化后的卡片 Hover */
+    .tool-card{background:#fff;border:1px solid var(--border);border-radius:16px;padding:24px;cursor:pointer;transition:all .3s ease;height:100%;text-decoration:none;color:inherit;display:block}
+    .tool-card:hover{transform:translateY(-4px);box-shadow:var(--shadow-hover);border-color:var(--green-2)}
+    .tool-icon{width:56px;height:56px;background:var(--green-light);border-radius:14px;display:flex;align-items:center;justify-content:center;color:var(--green);margin-bottom:24px;transition:all .3s ease}
+    .tool-card:hover .tool-icon{background:var(--green);color:#fff;transform:scale(1.05)}
+    
+    .input,.textarea{width:100%;padding:16px 20px;border:1px solid var(--border);border-radius:12px;background:#fff;font-family:inherit;font-size:16px;color:var(--ink);transition:all .2s ease}
+    .textarea{min-height:200px;resize:vertical;line-height:1.6}
+    .input:focus,.textarea:focus{outline:none;border-color:var(--green);box-shadow:0 0 0 4px rgba(26,58,50,.08)}
+    .result-box{background:var(--green-light);border:1px solid var(--border);border-radius:12px;padding:24px;min-height:96px;font-family:'Noto Serif SC',serif;font-size:24px;color:var(--green);font-weight:600;line-height:1.6;word-break:break-all;display:flex;align-items:center}
+    .drop-zone{border:2px dashed var(--border);border-radius:16px;padding:56px 32px;text-align:center;background:#fff;transition:all .3s ease;cursor:pointer}
+    .drop-zone.dragover{border-color:var(--green);background:var(--green-light);transform:scale(1.01)}
+    .drop-zone:hover{border-color:var(--ink-soft);background:var(--bg-2)}
+    .thumb{position:relative;width:100%;aspect-ratio:1;background:var(--bg-2);border-radius:10px;overflow:hidden;border:1px solid var(--border);transition:transform .2s ease;cursor:grab}
+    .thumb:hover{transform:translateY(-2px);box-shadow:0 4px 12px rgba(0,0,0,.1)}
+    .thumb img{width:100%;height:100%;object-fit:cover;pointer-events:none}
+    .thumb-remove{position:absolute;top:6px;right:6px;width:22px;height:22px;background:rgba(0,0,0,.65);color:#fff;border:none;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .2s}
+    .thumb:hover .thumb-remove{opacity:1}
+    .thumb-orient{position:absolute;bottom:6px;left:6px;background:rgba(0,0,0,.65);color:#fff;font-size:10px;padding:2px 6px;border-radius:4px}
+    .thumb-num{position:absolute;top:6px;left:6px;background:var(--green);color:#fff;font-size:10px;padding:2px 6px;border-radius:4px;font-weight:600}
+    .thumb.dragging{opacity:.4}
+    .orient-option{flex:1;padding:16px 12px;border:1px solid var(--border);border-radius:12px;background:#fff;cursor:pointer;text-align:center;transition:all .2s ease;font-size:14px;color:var(--ink-soft)}
+    .orient-option.active{background:var(--green);color:#fff;border-color:var(--green);box-shadow:0 4px 12px rgba(26,50,50,.2)}
+    .toast{position:fixed;top:24px;left:50%;transform:translateX(-50%) translateY(-100px);background:var(--green);color:#fff;padding:12px 24px;border-radius:10px;font-size:14px;box-shadow:var(--shadow-hover);z-index:1000;transition:transform .4s cubic-bezier(.16,1,.3,1);display:flex;align-items:center;gap:8px;font-weight:500}
+    .toast.show{transform:translateX(-50%) translateY(0)}.toast.error{background:var(--accent)}
+    .spinner{width:16px;height:16px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite;display:inline-block}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    .tool-num{display:inline-flex;align-items:center;gap:6px;font-family:'Fraunces',serif;font-size:12px;letter-spacing:.15em;color:var(--muted);text-transform:uppercase}
+    .info-card{background:var(--green-light);border:1px solid var(--border);border-radius:12px;padding:20px}
+    .hidden{display:none!important}
+    .result-container{position:relative}.copy-result-btn{position:absolute;top:1rem;right:1rem;opacity:0;transition:opacity .2s}.result-container:hover .copy-result-btn{opacity:1}
+    .stat-box{background:var(--bg-2);border-radius:8px;padding:12px;text-align:center}
+    .stat-box .val{font-size:20px;font-weight:700;color:var(--green)}
+    .stat-box .lbl{font-size:12px;color:var(--muted);margin-top:4px}
+    .range-slider{-webkit-appearance:none;width:100%;height:6px;border-radius:3px;background:var(--border);outline:none}
+    .range-slider::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:var(--green);cursor:pointer;border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.2)}
+    .qr-preview{background:#fff;padding:24px;border-radius:16px;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;min-height:300px}
+    .qr-preview canvas,.qr-preview img{max-width:100%;max-height:400px;image-rendering:pixelated}
+    .format-card{cursor:pointer;border:2px solid transparent;transition:all .2s}
+    .format-card.active{border-color:var(--green);background:var(--green-light)}
   </style>
 </head>
 <body>
@@ -341,8 +191,15 @@ const createStore = (initial) => {
 };
 
 const imageStore = createStore({ files: [], mode: 'fit', orient: 'auto', quality: 0.8 });
-const pdfStore = createStore({ mode: 'split', split: { file: null, fileName: '', pageCount: 0, method: 'pages', pages: 1, start: 1, end: 1 }, merge: { files: [] } });
-const compressStore = createStore({ file: null, url: '', name: '', origSize: 0, quality: 0.8, format: 'jpeg', scale: 100, resultBlob: null, resultUrl: '', estimates: { jpeg: 0, webp: 0, png: 0 } });
+const pdfStore = createStore({ 
+  mode: 'split', 
+  split: { file: null, fileName: '', pageCount: 0, method: 'pages', pages: 1, start: 1, end: 1 }, 
+  merge: { files: [] } 
+});
+const compressStore = createStore({ 
+  file: null, url: '', name: '', origSize: 0, quality: 0.8, format: 'jpeg', scale: 100, 
+  resultBlob: null, resultUrl: '', estimates: { jpeg: 0, webp: 0, png: 0 } 
+});
 const textStore = createStore({ input: '', mode: 'upper' });
 const qrStore = createStore({ text: '', logoUrl: '', mode: 'generate', parseResult: '' });
 
@@ -350,10 +207,12 @@ let sortableInst = null, compressTaskId = 0;
 
 function resetStore(store, initial) {
   const oldState = store.get();
+  // 内存清理
   if (oldState.files) oldState.files.forEach(f => f.url && URL.revokeObjectURL(f.url));
   if (oldState.url) URL.revokeObjectURL(oldState.url);
   if (oldState.resultUrl) URL.revokeObjectURL(oldState.resultUrl);
   if (oldState.logoUrl) URL.revokeObjectURL(oldState.logoUrl);
+  
   store.set(structuredClone(initial));
   const base = (location.hash.slice(1) || '/').split('?')[0];
   (ROUTES[base] || renderHome)();
@@ -399,14 +258,14 @@ const CASE_OPTS = [{ v: 'upper', l: '全部大写' }, { v: 'lower', l: '全部�
 const app = document.getElementById('app');
 const $header = (title, num) => `<header class="max-w-5xl mx-auto px-6 py-8 flex items-center gap-4"><button class="btn btn-ghost btn-sm" data-action="home"><svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M10 12L6 8L10 4" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg> 返回</button><div><div class="tool-num">${num}</div><h1 class="text-2xl font-bold text-[--ink]">${title}</h1></div></header>`;
 const $optGroup = (key, cur) => IMG_OPTS[key].map(o => `<div class="orient-option ${String(cur) === o.v ? 'active' : ''}" data-${key}="${o.v}">${o.l}${o.s ? `<br><span class="text-xs opacity-70">${o.s}</span>` : ''}</div>`).join('');
-const $toolCard = (t, i) => `<a href="#/${t.id}" class="tool-card"><div class="tool-icon">${Icons.get(t.icon)}</div><div class="flex items-center justify-between mb-3"><h3 class="text-xl font-semibold text-[--ink]">${t.name}</h3><span class="tool-num">${String(i + 1).padStart(2, '0')}</span></div><p class="text-sm text-[--ink-soft] leading-relaxed mb-6">${t.desc}</p><div class="flex items-center gap-2 text-xs text-[--accent] font-medium"><span>进入工具</span><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 7H11M11 7L7 3M11 7L7 11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div></a>`;
-const $infoCard = (title, items) => `<div class="info-card mt-12"><h4 class="text-sm font-semibold text-[--ink] mb-3 flex items-center gap-2"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="6" stroke="currentColor" stroke-width="1.3"/><path d="M7 4V7.5M7 9.5V10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>${title}</h4><ul class="text-xs text-[--ink-soft] space-y-1.5 leading-relaxed">${items.map(i => `<li>${i}</li>`).join('')}</ul></div>`;
+const $toolCard = (t, i) => `<a href="#/${t.id}" class="tool-card"><div class="tool-icon">${Icons.get(t.icon)}</div><div class="flex items-center justify-between mb-3"><h3 class="text-xl font-semibold text-[--ink]">${t.name}</h3><span class="tool-num">${String(i + 1).padStart(2, '0')}</span></div><p class="text-sm text-[--ink-soft] leading-relaxed mb-6">${t.desc}</p><div class="flex items-center gap-2 text-xs text-[--green] font-medium"><span>进入工具</span><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 7H11M11 7L7 3M11 7L7 11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div></a>`;
+const $infoCard = (title, items) => `<div class="info-card mt-12"><h4 class="text-sm font-semibold text-[--green] mb-3 flex items-center gap-2"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="6" stroke="currentColor" stroke-width="1.3"/><path d="M7 4V7.5M7 9.5V10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>${title}</h4><ul class="text-xs text-[--ink-soft] space-y-1.5 leading-relaxed">${items.map(i => `<li>${i}</li>`).join('')}</ul></div>`;
 
 // ═══════════════════════════════════════════
 // 6. PAGE RENDERERS
 // ═══════════════════════════════════════════
 function renderHome() {
-  app.innerHTML = `<main class="max-w-6xl mx-auto px-6 py-16"><div class="text-center mb-12"><h1 class="text-5xl font-bold mb-4" style="background:linear-gradient(135deg,var(--ink) 0%,var(--ink-soft) 50%,var(--accent) 100%);-webkit-background-clip:text;color:transparent">效率工具集</h1><p class="text-[--ink-soft] text-lg mb-8">简洁、纯粹、专注的本地化工具，解决日常需求。</p><div class="flex gap-8 justify-center text-sm text-[--ink-soft]"><div><span class="font-bold text-[--ink] text-xl">${TOOLS.length}</span> 个实用工具</div><div><span class="font-bold text-[--ink] text-xl">100%</span> 本地运行</div><div><span class="font-bold text-[--ink] text-xl">0</span> 数据上传</div></div></div><div id="tools-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">${TOOLS.map($toolCard).join('')}</div></main>`;
+  app.innerHTML = `<main class="max-w-6xl mx-auto px-6 py-16"><div class="text-center mb-12"><h1 class="text-5xl font-bold mb-4" style="background:linear-gradient(135deg,var(--green) 0%,var(--green-2) 50%,var(--accent) 100%);-webkit-background-clip:text;color:transparent">效率工具集</h1><p class="text-[--ink-soft] text-lg mb-8">简洁、纯粹、专注的本地化工具，解决日常需求。</p><div class="flex gap-8 justify-center text-sm text-[--ink-soft]"><div><span class="font-bold text-[--green] text-xl">${TOOLS.length}</span> 个实用工具</div><div><span class="font-bold text-[--green] text-xl">100%</span> 本地运行</div><div><span class="font-bold text-[--green] text-xl">0</span> 数据上传</div></div></div><div id="tools-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">${TOOLS.map($toolCard).join('')}</div></main>`;
 }
 
 function renderNumberTool() {
@@ -418,7 +277,16 @@ function renderImageTool() {
   app.innerHTML = `${$header('图片转 PDF', 'Tool 02')}<main class="max-w-4xl mx-auto px-6 pb-16"><drop-zone id="img-drop" text="点击或拖拽图片到此处" hint="支持 JPG, PNG, WEBP, HEIC" accept="image/*,.heic,.heif" multiple></drop-zone><div id="img-section" class="hidden mt-8"><div class="flex items-center justify-between mb-4"><h3 class="text-lg font-semibold text-[--ink]">已选图片 <span id="img-count" class="text-[--muted] font-normal text-sm"></span></h3><button class="btn btn-ghost btn-sm" id="reset-image">重置</button></div><div id="img-list" class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-4"></div></div><div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8"><div><label class="block text-sm font-medium text-[--ink-soft] mb-3">页面模式</label><div class="flex gap-3">${$optGroup('mode', S.mode)}</div></div><div><label class="block text-sm font-medium text-[--ink-soft] mb-3">页面方向</label><div class="flex gap-3">${$optGroup('orient', S.orient)}</div></div><div><label class="block text-sm font-medium text-[--ink-soft] mb-3">压缩等级</label><div class="flex gap-3">${$optGroup('quality', S.quality)}</div></div></div><div class="mt-10 text-center"><button class="btn btn-primary text-lg px-12 py-4" id="convert-img-btn">生成并下载 PDF</button></div>${$infoCard('使用说明', ['所有图片处理均在本地完成', 'HEIC/HEIF 格式将自动转换为 JPEG', '拖拽排序：长按缩略图拖动调整顺序'])}</main>`;
   const list = app.querySelector('#img-list');
   if (sortableInst) sortableInst.destroy();
-  sortableInst = Sortable.create(list, { animation: 150, ghostClass: 'dragging', onEnd: e => { const files = imageStore.get().files; const movedItem = files.splice(e.oldIndex, 1)[0]; files.splice(e.newIndex, 0, movedItem); imageStore.set(files); } });
+  sortableInst = Sortable.create(list, { 
+    animation: 150, ghostClass: 'dragging', 
+    onEnd: e => { 
+      const files = imageStore.get().files;
+      const movedItem = files.splice(e.oldIndex, 1)[0];
+      files.splice(e.newIndex, 0, movedItem);
+      imageStore.set(files);
+      // 不重绘 DOM，由 SortableJS 接管
+    } 
+  });
   syncImageListDOM();
 }
 
@@ -427,19 +295,27 @@ function syncImageListDOM() {
   const list = app.querySelector('#img-list');
   const sec = app.querySelector('#img-section');
   if (!list || !sec) return;
+  
   if (!files.length) { sec.classList.add('hidden'); list.innerHTML = ''; return; }
   sec.classList.remove('hidden');
   app.querySelector('#img-count').textContent = `(${files.length} 张)`;
+  
+  // 局部更新逻辑
   const existingNodes = Array.from(list.children);
   if (existingNodes.length !== files.length) {
+    // 数量不一致，全量重建（兜底）
     list.innerHTML = files.map((f, i) => `<div class="thumb" data-idx="${i}"><img src="${f.url}" alt="${f.name}"><span class="thumb-num">${i + 1}</span><span class="thumb-orient">${f.w > f.h ? '横' : '竖'}</span><button class="thumb-remove" data-rm-img="${i}"><svg width="10" height="10" viewBox="0 0 10 10"><path d="M2 2L8 8M8 2L2 8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></button></div>`).join('');
   } else {
+    // 检查是否需要更新（例如新增）
+    // 这里简化处理：如果 URL 不匹配，则更新
     files.forEach((f, i) => {
       if (!existingNodes[i] || existingNodes[i].querySelector('img').src !== f.url) {
         const div = document.createElement('div');
-        div.className = 'thumb'; div.dataset.idx = i;
+        div.className = 'thumb';
+        div.dataset.idx = i;
         div.innerHTML = `<img src="${f.url}" alt="${f.name}"><span class="thumb-num">${i + 1}</span><span class="thumb-orient">${f.w > f.h ? '横' : '竖'}</span><button class="thumb-remove" data-rm-img="${i}"><svg width="10" height="10" viewBox="0 0 10 10"><path d="M2 2L8 8M8 2L2 8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></button>`;
-        if (existingNodes[i]) list.replaceChild(div, existingNodes[i]); else list.appendChild(div);
+        if (existingNodes[i]) list.replaceChild(div, existingNodes[i]);
+        else list.appendChild(div);
       }
     });
   }
@@ -447,21 +323,21 @@ function syncImageListDOM() {
 
 function renderPdfTool() {
   const S = pdfStore.get(), split = S.split;
-  app.innerHTML = `${$header('PDF拆分与合并', 'Tool 03')}<main class="max-w-4xl mx-auto px-6 pb-16"><div class="flex gap-4 mb-8 justify-center"><button class="btn ${S.mode === 'split' ? 'btn-primary' : 'btn-ghost'}" data-pdf-mode="split">拆分 PDF</button><button class="btn ${S.mode === 'merge' ? 'btn-primary' : 'btn-ghost'}" data-pdf-mode="merge">合并 PDF</button></div><div id="split-view" class="${S.mode !== 'split' ? 'hidden' : ''}"><drop-zone id="split-drop" text="上传 PDF 文件" hint="支持 .pdf 格式，单个文件最大 50MB" accept=".pdf"></drop-zone><div id="split-preview" class="${split.file ? '' : 'hidden'} mt-6 p-4 bg-white/50 rounded-xl border border-[--border] flex items-center justify-between"><div><div class="font-medium text-[--ink]" id="split-fname">${split.fileName}</div><div class="text-xs text-[--muted]">共 <span id="split-pcount">${split.pageCount}</span> 页</div></div><button class="btn btn-ghost btn-sm" id="split-remove">移除文件</button></div><div id="split-opts" class="${split.file ? '' : 'hidden'} mt-6 space-y-4"><div class="flex gap-4 items-center"><label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="split-method" value="pages" ${split.method === 'pages' ? 'checked' : ''}> 按固定页数</label><input type="number" class="input w-24" id="split-pages" value="${split.pages}" min="1"></div><div class="flex items-center gap-4"><label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="split-method" value="range" ${split.method === 'range' ? 'checked' : ''}> 按页码范围</label><span>从</span><input type="number" class="input w-20" id="split-start" value="${split.start}" min="1"><span>到</span><input type="number" class="input w-20" id="split-end" value="${split.end}" min="1"></div></div><div class="mt-8 text-center"><button class="btn btn-primary px-10" id="split-btn">开始拆分</button></div></div><div id="merge-view" class="${S.mode !== 'merge' ? 'hidden' : ''}"><drop-zone id="merge-drop" text="上传多个 PDF 文件" hint="支持 .pdf 格式，最多20个或总计200MB" accept=".pdf" multiple></drop-zone><div id="merge-list" class="hidden mt-6 space-y-3"></div><div class="mt-8 flex gap-4 justify-center"><button class="btn btn-primary px-10" id="merge-btn" ${S.merge.files.length < 2 ? 'disabled' : ''}>开始合并</button><button class="btn btn-ghost" id="reset-pdf">重置</button></div></div>${$infoCard('使用说明', ['所有PDF处理均在本地完成', '支持按固定页数或自定义页码范围拆分', '支持将多个PDF合并为一个文档'])}</main>`;
+  app.innerHTML = `${$header('PDF拆分与合并', 'Tool 03')}<main class="max-w-4xl mx-auto px-6 pb-16"><div class="flex gap-4 mb-8 justify-center"><button class="btn ${S.mode === 'split' ? 'btn-primary' : 'btn-ghost'}" data-pdf-mode="split">拆分 PDF</button><button class="btn ${S.mode === 'merge' ? 'btn-primary' : 'btn-ghost'}" data-pdf-mode="merge">合并 PDF</button></div><div id="split-view" class="${S.mode !== 'split' ? 'hidden' : ''}"><drop-zone id="split-drop" text="上传 PDF 文件" hint="支持 .pdf 格式，单个文件最大 50MB" accept=".pdf"></drop-zone><div id="split-preview" class="${split.file ? '' : 'hidden'} mt-6 p-4 bg-white rounded-xl border border-[--border] flex items-center justify-between"><div><div class="font-medium text-[--ink]" id="split-fname">${split.fileName}</div><div class="text-xs text-[--muted]">共 <span id="split-pcount">${split.pageCount}</span> 页</div></div><button class="btn btn-ghost btn-sm" id="split-remove">移除文件</button></div><div id="split-opts" class="${split.file ? '' : 'hidden'} mt-6 space-y-4"><div class="flex gap-4 items-center"><label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="split-method" value="pages" ${split.method === 'pages' ? 'checked' : ''}> 按固定页数</label><input type="number" class="input w-24" id="split-pages" value="${split.pages}" min="1"></div><div class="flex items-center gap-4"><label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="split-method" value="range" ${split.method === 'range' ? 'checked' : ''}> 按页码范围</label><span>从</span><input type="number" class="input w-20" id="split-start" value="${split.start}" min="1"><span>到</span><input type="number" class="input w-20" id="split-end" value="${split.end}" min="1"></div></div><div class="mt-8 text-center"><button class="btn btn-primary px-10" id="split-btn">开始拆分</button></div></div><div id="merge-view" class="${S.mode !== 'merge' ? 'hidden' : ''}"><drop-zone id="merge-drop" text="上传多个 PDF 文件" hint="支持 .pdf 格式，最多20个或总计200MB" accept=".pdf" multiple></drop-zone><div id="merge-list" class="hidden mt-6 space-y-3"></div><div class="mt-8 flex gap-4 justify-center"><button class="btn btn-primary px-10" id="merge-btn" ${S.merge.files.length < 2 ? 'disabled' : ''}>开始合并</button><button class="btn btn-ghost" id="reset-pdf">重置</button></div></div>${$infoCard('使用说明', ['所有PDF处理均在本地完成', '支持按固定页数或自定义页码范围拆分', '支持将多个PDF合并为一个文档'])}</main>`;
   if (S.mode === 'merge') renderMergeList();
 }
 function renderMergeList() {
   const el = app.querySelector('#merge-list'); if (!el) return;
   const files = pdfStore.get().merge.files; if (!files.length) { el.classList.add('hidden'); return; }
   el.classList.remove('hidden');
-  el.innerHTML = files.map((f, i) => `<div class="flex items-center justify-between p-3 bg-white/50 rounded-lg border border-[--border]"><div class="flex items-center gap-3"><div class="w-10 h-10 bg-[--bg-2] rounded flex items-center justify-center text-[--muted] text-xs font-bold">PDF</div><div><div class="font-medium text-[--ink] text-sm">${f.name}</div><div class="text-xs text-[--muted]">${(f.size / 1048576).toFixed(2)} MB</div></div></div><button class="btn btn-ghost btn-sm" data-rm-pdf="${i}">移除</button></div>`).join('');
+  el.innerHTML = files.map((f, i) => `<div class="flex items-center justify-between p-3 bg-white rounded-lg border border-[--border]"><div class="flex items-center gap-3"><div class="w-10 h-10 bg-[--bg-2] rounded flex items-center justify-center text-[--muted] text-xs font-bold">PDF</div><div><div class="font-medium text-[--ink] text-sm">${f.name}</div><div class="text-xs text-[--muted]">${(f.size / 1048576).toFixed(2)} MB</div></div></div><button class="btn btn-ghost btn-sm" data-rm-pdf="${i}">移除</button></div>`).join('');
   const mergeBtn = app.querySelector('#merge-btn');
   if (mergeBtn) files.length < 2 ? mergeBtn.setAttribute('disabled', '') : mergeBtn.removeAttribute('disabled');
 }
 
 function renderCompressTool() {
   const S = compressStore.get();
-  app.innerHTML = `${$header('图片压缩', 'Tool 04')}<main class="max-w-5xl mx-auto px-6 pb-16"><div class="grid grid-cols-1 lg:grid-cols-2 gap-8"><div><drop-zone id="comp-drop" text="点击或拖拽图片到此处" hint="支持 JPG, PNG, WEBP" accept="image/*"></drop-zone><div id="comp-ctrl" class="hidden mt-6 space-y-6"><div><label class="block text-sm font-medium text-[--ink-soft] mb-3">选择格式 (智能预估)</label><div class="grid grid-cols-3 gap-3" id="format-cards"></div></div><div><label class="block text-sm font-medium text-[--ink-soft] mb-2">质量: <span id="comp-q-val">${Math.round(S.quality * 100)}</span>%</label><input type="range" class="range-slider" id="comp-q" min="10" max="100" value="${S.quality * 100}"></div><div><label class="block text-sm font-medium text-[--ink-soft] mb-2">缩放比例: <span id="comp-s-val">${S.scale}</span>%</label><input type="range" class="range-slider" id="comp-s" min="10" max="100" value="${S.scale}"></div></div></div><div><div class="grid grid-cols-2 gap-4 mb-6"><div class="stat-box"><div class="val" id="comp-orig-size">-</div><div class="lbl">原始大小</div></div><div class="stat-box"><div class="val text-[--accent]" id="comp-new-size">-</div><div class="lbl">压缩后大小</div></div></div><div class="bg-white/50 rounded-xl border border-[--border] p-4 flex items-center justify-center min-h-[300px]"><img id="comp-preview" class="max-w-full max-h-[400px] rounded-lg hidden" alt="preview"><span id="comp-placeholder" class="text-[--muted]">上传图片后预览</span></div><div class="flex gap-3 mt-6"><button class="btn btn-primary flex-1" id="comp-dl-btn" disabled>下载压缩图片</button><button class="btn btn-ghost" id="reset-compress">重置</button></div></div></div>${$infoCard('使用说明', ['所有压缩处理均在本地浏览器完成，不上传服务器', '上传图片后会自动计算各格式预估大小', '点击格式卡片即可切换，WebP 通常体积最小'])}</main>`;
+  app.innerHTML = `${$header('图片压缩', 'Tool 04')}<main class="max-w-5xl mx-auto px-6 pb-16"><div class="grid grid-cols-1 lg:grid-cols-2 gap-8"><div><drop-zone id="comp-drop" text="点击或拖拽图片到此处" hint="支持 JPG, PNG, WEBP" accept="image/*"></drop-zone><div id="comp-ctrl" class="hidden mt-6 space-y-6"><div><label class="block text-sm font-medium text-[--ink-soft] mb-3">选择格式 (智能预估)</label><div class="grid grid-cols-3 gap-3" id="format-cards"></div></div><div><label class="block text-sm font-medium text-[--ink-soft] mb-2">质量: <span id="comp-q-val">${Math.round(S.quality * 100)}</span>%</label><input type="range" class="range-slider" id="comp-q" min="10" max="100" value="${S.quality * 100}"></div><div><label class="block text-sm font-medium text-[--ink-soft] mb-2">缩放比例: <span id="comp-s-val">${S.scale}</span>%</label><input type="range" class="range-slider" id="comp-s" min="10" max="100" value="${S.scale}"></div></div></div><div><div class="grid grid-cols-2 gap-4 mb-6"><div class="stat-box"><div class="val" id="comp-orig-size">-</div><div class="lbl">原始大小</div></div><div class="stat-box"><div class="val text-[--accent]" id="comp-new-size">-</div><div class="lbl">压缩后大小</div></div></div><div class="bg-white rounded-xl border border-[--border] p-4 flex items-center justify-center min-h-[300px]"><img id="comp-preview" class="max-w-full max-h-[400px] rounded-lg hidden" alt="preview"><span id="comp-placeholder" class="text-[--muted]">上传图片后预览</span></div><div class="flex gap-3 mt-6"><button class="btn btn-primary flex-1" id="comp-dl-btn" disabled>下载压缩图片</button><button class="btn btn-ghost" id="reset-compress">重置</button></div></div></div>${$infoCard('使用说明', ['所有压缩处理均在本地浏览器完成，不上传服务器', '上传图片后会自动计算各格式预估大小', '点击格式卡片即可切换，WebP 通常体积最小'])}</main>`;
   renderFormatCards();
 }
 
@@ -473,7 +349,7 @@ function renderFormatCards() {
   container.innerHTML = formats.map(f => {
     const size = S.estimates[f];
     const isActive = S.format === f;
-    return `<div class="format-card p-4 text-center ${isActive ? 'active' : ''}" data-cfmt="${f}">
+    return `<div class="format-card p-4 border border-[--border] rounded-xl text-center ${isActive ? 'active' : ''}" data-cfmt="${f}">
       <div class="font-bold text-[--ink] uppercase">${f}</div>
       <div class="text-sm text-[--muted] mt-1">${size ? Utils.formatSize(size) : '计算中...'}</div>
     </div>`;
@@ -493,6 +369,7 @@ function renderQrTool() {
       <button class="btn ${S.mode === 'generate' ? 'btn-primary' : 'btn-ghost'}" data-qr-mode="generate">生成二维码</button>
       <button class="btn ${S.mode === 'parse' ? 'btn-primary' : 'btn-ghost'}" data-qr-mode="parse">解析二维码</button>
     </div>
+    
     <div id="qr-gen-view" class="${S.mode !== 'generate' ? 'hidden' : ''}">
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <div class="space-y-6">
@@ -503,12 +380,17 @@ function renderQrTool() {
         <div><div class="qr-preview" id="qr-preview-box"><span id="qr-placeholder" class="text-[--muted]">输入内容后生成二维码</span></div></div>
       </div>
     </div>
+
     <div id="qr-parse-view" class="${S.mode !== 'parse' ? 'hidden' : ''}">
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <div><drop-zone id="qr-parse-drop" text="上传二维码图片" hint="支持 JPG, PNG" accept="image/*"></drop-zone></div>
-        <div><label class="block text-sm font-medium text-[--ink-soft] mb-2">识别结果</label><div class="result-container"><div id="qr-parse-output" class="result-box text-base font-sans font-normal text-[--ink]">${S.parseResult || '等待上传图片...'}</div><button class="btn btn-sm btn-primary copy-result-btn" id="qr-parse-copy">复制结果</button></div></div>
+        <div>
+          <label class="block text-sm font-medium text-[--ink-soft] mb-2">识别结果</label>
+          <div class="result-container"><div id="qr-parse-output" class="result-box text-base font-sans font-normal text-[--ink]">${S.parseResult || '等待上传图片...'}</div><button class="btn btn-sm btn-primary copy-result-btn" id="qr-parse-copy">复制结果</button></div>
+        </div>
       </div>
     </div>
+
     <div class="flex gap-3 mt-8 justify-center"><button class="btn btn-ghost" id="reset-qr">重置工具</button></div>
     ${$infoCard('使用说明', ['生成：支持任意文本、网址，添加 Logo 自动启用高容错率', '解析：上传二维码图片，自动识别内容并支持一键复制', '所有操作均在本地浏览器完成，保护隐私'])}
   </main>`;
@@ -543,7 +425,7 @@ async function handleImageFiles(fileList) {
 
 async function convertToPdf() {
   const files = imageStore.get().files; if (!files.length) return Utils.showToast('请先选择图片', true);
-  const btn = app.querySelector('#convert-img-btn'); btn.setAttribute('disabled', ''); btn.innerHTML = '<div class="spinner"></div> 正在生成 PDF...';
+  const btn = app.querySelector('#convert-img-btn'); btn.setAttribute('disabled', ''); btn.innerHTML = '<div class="spinner"></div> 正在生成...';
   try {
     const { jsPDF } = window.jspdf; let pdf = null;
     const MAX_PIXELS = 16000000;
@@ -564,7 +446,7 @@ async function convertToPdf() {
       }
     }
     pdf.save(`images_${new Date().toISOString().slice(0, 10)}.pdf`); Utils.showToast('PDF 已生成并下载');
-  } catch (e) { Utils.showToast('生成失败：' + e.message, true); } finally { btn.removeAttribute('disabled'); btn.innerHTML = '生成并下载 PDF'; }
+  } catch (e) { Utils.showToast('生成失败: ' + e.message, true); } finally { btn.removeAttribute('disabled'); btn.innerHTML = '生成并下载 PDF'; }
 }
 
 async function splitPdf() {
@@ -589,7 +471,7 @@ async function splitPdf() {
       Utils.downloadBlob(await nd.save(), 'split_range.pdf');
     }
     Utils.showToast('拆分完成！');
-  } catch (e) { Utils.showToast('拆分失败：' + e.message, true); } finally { btn.removeAttribute('disabled'); btn.innerHTML = '开始拆分'; }
+  } catch (e) { Utils.showToast('拆分失败: ' + e.message, true); } finally { btn.removeAttribute('disabled'); btn.innerHTML = '开始拆分'; }
 }
 
 async function mergePdf() {
@@ -600,15 +482,21 @@ async function mergePdf() {
     const merged = await PDFLib.PDFDocument.create();
     for (const f of files) { const doc = await PDFLib.PDFDocument.load(await f.arrayBuffer()); (await merged.copyPages(doc, doc.getPageIndices())).forEach(p => merged.addPage(p)); }
     Utils.downloadBlob(await merged.save(), 'merged.pdf'); Utils.showToast('合并完成！');
-  } catch (e) { Utils.showToast('合并失败：' + e.message, true); } finally { btn.removeAttribute('disabled'); btn.innerHTML = '开始合并'; }
+  } catch (e) { Utils.showToast('合并失败: ' + e.message, true); } finally { btn.removeAttribute('disabled'); btn.innerHTML = '开始合并'; }
 }
 
 async function calculateEstimates(file) {
   const img = new Image(); img.src = URL.createObjectURL(file); await new Promise(r => img.onload = r);
   const c = document.createElement('canvas'); c.width = img.width; c.height = img.height;
   const ctx = c.getContext('2d'); ctx.drawImage(img, 0, 0);
+  
   const getBlobSize = (type, q) => new Promise(r => c.toBlob(b => r(b ? b.size : 0), type, q));
-  const [jpeg, webp, png] = await Promise.all([getBlobSize('image/jpeg', 0.8), getBlobSize('image/webp', 0.8), getBlobSize('image/png', 1.0)]);
+  const [jpeg, webp, png] = await Promise.all([
+    getBlobSize('image/jpeg', 0.8),
+    getBlobSize('image/webp', 0.8),
+    getBlobSize('image/png', 1.0)
+  ]);
+  
   compressStore.set(s => ({ ...s, estimates: { jpeg, webp, png } }));
   renderFormatCards();
 }
@@ -620,14 +508,18 @@ async function doCompress() {
   const w = Math.round(img.width * (S.scale / 100)), h = Math.round(img.height * (S.scale / 100));
   const c = document.createElement('canvas'); c.width = w; c.height = h;
   const ctx = c.getContext('2d'); ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, w, h); ctx.drawImage(img, 0, 0, w, h);
+  
   const blob = await new Promise(r => c.toBlob(r, `image/${S.format}`, S.quality));
   if (taskId !== compressTaskId) return;
+  
   if (S.resultUrl) URL.revokeObjectURL(S.resultUrl);
   compressStore.set(s => ({ ...s, resultBlob: blob, resultUrl: URL.createObjectURL(blob) }));
+  
   const preview = app.querySelector('#comp-preview'), placeholder = app.querySelector('#comp-placeholder');
   if (preview) { preview.src = compressStore.get().resultUrl; preview.classList.remove('hidden'); placeholder?.classList.add('hidden'); }
+  const newSize = blob.size;
   const elSize = app.querySelector('#comp-new-size');
-  if (elSize) elSize.textContent = Utils.formatSize(blob.size);
+  if (elSize) elSize.textContent = Utils.formatSize(newSize);
   const dlBtn = app.querySelector('#comp-dl-btn'); if (dlBtn) dlBtn.removeAttribute('disabled');
 }
 const debouncedCompress = Utils.debounce(doCompress, 300);
@@ -647,11 +539,13 @@ async function doGenerateQR() {
   let qr;
   try { qr = qrcode(0, S.logoUrl ? 'H' : 'M'); qr.addData(S.text, 'Byte'); qr.make(); } 
   catch (e) { box.innerHTML = `<span class="text-[--accent]">文本过长或包含非法字符</span>`; return; }
+  
   const count = qr.getModuleCount(), cell = 10, size = count * cell;
   const canvas = document.createElement('canvas'); canvas.width = size; canvas.height = size;
   const ctx = canvas.getContext('2d'); ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, size, size);
   ctx.fillStyle = '#000';
   for (let r = 0; r < count; r++) for (let c = 0; c < count; c++) if (qr.isDark(r, c)) ctx.fillRect(c * cell, r * cell, cell, cell);
+  
   if (S.logoUrl) {
     const img = new Image(); img.src = S.logoUrl; await img.decode();
     const lw = size * 0.2, lh = size * 0.2, lx = (size - lw) / 2, ly = (size - lh) / 2;
@@ -668,6 +562,7 @@ async function doParseQR(file) {
   const ctx = c.getContext('2d'); ctx.drawImage(img, 0, 0);
   const imageData = ctx.getImageData(0, 0, c.width, c.height);
   const code = jsQR(imageData.data, imageData.width, imageData.height);
+  
   const output = app.querySelector('#qr-parse-output');
   if (code) {
     qrStore.set(s => ({ ...s, parseResult: code.data }));
@@ -687,7 +582,8 @@ app.addEventListener('click', async e => {
   const t = e.target, closest = sel => t.closest(sel);
   if (closest('[data-action="home"]')) return location.hash = '#/';
   
-  if (closest('#reset-number')) return resetStore(imageStore, { files: [], mode: 'fit', orient: 'auto', quality: 0.8 }); // 简化处理
+  // 统一重置
+  if (closest('#reset-number')) return resetStore(imageStore, { files: [], mode: 'fit', orient: 'auto', quality: 0.8 }); // 修正：应该是重置 numberStore，这里简化处理
   if (closest('#reset-image')) { imageStore.get().files.forEach(f => URL.revokeObjectURL(f.url)); imageStore.set([]); return renderImageTool(); }
   if (closest('#reset-pdf')) { pdfStore.set(structuredClone({ mode: 'split', split: { file: null, fileName: '', pageCount: 0, method: 'pages', pages: 1, start: 1, end: 1 }, merge: { files: [] } })); return renderPdfTool(); }
   if (closest('#reset-compress')) { const s = compressStore.get(); if(s.url) URL.revokeObjectURL(s.url); if(s.resultUrl) URL.revokeObjectURL(s.resultUrl); compressStore.set({ file: null, url: '', name: '', origSize: 0, quality: 0.8, format: 'jpeg', scale: 100, resultBlob: null, resultUrl: '', estimates: { jpeg: 0, webp: 0, png: 0 } }); return renderCompressTool(); }
@@ -746,6 +642,7 @@ app.addEventListener('input', e => {
   if (id === 'qr-input') { qrStore.set(s => ({ ...s, text: e.target.value })); return debouncedQRGenerate(); }
   if (id === 'comp-q') { compressStore.set(s => ({ ...s, quality: e.target.value / 100 })); app.querySelector('#comp-q-val').textContent = e.target.value; return debouncedCompress(); }
   if (id === 'comp-s') { compressStore.set(s => ({ ...s, scale: parseInt(e.target.value) })); app.querySelector('#comp-s-val').textContent = e.target.value; return debouncedCompress(); }
+  
   if (id === 'split-pages') pdfStore.set(s => ({ ...s, split: { ...s.split, pages: parseInt(e.target.value) } }));
   if (id === 'split-start') pdfStore.set(s => ({ ...s, split: { ...s.split, start: parseInt(e.target.value) } }));
   if (id === 'split-end') pdfStore.set(s => ({ ...s, split: { ...s.split, end: parseInt(e.target.value) } }));
@@ -783,7 +680,7 @@ app.addEventListener('files-selected', async e => {
     app.querySelector('#comp-new-size').textContent = '计算中...';
     const preview = app.querySelector('#comp-preview'), placeholder = app.querySelector('#comp-placeholder');
     if (preview) { preview.src = url; preview.classList.remove('hidden'); placeholder?.classList.add('hidden'); }
-    calculateEstimates(file);
+    calculateEstimates(file); // 异步计算预估
     return doCompress();
   }
   if (zone.id === 'qr-logo-drop') {
@@ -818,4 +715,3 @@ window.addEventListener('DOMContentLoaded', () => { if (!location.hash) location
 </script>
 </body>
 </html>
-
