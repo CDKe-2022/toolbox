@@ -63,14 +63,22 @@
     .drop-zone.dragover::before{opacity:1}
     .drop-zone:hover{border-color:var(--ink-soft);background:var(--bg-2)}
     
-    .thumb{position:relative;width:100%;aspect-ratio:1;background:var(--bg-2);border-radius:12px;overflow:hidden;border:1px solid var(--border);transition:var(--transition);cursor:grab}
-    .thumb:hover{transform:translateY(-3px);box-shadow:var(--shadow-md)}
+    /* 图片缩略图网格容器 */
+    .thumb-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
+    @media (min-width: 640px){.thumb-grid{grid-template-columns:repeat(4,minmax(0,1fr))}}
+    @media (min-width: 768px){.thumb-grid{grid-template-columns:repeat(5,minmax(0,1fr));gap:20px}}
+    @media (min-width: 1024px){.thumb-grid{grid-template-columns:repeat(6,minmax(0,1fr))}}
+    
+    .thumb{position:relative;width:100%;aspect-ratio:1;background:var(--bg-2);border-radius:12px;overflow:hidden;border:1px solid var(--border);transition:var(--transition);cursor:grab;display:flex;align-items:center;justify-content:center}
+    .thumb:hover{transform:translateY(-3px);box-shadow:var(--shadow-md);border-color:var(--green)}
     .thumb img{width:100%;height:100%;object-fit:cover;pointer-events:none}
-    .thumb-remove{position:absolute;top:6px;right:6px;width:24px;height:24px;background:rgba(0,0,0,.65);color:#fff;border:none;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .2s}
+    .thumb-remove{position:absolute;top:6px;right:6px;width:24px;height:24px;background:rgba(0,0,0,.65);color:#fff;border:none;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .2s;z-index:2}
     .thumb:hover .thumb-remove{opacity:1}
-    .thumb-orient{position:absolute;bottom:6px;left:6px;background:rgba(0,0,0,.65);color:#fff;font-size:10px;padding:2px 6px;border-radius:4px}
-    .thumb-num{position:absolute;top:6px;left:6px;background:var(--green);color:#fff;font-size:10px;padding:2px 6px;border-radius:4px;font-weight:600}
+    .thumb-orient{position:absolute;bottom:6px;left:6px;background:rgba(0,0,0,.65);color:#fff;font-size:10px;padding:2px 6px;border-radius:4px;z-index:2}
+    .thumb-num{position:absolute;top:6px;left:6px;background:var(--green);color:#fff;font-size:10px;padding:2px 6px;border-radius:4px;font-weight:600;z-index:2}
     .thumb.dragging{opacity:.4}
+    .thumb.active{border-color:var(--green);box-shadow:0 0 0 3px rgba(26,58,50,.15)}
+    .thumb.active::after{content:'';position:absolute;inset:0;border:2px solid var(--green);border-radius:12px;pointer-events:none}
     
     .orient-option{flex:1;padding:16px 12px;border:1px solid var(--border);border-radius:12px;background:#fff;cursor:pointer;text-align:center;transition:var(--transition);font-size:14px;color:var(--ink-soft)}
     .orient-option:hover{border-color:var(--ink-soft);transform:translateY(-2px)}
@@ -125,6 +133,15 @@
       .input,.textarea{padding:12px 16px;font-size:14px}
       .result-box{font-size:20px;padding:16px}
       .drop-zone{padding:32px 16px}
+      .thumb-grid{grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:12px!important}
+      .thumb{border-radius:10px}
+      .thumb-num,.thumb-orient{font-size:9px;padding:2px 4px}
+      .thumb-remove{width:20px;height:20px}
+    }
+    
+    @media (max-width: 480px) {
+      .thumb-grid{grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:10px!important}
+      .drop-zone{padding:24px 12px}
     }
     
     :focus-visible{outline:2px solid var(--green);outline-offset:2px}
@@ -565,7 +582,7 @@ function renderCompressTool() {
 
 function renderImageTool() {
   const S = imageStore.get();
-  app.innerHTML = `${$header('图片转 PDF', 'Tool 08')}<main class="max-w-4xl mx-auto px-6 pb-16 page-enter"><drop-zone id="img-drop" text="点击或拖拽图片到此处" hint="支持 JPG, PNG, WEBP, HEIC" accept="image/*,.heic,.heif" multiple></drop-zone><div id="img-section" class="hidden mt-8"><div class="flex items-center justify-between mb-4"><h3 class="text-lg font-semibold text-[--ink]">已选图片 <span id="img-count" class="text-[--muted] font-normal text-sm"></span></h3><button class="btn btn-ghost btn-sm" id="reset-image">重置</button></div><div id="img-list" class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-4"></div></div><div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8"><div><label class="block text-sm font-medium text-[--ink-soft] mb-3">页面模式</label><div class="flex gap-3">${$optGroup('mode', S.mode)}</div></div><div><label class="block text-sm font-medium text-[--ink-soft] mb-3">页面方向</label><div class="flex gap-3">${$optGroup('orient', S.orient)}</div></div><div><label class="block text-sm font-medium text-[--ink-soft] mb-3">压缩等级</label><div class="flex gap-3">${$optGroup('quality', S.quality)}</div></div></div><div class="mt-10 text-center"><button class="btn btn-primary text-lg px-12 py-4" id="convert-img-btn">生成并下载 PDF</button></div>${$infoCard('使用说明', ['所有图片处理均在本地完成', 'HEIC/HEIF 格式将自动转换为 JPEG', '拖拽排序：长按缩略图拖动调整顺序'])}</main>`;
+  app.innerHTML = `${$header('图片转 PDF', 'Tool 08')}<main class="max-w-4xl mx-auto px-6 pb-16 page-enter"><drop-zone id="img-drop" text="点击或拖拽图片到此处" hint="支持 JPG, PNG, WEBP, HEIC" accept="image/*,.heic,.heif" multiple></drop-zone><div id="img-section" class="hidden mt-8"><div class="flex items-center justify-between mb-4"><h3 class="text-lg font-semibold text-[--ink]">已选图片 <span id="img-count" class="text-[--muted] font-normal text-sm"></span></h3><button class="btn btn-ghost btn-sm" id="reset-image">重置</button></div><div id="img-list" class="thumb-grid"></div></div><div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8"><div><label class="block text-sm font-medium text-[--ink-soft] mb-3">页面模式</label><div class="flex gap-3">${$optGroup('mode', S.mode)}</div></div><div><label class="block text-sm font-medium text-[--ink-soft] mb-3">页面方向</label><div class="flex gap-3">${$optGroup('orient', S.orient)}</div></div><div><label class="block text-sm font-medium text-[--ink-soft] mb-3">压缩等级</label><div class="flex gap-3">${$optGroup('quality', S.quality)}</div></div></div><div class="mt-10 text-center"><button class="btn btn-primary text-lg px-12 py-4" id="convert-img-btn">生成并下载 PDF</button></div>${$infoCard('使用说明', ['所有图片处理均在本地完成', 'HEIC/HEIF 格式将自动转换为 JPEG', '拖拽排序：长按缩略图拖动调整顺序'])}</main>`;
   const list = app.querySelector('#img-list');
   if (sortableInst) sortableInst.destroy();
   sortableInst = Sortable.create(list, { animation: 150, ghostClass: 'dragging', onEnd: e => { const files = imageStore.get().files; const movedItem = files.splice(e.oldIndex, 1)[0]; files.splice(e.newIndex, 0, movedItem); imageStore.set(s => ({ ...s, files })); } });
@@ -770,7 +787,7 @@ function syncImageListDOM() {
   if (!files.length) { sec.classList.add('hidden'); list.innerHTML = ''; return; }
   sec.classList.remove('hidden');
   app.querySelector('#img-count').textContent = `(${files.length} 张)`;
-  list.innerHTML = files.map((f, i) => `<div class="thumb" data-idx="${i}"><img src="${f.url}" alt="${f.name}"><span class="thumb-num">${i + 1}</span><span class="thumb-orient">${f.w > f.h ? '横' : '竖'}</span><button class="thumb-remove" data-rm-img="${i}"><svg width="10" height="10" viewBox="0 0 10 10"><path d="M2 2L8 8M8 2L2 8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></button></div>`).join('');
+  list.innerHTML = files.map((f, i) => `<div class="thumb" data-idx="${i}" tabindex="0" role="button" aria-label="图片 ${i + 1}, ${f.name}"><img src="${f.url}" alt="${f.name}"><span class="thumb-num">${i + 1}</span><span class="thumb-orient">${f.w > f.h ? '横' : '竖'}</span><button class="thumb-remove" data-rm-img="${i}" aria-label="删除图片 ${i + 1}"><svg width="10" height="10" viewBox="0 0 10 10"><path d="M2 2L8 8M8 2L2 8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></button></div>`).join('');
 }
 
 function renderDateDiffResult(res) {
@@ -1091,6 +1108,14 @@ const debouncedCompress = Utils.debounce(doCompress, 300);
 app.addEventListener('click', async e => {
   const t = e.target, closest = sel => t.closest(sel);
   if (closest('[data-action="home"]')) return location.hash = '#/';
+  
+  // 处理缩略图点击选中
+  const thumbEl = closest('.thumb');
+  if (thumbEl && !closest('.thumb-remove') && app.querySelector('#img-list')) {
+    app.querySelectorAll('.thumb').forEach(t => t.classList.remove('active'));
+    thumbEl.classList.add('active');
+    return;
+  }
   
   if (closest('#reset-number')) { 
     const i = app.querySelector('#num-input'), o = app.querySelector('#num-output'); 
