@@ -62,12 +62,15 @@
     .result-box .copy-icon{position:absolute;top:12px;right:12px;opacity:0;transition:opacity .2s;color:var(--green);width:18px;height:18px}
     .result-box:hover .copy-icon{opacity:0.6}
     
-    /* 拖拽区域 */
-    .drop-zone{border:2px dashed var(--border);border-radius:20px;padding:56px 32px;text-align:center;background:#fff;transition:var(--transition);cursor:pointer;position:relative;overflow:hidden}
+    /* 拖拽区域 - 修复display问题 */
+    .drop-zone{display:block;border:2px dashed var(--border);border-radius:20px;padding:56px 32px;text-align:center;background:#fff;transition:var(--transition);cursor:pointer;position:relative;overflow:hidden}
     .drop-zone::before{content:'';position:absolute;top:0;left:0;width:100%;height:100%;background:radial-gradient(circle at center,rgba(26,58,50,.03) 0%,transparent 70%);opacity:0;transition:opacity .3s ease}
     .drop-zone.dragover{border-color:var(--green);background:var(--green-light);transform:scale(1.01)}
     .drop-zone.dragover::before{opacity:1}
     .drop-zone:hover{border-color:var(--ink-soft);background:var(--bg-2)}
+    .drop-zone .drop-zone-inner{display:flex;flex-direction:column;align-items:center;justify-content:center;height:100%}
+    .drop-zone .tool-icon{margin-bottom:16px} /* 统一间距 */
+    .drop-zone.compact{padding:24px} /* 用于QR Logo等小尺寸DropZone */
     
     /* 缩略图 */
     .thumb{position:relative;width:100%;aspect-ratio:1;background:var(--bg-2);border-radius:12px;overflow:hidden;border:1px solid var(--border);transition:var(--transition);cursor:grab}
@@ -80,7 +83,7 @@
     .thumb.dragging{opacity:.4}
     
     /* 选项卡片 */
-    .orient-option{flex:1;padding:16px 12px;border:1px solid var(--border);border-radius:12px;background:#fff;cursor:pointer;text-align:center;transition:var(--transition);font-size:14px;color:var(--ink-soft)}
+    .orient-option{flex:1;padding:16px 12px;border:1px solid var(--border);border-radius:12px;background:#fff;cursor:pointer;text-align:center;transition:var(--transition);font-size:14px;color:var(--ink-soft);min-width:0}
     .orient-option:hover{border-color:var(--ink-soft);transform:translateY(-2px)}
     .orient-option.active{background:var(--green);color:#fff;border-color:var(--green);box-shadow:0 4px 12px rgba(26,50,50,.2)}
     
@@ -148,6 +151,7 @@
       .input,.textarea{padding:12px 16px;font-size:14px}
       .result-box{font-size:20px;padding:16px}
       .drop-zone{padding:32px 16px}
+      .split-opts-container{flex-wrap:wrap} /* 修复小屏幕溢出 */
     }
     
     /* 无障碍焦点样式 */
@@ -261,12 +265,12 @@ const Utils = {
 };
 
 // ═══════════════════════════════════════════
-// 2. 状态管理
+// 2. 状态管理 - 改进：get方法返回深拷贝
 // ═══════════════════════════════════════════
 const createStore = (initial) => {
   let state = structuredClone(initial);
   return {
-    get: () => state,
+    get: () => structuredClone(state), // 返回深拷贝，防止外部直接修改
     set: (updater) => { state = typeof updater === 'function' ? updater(structuredClone(state)) : updater; }
   };
 };
@@ -304,15 +308,17 @@ function resetStore(store, initial) {
 }
 
 // ═══════════════════════════════════════════
-// 3. Web组件
+// 3. Web组件 - 修复display问题
 // ═══════════════════════════════════════════
 class DropZone extends HTMLElement {
   connectedCallback() {
     if (this._init) return; this._init = true;
     const text = this.getAttribute('text') || '点击或拖拽文件到此处', hint = this.getAttribute('hint') || '';
     const accept = this.getAttribute('accept') || '*/*', multi = this.hasAttribute('multiple') ? 'multiple' : '';
+    const compact = this.hasAttribute('compact') ? 'compact' : ''; // 新增compact属性
     this.classList.add('drop-zone');
-    this.innerHTML = `<input type="file" class="hidden" ${multi} accept="${accept}"><div class="tool-icon mx-auto mb-4" style="width:52px;height:52px">${Icons.tool4}</div><p class="font-medium text-[--ink] mb-1 text-base">${text}</p><p class="text-xs text-[--muted]">${hint}</p>`;
+    if (compact) this.classList.add(compact);
+    this.innerHTML = `<input type="file" class="hidden" ${multi} accept="${accept}"><div class="drop-zone-inner"><div class="tool-icon mx-auto" style="width:52px;height:52px">${Icons.tool4}</div><p class="font-medium text-[--ink] mb-1 text-base">${text}</p><p class="text-xs text-[--muted]">${hint}</p></div>`;
     const input = this.querySelector('input');
     this.addEventListener('click', () => input.click());
     this.addEventListener('dragover', e => { e.preventDefault(); this.classList.add('dragover'); });
@@ -374,7 +380,7 @@ function renderQrTool() {
       <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
         <div class="space-y-6">
           <div><label class="block text-sm font-medium text-[--ink-soft] mb-2">输入文本或链接</label><textarea id="qr-input" class="textarea" placeholder="输入网址、文本或名片信息...">${S.text}</textarea></div>
-          <div><label class="block text-sm font-medium text-[--ink-soft] mb-2">添加中心 Logo (可选)</label><drop-zone id="qr-logo-drop" text="点击上传 Logo" hint="建议透明背景 PNG" accept="image/*" style="padding:24px"></drop-zone></div>
+          <div><label class="block text-sm font-medium text-[--ink-soft] mb-2">添加中心 Logo (可选)</label><drop-zone id="qr-logo-drop" text="点击上传 Logo" hint="建议透明背景 PNG" accept="image/*" compact></drop-zone></div>
           <div class="flex gap-3"><button class="btn btn-primary flex-1" id="qr-dl-png">下载 PNG</button><button class="btn btn-ghost flex-1" id="qr-dl-svg">下载 SVG</button><button class="btn btn-ghost" id="qr-copy-img" title="复制图片">复制</button></div>
         </div>
         <div><div class="qr-preview" id="qr-preview-box"><span id="qr-placeholder" class="text-[--muted]">输入内容后生成二维码</span></div></div>
@@ -392,10 +398,10 @@ function renderQrTool() {
   if (S.mode === 'generate') doGenerateQR();
 }
 
-// Tool 03: PDF拆分与合并
+// Tool 03: PDF拆分与合并 - 修复选项区域溢出
 function renderPdfTool() {
   const S = pdfStore.get(), split = S.split;
-  app.innerHTML = `${$header('PDF拆分与合并', 'Tool 03')}<main class="max-w-4xl mx-auto px-6 pb-16 page-enter"><div class="flex gap-4 mb-8 justify-center"><button class="btn ${S.mode === 'split' ? 'btn-primary' : 'btn-ghost'}" data-pdf-mode="split">拆分 PDF</button><button class="btn ${S.mode === 'merge' ? 'btn-primary' : 'btn-ghost'}" data-pdf-mode="merge">合并 PDF</button></div><div id="split-view" class="${S.mode !== 'split' ? 'hidden' : ''}"><drop-zone id="split-drop" text="上传 PDF 文件" hint="支持 .pdf 格式，单个文件最大 50MB" accept=".pdf"></drop-zone><div id="split-preview" class="${split.file ? '' : 'hidden'} mt-6 p-4 bg-white rounded-xl border border-[--border] flex items-center justify-between"><div><div class="font-medium text-[--ink]" id="split-fname">${split.fileName}</div><div class="text-xs text-[--muted]">共 <span id="split-pcount">${split.pageCount}</span> 页</div></div><button class="btn btn-ghost btn-sm" id="split-remove">移除文件</button></div><div id="split-opts" class="${split.file ? '' : 'hidden'} mt-6 space-y-4"><div class="flex gap-4 items-center"><label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="split-method" value="pages" ${split.method === 'pages' ? 'checked' : ''}> 按固定页数</label><input type="number" class="input w-24" id="split-pages" value="${split.pages}" min="1"></div><div class="flex items-center gap-4"><label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="split-method" value="range" ${split.method === 'range' ? 'checked' : ''}> 按页码范围</label><span>从</span><input type="number" class="input w-20" id="split-start" value="${split.start}" min="1"><span>到</span><input type="number" class="input w-20" id="split-end" value="${split.end}" min="1"></div></div><div class="mt-8 text-center"><button class="btn btn-primary px-10" id="split-btn">开始拆分</button></div></div><div id="merge-view" class="${S.mode !== 'merge' ? 'hidden' : ''}"><drop-zone id="merge-drop" text="上传多个 PDF 文件" hint="支持 .pdf 格式，最多20个或总计200MB" accept=".pdf" multiple></drop-zone><div id="merge-list" class="hidden mt-6 space-y-3"></div><div class="mt-8 flex gap-4 justify-center"><button class="btn btn-primary px-10" id="merge-btn" ${S.merge.files.length < 2 ? 'disabled' : ''}>开始合并</button><button class="btn btn-ghost" id="reset-pdf">重置</button></div></div>${$infoCard('使用说明', ['所有PDF处理均在本地完成', '支持按固定页数或自定义页码范围拆分', '支持将多个PDF合并为一个文档'])}</main>`;
+  app.innerHTML = `${$header('PDF拆分与合并', 'Tool 03')}<main class="max-w-4xl mx-auto px-6 pb-16 page-enter"><div class="flex gap-4 mb-8 justify-center"><button class="btn ${S.mode === 'split' ? 'btn-primary' : 'btn-ghost'}" data-pdf-mode="split">拆分 PDF</button><button class="btn ${S.mode === 'merge' ? 'btn-primary' : 'btn-ghost'}" data-pdf-mode="merge">合并 PDF</button></div><div id="split-view" class="${S.mode !== 'split' ? 'hidden' : ''}"><drop-zone id="split-drop" text="上传 PDF 文件" hint="支持 .pdf 格式，单个文件最大 50MB" accept=".pdf"></drop-zone><div id="split-preview" class="${split.file ? '' : 'hidden'} mt-6 p-4 bg-white rounded-xl border border-[--border] flex items-center justify-between"><div><div class="font-medium text-[--ink]" id="split-fname">${split.fileName}</div><div class="text-xs text-[--muted]">共 <span id="split-pcount">${split.pageCount}</span> 页</div></div><button class="btn btn-ghost btn-sm" id="split-remove">移除文件</button></div><div id="split-opts" class="${split.file ? '' : 'hidden'} mt-6 space-y-4"><div class="split-opts-container flex gap-4 items-center flex-wrap"><label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="split-method" value="pages" ${split.method === 'pages' ? 'checked' : ''}> 按固定页数</label><input type="number" class="input w-24" id="split-pages" value="${split.pages}" min="1"></div><div class="split-opts-container flex items-center gap-4 flex-wrap"><label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="split-method" value="range" ${split.method === 'range' ? 'checked' : ''}> 按页码范围</label><span>从</span><input type="number" class="input w-20" id="split-start" value="${split.start}" min="1"><span>到</span><input type="number" class="input w-20" id="split-end" value="${split.end}" min="1"></div></div><div class="mt-8 text-center"><button class="btn btn-primary px-10" id="split-btn">开始拆分</button></div></div><div id="merge-view" class="${S.mode !== 'merge' ? 'hidden' : ''}"><drop-zone id="merge-drop" text="上传多个 PDF 文件" hint="支持 .pdf 格式，最多20个或总计200MB" accept=".pdf" multiple></drop-zone><div id="merge-list" class="hidden mt-6 space-y-3"></div><div class="mt-8 flex gap-4 justify-center"><button class="btn btn-primary px-10" id="merge-btn" ${S.merge.files.length < 2 ? 'disabled' : ''}>开始合并</button><button class="btn btn-ghost" id="reset-pdf">重置</button></div></div>${$infoCard('使用说明', ['所有PDF处理均在本地完成', '支持按固定页数或自定义页码范围拆分', '支持将多个PDF合并为一个文档'])}</main>`;
   if (S.mode === 'merge') renderMergeList();
 }
 
@@ -543,14 +549,26 @@ function renderCompressTool() {
   renderFormatCards();
 }
 
-// Tool 08: 图片转 PDF
+// Tool 08: 图片转 PDF - 优化Sortable初始化
 function renderImageTool() {
   const S = imageStore.get();
-  app.innerHTML = `${$header('图片转 PDF', 'Tool 08')}<main class="max-w-4xl mx-auto px-6 pb-16 page-enter"><drop-zone id="img-drop" text="点击或拖拽图片到此处" hint="支持 JPG, PNG, WEBP, HEIC" accept="image/*,.heic,.heif" multiple></drop-zone><div id="img-section" class="hidden mt-8"><div class="flex items-center justify-between mb-4"><h3 class="text-lg font-semibold text-[--ink]">已选图片 <span id="img-count" class="text-[--muted] font-normal text-sm"></span></h3><button class="btn btn-ghost btn-sm" id="reset-image">重置</button></div><div id="img-list" class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-4"></div></div><div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8"><div><label class="block text-sm font-medium text-[--ink-soft] mb-3">页面模式</label><div class="flex gap-3">${$optGroup('mode', S.mode)}</div></div><div><label class="block text-sm font-medium text-[--ink-soft] mb-3">页面方向</label><div class="flex gap-3">${$optGroup('orient', S.orient)}</div></div><div><label class="block text-sm font-medium text-[--ink-soft] mb-3">压缩等级</label><div class="flex gap-3">${$optGroup('quality', S.quality)}</div></div></div><div class="mt-10 text-center"><button class="btn btn-primary text-lg px-12 py-4" id="convert-img-btn">生成并下载 PDF</button></div>${$infoCard('使用说明', ['所有图片处理均在本地完成', 'HEIC/HEIF 格式将自动转换为 JPEG', '拖拽排序：长按缩略图拖动调整顺序'])}</main>`;
+  app.innerHTML = `${$header('图片转 PDF', 'Tool 08')}<main class="max-w-4xl mx-auto px-6 pb-16 page-enter"><drop-zone id="img-drop" text="点击或拖拽图片到此处" hint="支持 JPG, PNG, WEBP, HEIC" accept="image/*,.heic,.heif" multiple></drop-zone><div id="img-section" class="hidden mt-8"><div class="flex items-center justify-between mb-4"><h3 class="text-lg font-semibold text-[--ink]">已选图片 <span id="img-count" class="text-[--muted] font-normal text-sm"></span></h3><button class="btn btn-ghost btn-sm" id="reset-image">重置</button></div><div id="img-list" class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-4"></div></div><div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8"><div><label class="block text-sm font-medium text-[--ink-soft] mb-3">页面模式</label><div class="flex gap-3 flex-wrap">${$optGroup('mode', S.mode)}</div></div><div><label class="block text-sm font-medium text-[--ink-soft] mb-3">页面方向</label><div class="flex gap-3 flex-wrap">${$optGroup('orient', S.orient)}</div></div><div><label class="block text-sm font-medium text-[--ink-soft] mb-3">压缩等级</label><div class="flex gap-3 flex-wrap">${$optGroup('quality', S.quality)}</div></div></div><div class="mt-10 text-center"><button class="btn btn-primary text-lg px-12 py-4" id="convert-img-btn">生成并下载 PDF</button></div>${$infoCard('使用说明', ['所有图片处理均在本地完成', 'HEIC/HEIF 格式将自动转换为 JPEG', '拖拽排序：长按缩略图拖动调整顺序'])}</main>`;
+  // 优化：在显示section后再初始化Sortable
+  syncImageListDOM();
   const list = app.querySelector('#img-list');
   if (sortableInst) sortableInst.destroy();
-  sortableInst = Sortable.create(list, { animation: 150, ghostClass: 'dragging', onEnd: e => { const files = imageStore.get().files; const movedItem = files.splice(e.oldIndex, 1)[0]; files.splice(e.newIndex, 0, movedItem); imageStore.set(s => ({ ...s, files })); } });
-  syncImageListDOM();
+  if (list) {
+    sortableInst = Sortable.create(list, { 
+      animation: 150, 
+      ghostClass: 'dragging', 
+      onEnd: e => { 
+        const files = imageStore.get().files; 
+        const movedItem = files.splice(e.oldIndex, 1)[0]; 
+        files.splice(e.newIndex, 0, movedItem); 
+        imageStore.set(s => ({ ...s, files })); 
+      } 
+    });
+  }
 }
 
 function renderMergeList() {
@@ -609,7 +627,7 @@ function renderDateCalcResult(res) {
   el.innerHTML = `
     <div class="date-result-card">
       <div class="text-sm text-[--muted] mb-2">推算结果日期</div>
-      <div class="big-num text-3xl" style="font-size:32px">${res.dateStr}</div>
+      <div class="big-num" style="font-size:32px">${res.dateStr}</div>
       <div class="mt-4 text-sm text-[--ink-soft]">
         ${res.offset > 0 ? '增加' : '减少'} ${Math.abs(res.offset)} ${res.unitName}
         ${res.isWorkday ? '' : '<span class="text-[--accent] ml-2">(注意：该日为周末)</span>'}
@@ -619,7 +637,7 @@ function renderDateCalcResult(res) {
 }
 
 // ═══════════════════════════════════════════
-// 7. 业务逻辑
+// 7. 业务逻辑 - 添加图片加载错误处理
 // ═══════════════════════════════════════════
 function doConvert() {
   const input = app.querySelector('#num-input'), output = app.querySelector('#num-output'); if (!input || !output) return;
@@ -643,7 +661,12 @@ async function handleImageFiles(fileList) {
     try {
       let blob = file; if (Utils.isHeic(file)) { const res = await heic2any({ blob: file, toType: 'image/jpeg', quality: 0.92 }); blob = Array.isArray(res) ? res[0] : res; }
       const url = URL.createObjectURL(blob);
-      const { w, h } = await new Promise((res, rej) => { const img = new Image(); img.onload = () => res({ w: img.width, h: img.height }); img.onerror = rej; img.src = url; });
+      const { w, h } = await new Promise((res, rej) => { 
+        const img = new Image(); 
+        img.onload = () => res({ w: img.width, h: img.height }); 
+        img.onerror = () => rej(new Error('图片加载失败')); 
+        img.src = url; 
+      });
       return { url, blob, w, h, name: file.name };
     } catch { Utils.showToast('处理失败: ' + file.name, true); return null; }
   }));
@@ -657,7 +680,12 @@ async function convertToPdf() {
   try {
     const { jsPDF } = window.jspdf; let pdf = null;
     for (const f of files) {
-      const img = new Image(); img.src = f.url; await new Promise(r => img.onload = r);
+      // 添加错误处理
+      const img = new Image(); img.src = f.url; 
+      await new Promise((r, rej) => { 
+        img.onload = r; 
+        img.onerror = () => rej(new Error('图片加载失败')); 
+      });
       const c = document.createElement('canvas'); c.width = f.w; c.height = f.h;
       const ctx = c.getContext('2d'); ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, f.w, f.h); ctx.drawImage(img, 0, 0, f.w, f.h);
       const S = imageStore.get();
@@ -701,7 +729,13 @@ async function mergePdf() {
 }
 
 async function calculateEstimates(file) {
-  const url = URL.createObjectURL(file); const img = new Image(); img.src = url; await new Promise(r => img.onload = r); URL.revokeObjectURL(url);
+  const url = URL.createObjectURL(file); 
+  const img = new Image(); img.src = url; 
+  await new Promise((r, rej) => { 
+    img.onload = r; 
+    img.onerror = () => rej(new Error('图片加载失败')); 
+  }); 
+  URL.revokeObjectURL(url);
   const c = document.createElement('canvas'); c.width = img.width; c.height = img.height;
   const ctx = c.getContext('2d'); ctx.drawImage(img, 0, 0);
   const getBlobSize = (type, q) => new Promise(r => c.toBlob(b => r(b ? b.size : 0), type, q));
@@ -713,7 +747,11 @@ async function calculateEstimates(file) {
 async function doCompress() {
   const S = compressStore.get(); if (!S.file) return;
   const taskId = ++compressTaskId;
-  const img = new Image(); img.src = S.url; await new Promise(r => img.onload = r);
+  const img = new Image(); img.src = S.url; 
+  await new Promise((r, rej) => { 
+    img.onload = r; 
+    img.onerror = () => rej(new Error('图片加载失败')); 
+  });
   const w = Math.round(img.width * (S.scale / 100)), h = Math.round(img.height * (S.scale / 100));
   const c = document.createElement('canvas'); c.width = w; c.height = h;
   const ctx = c.getContext('2d'); ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, w, h); ctx.drawImage(img, 0, 0, w, h);
@@ -746,7 +784,11 @@ async function doGenerateQR() {
   const ctx = canvas.getContext('2d'); ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, size, size); ctx.fillStyle = '#000';
   for (let r = 0; r < count; r++) for (let c = 0; c < count; c++) if (qr.isDark(r, c)) ctx.fillRect(c * cell, r * cell, cell, cell);
   if (S.logoUrl) {
-    const img = new Image(); img.src = S.logoUrl; await img.decode();
+    const img = new Image(); img.src = S.logoUrl; 
+    await new Promise((r, rej) => { 
+      img.onload = r; 
+      img.onerror = () => rej(new Error('Logo加载失败')); 
+    }).catch(() => Utils.showToast('Logo加载失败，已忽略', true));
     const lw = size * 0.2, lh = size * 0.2, lx = (size - lw) / 2, ly = (size - lh) / 2;
     ctx.fillStyle = '#fff'; ctx.fillRect(lx - 8, ly - 8, lw + 16, lh + 16); ctx.drawImage(img, lx, ly, lw, lh);
   }
@@ -754,7 +796,17 @@ async function doGenerateQR() {
 }
 
 async function doParseQR(file) {
-  const url = URL.createObjectURL(file); const img = new Image(); img.src = url; await new Promise(r => img.onload = r); URL.revokeObjectURL(url);
+  const url = URL.createObjectURL(file); 
+  const img = new Image(); img.src = url; 
+  await new Promise((r, rej) => { 
+    img.onload = r; 
+    img.onerror = () => rej(new Error('图片加载失败')); 
+  }).catch(() => { 
+    Utils.showToast('图片加载失败', true); 
+    URL.revokeObjectURL(url); 
+    return; 
+  });
+  URL.revokeObjectURL(url);
   const c = document.createElement('canvas'); c.width = img.width; c.height = img.height;
   const ctx = c.getContext('2d'); ctx.drawImage(img, 0, 0);
   const imageData = ctx.getImageData(0, 0, c.width, c.height);
@@ -853,6 +905,7 @@ function doCalculateDateDiff() {
   renderDateDiffResult(res);
 }
 
+// 修复：月份加减逻辑，正确处理月末溢出
 function doCalculateDateOffset() {
   const baseStr = app.querySelector('#date-base').value;
   const offset = parseInt(app.querySelector('#date-offset').value) || 0;
@@ -865,15 +918,28 @@ function doCalculateDateOffset() {
   
   const resultDate = new Date(base);
   
-  if (unit === 'days') resultDate.setDate(resultDate.getDate() + offset);
-  else if (unit === 'weeks') resultDate.setDate(resultDate.getDate() + (offset * 7));
-  else if (unit === 'years') resultDate.setFullYear(resultDate.getFullYear() + offset);
-  else if (unit === 'months') {
+  if (unit === 'days') {
+    resultDate.setDate(resultDate.getDate() + offset);
+  } else if (unit === 'weeks') {
+    resultDate.setDate(resultDate.getDate() + (offset * 7));
+  } else if (unit === 'years') {
+    resultDate.setFullYear(resultDate.getFullYear() + offset);
+    // 处理2月29日的情况
+    if (base.getMonth() === 1 && base.getDate() === 29 && resultDate.getMonth() !== 1) {
+      resultDate.setDate(0); // 设为上个月最后一天
+    }
+  } else if (unit === 'months') {
+    // 修复月份加减逻辑：先保存原始日期，然后处理溢出
     const dayOfMonth = resultDate.getDate();
-    resultDate.setMonth(resultDate.getMonth() + offset + 1);
-    resultDate.setDate(0);
-    const targetMonthLastDay = resultDate.getDate();
-    resultDate.setMonth(resultDate.getMonth() + 1);
+    resultDate.setDate(1); // 先设为1号，避免溢出
+    resultDate.setMonth(resultDate.getMonth() + offset);
+    
+    // 获取目标月份的最后一天
+    const targetMonth = resultDate.getMonth();
+    const targetYear = resultDate.getFullYear();
+    const targetMonthLastDay = new Date(targetYear, targetMonth + 1, 0).getDate();
+    
+    // 恢复日期，如果原始日期大于目标月份最后一天，则设为最后一天
     resultDate.setDate(Math.min(dayOfMonth, targetMonthLastDay));
   }
   
