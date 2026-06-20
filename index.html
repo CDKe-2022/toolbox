@@ -1,186 +1,123 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>工具集 · 效率工具箱</title>
-  <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>🛠️</text></svg>">
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://unpkg.com/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
-  <script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
-  <script src="https://unpkg.com/sortablejs@1.15.0/Sortable.min.js"></script>
-  <script src="https://unpkg.com/heic2any@0.0.4/dist/heic2any.min.js"></script>
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
-  <script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
-  <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&family=Noto+Serif+SC:wght@600;700&family=Fraunces:wght@400;600&display=swap" rel="stylesheet">
-  <style>
-    :root {
-      --bg: #faf8f3; --bg-2: #f0ebe0; --ink: #1a2e2a; --ink-soft: #4a5a55; --muted: #8b9690;
-      --accent: #c2410c; --accent-soft: #fde4d4; --border: #e8e2d5; --green: #1a3a32; --green-2: #2d5247; --green-light: #f0f4f2;
-      --shadow-sm: 0 1px 2px rgba(26,46,42,.04), 0 4px 12px rgba(26,46,42,.06);
-      --shadow-md: 0 4px 12px rgba(26,46,42,.08), 0 12px 32px rgba(26,46,42,.1);
-      --shadow-lg: 0 8px 24px rgba(26,46,42,.1), 0 24px 56px rgba(26,46,42,.15);
-      --transition: all .3s cubic-bezier(.4,0,.2,1);
-    }
-    *{box-sizing:border-box} 
-    html,body{margin:0;padding:0}
-    body{font-family:'Noto Sans SC',system-ui,sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;-webkit-font-smoothing:antialiased;overflow-x:hidden}
-    
-    ::-webkit-scrollbar{width:8px;height:8px}
-    ::-webkit-scrollbar-track{background:var(--bg-2)}
-    ::-webkit-scrollbar-thumb{background:var(--muted);border-radius:4px}
-    ::-webkit-scrollbar-thumb:hover{background:var(--ink-soft)}
-    
-    .btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:10px 20px;border-radius:12px;font-size:14px;font-weight:500;cursor:pointer;border:1px solid transparent;transition:var(--transition);font-family:inherit;white-space:nowrap;line-height:1.5;position:relative;overflow:hidden}
-    .btn::after{content:'';position:absolute;top:50%;left:50%;width:0;height:0;border-radius:50%;background:rgba(255,255,255,.2);transform:translate(-50%,-50%);transition:width .6s,height .6s}
-    .btn:active::after{width:300px;height:300px}
-    .btn-sm{padding:6px 12px;font-size:12px;border-radius:8px}
-    .btn-primary{background:var(--green);color:#fff;box-shadow:var(--shadow-sm)}
-    .btn-primary:hover{background:var(--green-2);transform:translateY(-2px);box-shadow:var(--shadow-md)}
-    .btn-ghost{background:transparent;color:var(--ink-soft);border-color:var(--border)}
-    .btn-ghost:hover{background:var(--bg-2);color:var(--ink);border-color:var(--ink-soft);transform:translateY(-1px)}
-    .btn[disabled]{opacity:.6;cursor:not-allowed;transform:none!important;pointer-events:none}
-    
-    .tool-card{background:#fff;border:1px solid var(--border);border-radius:20px;padding:28px;cursor:pointer;transition:var(--transition);height:100%;text-decoration:none;color:inherit;display:block;position:relative;overflow:hidden}
-    .tool-card::before{content:'';position:absolute;top:0;left:0;width:100%;height:4px;background:linear-gradient(90deg,var(--green),var(--green-2));transform:scaleX(0);transform-origin:left;transition:transform .4s ease}
-    .tool-card:hover{transform:translateY(-6px);box-shadow:var(--shadow-lg);border-color:var(--green-2)}
-    .tool-card:hover::before{transform:scaleX(1)}
-    .tool-icon{width:56px;height:56px;background:var(--green-light);border-radius:16px;display:flex;align-items:center;justify-content:center;color:var(--green);margin-bottom:24px;transition:var(--transition)}
-    .tool-card:hover .tool-icon{background:var(--green);color:#fff;transform:scale(1.08) rotate(-5deg)}
-    
-    .input,.textarea{width:100%;padding:16px 20px;border:1px solid var(--border);border-radius:12px;background:#fff;font-family:inherit;font-size:16px;color:var(--ink);transition:var(--transition)}
-    .textarea{min-height:200px;resize:vertical;line-height:1.6}
-    .input:focus,.textarea:focus{outline:none;border-color:var(--green);box-shadow:0 0 0 4px rgba(26,58,50,.08)}
-    
-    .result-box{background:var(--green-light);border:1px solid var(--border);border-radius:12px;padding:24px;min-height:96px;font-family:'Noto Serif SC',serif;font-size:24px;color:var(--green);font-weight:600;line-height:1.6;word-break:break-all;display:flex;align-items:center;transition:var(--transition);cursor:pointer;position:relative}
-    .result-box:hover{box-shadow:var(--shadow-md);transform:translateY(-2px)}
-    .result-box .copy-icon{position:absolute;top:12px;right:12px;opacity:0;transition:opacity .2s;color:var(--green);width:18px;height:18px}
-    .result-box:hover .copy-icon{opacity:0.6}
-    
-    .drop-zone{border:2px dashed var(--border);border-radius:20px;padding:56px 32px;text-align:center;background:#fff;transition:var(--transition);cursor:pointer;position:relative;overflow:hidden}
-    .drop-zone::before{content:'';position:absolute;top:0;left:0;width:100%;height:100%;background:radial-gradient(circle at center,rgba(26,58,50,.03) 0%,transparent 70%);opacity:0;transition:opacity .3s ease}
-    .drop-zone.dragover{border-color:var(--green);background:var(--green-light);transform:scale(1.01)}
-    .drop-zone.dragover::before{opacity:1}
-    .drop-zone:hover{border-color:var(--ink-soft);background:var(--bg-2)}
-    
-    /* 图片缩略图网格容器 */
-    .thumb-grid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:16px}
-    @media (min-width: 640px){.thumb-grid{grid-template-columns:repeat(4,minmax(0,1fr))}}
-    @media (min-width: 768px){.thumb-grid{grid-template-columns:repeat(5,minmax(0,1fr));gap:20px}}
-    @media (min-width: 1024px){.thumb-grid{grid-template-columns:repeat(6,minmax(0,1fr))}}
-    
-    .thumb{position:relative;width:100%;aspect-ratio:1;background:var(--bg-2);border-radius:12px;overflow:hidden;border:1px solid var(--border);transition:var(--transition);cursor:grab;display:flex;align-items:center;justify-content:center}
-    .thumb:hover{transform:translateY(-3px);box-shadow:var(--shadow-md);border-color:var(--green)}
-    .thumb img{width:100%;height:100%;object-fit:cover;pointer-events:none}
-    .thumb-remove{position:absolute;top:6px;right:6px;width:24px;height:24px;background:rgba(0,0,0,.65);color:#fff;border:none;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .2s;z-index:2}
-    .thumb:hover .thumb-remove{opacity:1}
-    .thumb-orient{position:absolute;bottom:6px;left:6px;background:rgba(0,0,0,.65);color:#fff;font-size:10px;padding:2px 6px;border-radius:4px;z-index:2}
-    .thumb-num{position:absolute;top:6px;left:6px;background:var(--green);color:#fff;font-size:10px;padding:2px 6px;border-radius:4px;font-weight:600;z-index:2}
-    .thumb.dragging{opacity:.4}
-    .thumb.active{border-color:var(--green);box-shadow:0 0 0 3px rgba(26,58,50,.15)}
-    .thumb.active::after{content:'';position:absolute;inset:0;border:2px solid var(--green);border-radius:12px;pointer-events:none}
-    
-    .orient-option{flex:1;padding:16px 12px;border:1px solid var(--border);border-radius:12px;background:#fff;cursor:pointer;text-align:center;transition:var(--transition);font-size:14px;color:var(--ink-soft)}
-    .orient-option:hover{border-color:var(--ink-soft);transform:translateY(-2px)}
-    .orient-option.active{background:var(--green);color:#fff;border-color:var(--green);box-shadow:0 4px 12px rgba(26,50,50,.2)}
-    
-    .toast{position:fixed;top:24px;left:50%;transform:translateX(-50%) translateY(-100px);background:var(--green);color:#fff;padding:14px 28px;border-radius:12px;font-size:14px;box-shadow:var(--shadow-lg);z-index:1000;transition:transform .4s cubic-bezier(.16,1,.3,1);display:flex;align-items:center;gap:8px;font-weight:500}
-    .toast.show{transform:translateX(-50%) translateY(0)}
-    .toast.error{background:var(--accent)}
-    
-    .spinner{width:16px;height:16px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite;display:inline-block}
-    @keyframes spin{to{transform:rotate(360deg)}}
-    
-    .tool-num{display:inline-flex;align-items:center;gap:6px;font-family:'Fraunces',serif;font-size:12px;letter-spacing:.15em;color:var(--muted);text-transform:uppercase}
-    
-    .info-card{background:var(--green-light);border:1px solid var(--border);border-radius:16px;padding:24px;transition:var(--transition)}
-    .info-card:hover{box-shadow:var(--shadow-sm)}
-    
-    .hidden{display:none!important}
-    .result-container{position:relative}
-    
-    .stat-box{background:var(--bg-2);border-radius:12px;padding:16px;text-align:center;transition:var(--transition)}
-    .stat-box:hover{transform:translateY(-2px);box-shadow:var(--shadow-sm)}
-    .stat-box .val{font-size:24px;font-weight:700;color:var(--green)}
-    .stat-box .lbl{font-size:12px;color:var(--muted);margin-top:4px}
-    
-    .range-slider{-webkit-appearance:none;width:100%;height:6px;border-radius:3px;background:var(--border);outline:none}
-    .range-slider::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;border-radius:50%;background:var(--green);cursor:pointer;border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.2);transition:transform .2s}
-    .range-slider::-webkit-slider-thumb:hover{transform:scale(1.2)}
-    
-    .qr-preview{background:#fff;padding:24px;border-radius:20px;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;min-height:300px;transition:var(--transition)}
-    .qr-preview:hover{box-shadow:var(--shadow-sm)}
-    .qr-preview canvas,.qr-preview img{max-width:100%;max-height:400px;image-rendering:pixelated}
-    
-    .format-card{cursor:pointer;border:2px solid transparent;transition:var(--transition);border-radius:12px}
-    .format-card:hover{transform:translateY(-2px);box-shadow:var(--shadow-sm)}
-    .format-card.active{border-color:var(--green);background:var(--green-light)}
-    
-    .mock-result{font-family:monospace;font-size:14px;line-height:1.8;white-space:pre-wrap;background:var(--bg-2);padding:20px;border-radius:12px;min-height:300px;max-height:500px;overflow-y:auto;border:1px solid var(--border)}
-    
-    .date-result-card{background:var(--green-light);border:1px solid var(--border);border-radius:20px;padding:32px;text-align:center;transition:var(--transition)}
-    .date-result-card:hover{box-shadow:var(--shadow-md)}
-    .date-result-card .big-num{font-size:48px;font-weight:800;color:var(--green);line-height:1}
-    .date-result-card .big-lbl{font-size:14px;color:var(--ink-soft);margin-top:8px}
-    
-    .page-enter{animation:pageEnter .4s ease forwards}
-    @keyframes pageEnter{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
-    
-    @media (max-width: 768px) {
-      .tool-card{padding:20px}
-      .tool-icon{width:48px;height:48px;margin-bottom:16px}
-      .btn{padding:8px 16px;font-size:13px}
-      .input,.textarea{padding:12px 16px;font-size:14px}
-      .result-box{font-size:20px;padding:16px}
-      .drop-zone{padding:32px 16px}
-      .thumb-grid{grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:12px!important}
-      .thumb{border-radius:10px}
-      .thumb-num,.thumb-orient{font-size:9px;padding:2px 4px}
-      .thumb-remove{width:20px;height:20px}
-    }
-    
-    @media (max-width: 480px) {
-      .thumb-grid{grid-template-columns:repeat(3,minmax(0,1fr))!important;gap:10px!important}
-      .drop-zone{padding:24px 12px}
-    }
-    
-    :focus-visible{outline:2px solid var(--green);outline-offset:2px}
-    
-    .bg-decoration{position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;pointer-events:none;overflow:hidden}
-    .bg-decoration::before{content:'';position:absolute;top:-20%;right:-10%;width:50%;height:50%;background:radial-gradient(circle,rgba(26,58,50,.05) 0%,transparent 70%);border-radius:50%}
-    .bg-decoration::after{content:'';position:absolute;bottom:-20%;left:-10%;width:50%;height:50%;background:radial-gradient(circle,rgba(194,65,12,.03) 0%,transparent 70%);border-radius:50%}
-    
-    .picker-canvas-wrapper {
-      position: relative;
-      width: 100%;
-      aspect-ratio: 1;
-      background: #000;
-      cursor: crosshair;
-      border-radius: 16px;
-      overflow: hidden;
-      border: 1px solid var(--border);
-      background-image: 
-        linear-gradient(45deg, #e8e2d5 25%, transparent 25%), 
-        linear-gradient(-45deg, #e8e2d5 25%, transparent 25%), 
-        linear-gradient(45deg, transparent 75%, #e8e2d5 75%), 
-        linear-gradient(-45deg, transparent 75%, #e8e2d5 75%);
-      background-size: 20px 20px;
-      background-position: 0 0, 0 10px, 10px -10px, -10px 0px;
-    }
-    .picker-canvas-wrapper canvas {
-      width: 100%;
-      height: 100%;
-      image-rendering: pixelated;
-    }
-    .color-info-box {
-      cursor: pointer;
-      transition: var(--transition);
-    }
-    .color-info-box:hover {
-      background: var(--bg-2) !important;
-      border-color: var(--ink-soft) !important;
-    }
-  </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>工具集 · 效率工具箱</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>️</text></svg>">
+<script src="https://cdn.tailwindcss.com"></script>
+<script src="https://unpkg.com/jspdf@2.5.1/dist/jspdf.umd.min.js"></script>
+<script src="https://unpkg.com/pdf-lib@1.17.1/dist/pdf-lib.min.js"></script>
+<script src="https://unpkg.com/sortablejs@1.15.0/Sortable.min.js"></script>
+<script src="https://unpkg.com/heic2any@0.0.4/dist/heic2any.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&family=Noto+Serif+SC:wght@600;700&family=Fraunces:wght@400;600&display=swap" rel="stylesheet">
+<style>
+:root {
+--bg: #faf8f3; --bg-2: #f0ebe0; --ink: #1a2e2a; --ink-soft: #4a5a55; --muted: #8b9690;
+--accent: #c2410c; --accent-soft: #fde4d4; --border: #e8e2d5; --green: #1a3a32; --green-2: #2d5247; --green-light: #f0f4f2;
+--shadow-sm: 0 1px 2px rgba(26,46,42,.04), 0 4px 12px rgba(26,46,42,.06);
+--shadow-md: 0 4px 12px rgba(26,46,42,.08), 0 12px 32px rgba(26,46,42,.1);
+--shadow-lg: 0 8px 24px rgba(26,46,42,.1), 0 24px 56px rgba(26,46,42,.15);
+--transition: all .3s cubic-bezier(.4,0,.2,1);
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{font-family:'Noto Sans SC',system-ui,sans-serif;background:var(--bg);color:var(--ink);min-height:100vh;-webkit-font-smoothing:antialiased;overflow-x:hidden}
+::-webkit-scrollbar{width:8px;height:8px}
+::-webkit-scrollbar-track{background:var(--bg-2)}
+::-webkit-scrollbar-thumb{background:var(--muted);border-radius:4px}
+::-webkit-scrollbar-thumb:hover{background:var(--ink-soft)}
+.btn{display:inline-flex;align-items:center;justify-content:center;gap:8px;padding:10px 20px;border-radius:12px;font-size:14px;font-weight:500;cursor:pointer;border:1px solid transparent;transition:var(--transition);font-family:inherit;white-space:nowrap;line-height:1.5;position:relative;overflow:hidden}
+.btn::after{content:'';position:absolute;top:50%;left:50%;width:0;height:0;border-radius:50%;background:rgba(255,255,255,.2);transform:translate(-50%,-50%);transition:width .6s,height .6s}
+.btn:active::after{width:300px;height:300px}
+.btn-sm{padding:6px 12px;font-size:12px;border-radius:8px}
+.btn-primary{background:var(--green);color:#fff;box-shadow:var(--shadow-sm)}
+.btn-primary:hover{background:var(--green-2);transform:translateY(-2px);box-shadow:var(--shadow-md)}
+.btn-ghost{background:transparent;color:var(--ink-soft);border-color:var(--border)}
+.btn-ghost:hover{background:var(--bg-2);color:var(--ink);border-color:var(--ink-soft);transform:translateY(-1px)}
+.btn[disabled]{opacity:.6;cursor:not-allowed;transform:none!important;pointer-events:none}
+.tool-card{background:#fff;border:1px solid var(--border);border-radius:20px;padding:28px;cursor:pointer;transition:var(--transition);height:100%;text-decoration:none;color:inherit;display:block;position:relative;overflow:hidden}
+.tool-card::before{content:'';position:absolute;top:0;left:0;width:100%;height:4px;background:linear-gradient(90deg,var(--green),var(--green-2));transform:scaleX(0);transform-origin:left;transition:transform .4s ease}
+.tool-card:hover{transform:translateY(-6px);box-shadow:var(--shadow-lg);border-color:var(--green-2)}
+.tool-card:hover::before{transform:scaleX(1)}
+.tool-icon{width:56px;height:56px;background:var(--green-light);border-radius:16px;display:flex;align-items:center;justify-content:center;color:var(--green);margin-bottom:24px;transition:var(--transition)}
+.tool-card:hover .tool-icon{background:var(--green);color:#fff;transform:scale(1.08) rotate(-5deg)}
+.input,.textarea{width:100%;padding:16px 20px;border:1px solid var(--border);border-radius:12px;background:#fff;font-family:inherit;font-size:16px;color:var(--ink);transition:var(--transition)}
+.textarea{min-height:200px;resize:vertical;line-height:1.6}
+.input:focus,.textarea:focus{outline:none;border-color:var(--green);box-shadow:0 0 0 4px rgba(26,58,50,.08)}
+.result-box{background:var(--green-light);border:1px solid var(--border);border-radius:12px;padding:24px;min-height:96px;font-family:'Noto Serif SC',serif;font-size:24px;color:var(--green);font-weight:600;line-height:1.6;word-break:break-all;display:flex;align-items:center;transition:var(--transition);cursor:pointer;position:relative}
+.result-box:hover{box-shadow:var(--shadow-md);transform:translateY(-2px)}
+.result-box .copy-icon{position:absolute;top:12px;right:12px;opacity:0;transition:opacity .2s;color:var(--green);width:18px;height:18px}
+.result-box:hover .copy-icon{opacity:0.6}
+.drop-zone{border:2px dashed var(--border);border-radius:20px;padding:56px 32px;text-align:center;background:#fff;transition:var(--transition);cursor:pointer;position:relative;overflow:hidden}
+.drop-zone::before{content:'';position:absolute;top:0;left:0;width:100%;height:100%;background:radial-gradient(circle at center,rgba(26,58,50,.03) 0%,transparent 70%);opacity:0;transition:opacity .3s ease}
+.drop-zone.dragover{border-color:var(--green);background:var(--green-light);transform:scale(1.01)}
+.drop-zone.dragover::before{opacity:1}
+.drop-zone:hover{border-color:var(--ink-soft);background:var(--bg-2)}
+.thumb{position:relative;width:100%;aspect-ratio:1;background:var(--bg-2);border-radius:12px;overflow:hidden;border:1px solid var(--border);transition:var(--transition);cursor:grab}
+.thumb:hover{transform:translateY(-3px);box-shadow:var(--shadow-md)}
+.thumb img{width:100%;height:100%;object-fit:cover;pointer-events:none}
+.thumb-remove{position:absolute;top:6px;right:6px;width:24px;height:24px;background:rgba(0,0,0,.65);color:#fff;border:none;border-radius:50%;cursor:pointer;display:flex;align-items:center;justify-content:center;opacity:0;transition:opacity .2s}
+.thumb:hover .thumb-remove{opacity:1}
+.thumb-orient{position:absolute;bottom:6px;left:6px;background:rgba(0,0,0,.65);color:#fff;font-size:10px;padding:2px 6px;border-radius:4px}
+.thumb-num{position:absolute;top:6px;left:6px;background:var(--green);color:#fff;font-size:10px;padding:2px 6px;border-radius:4px;font-weight:600}
+.thumb.dragging{opacity:.4}
+.orient-option{flex:1;padding:16px 12px;border:1px solid var(--border);border-radius:12px;background:#fff;cursor:pointer;text-align:center;transition:var(--transition);font-size:14px;color:var(--ink-soft)}
+.orient-option:hover{border-color:var(--ink-soft);transform:translateY(-2px)}
+.orient-option.active{background:var(--green);color:#fff;border-color:var(--green);box-shadow:0 4px 12px rgba(26,50,50,.2)}
+.toast{position:fixed;top:24px;left:50%;transform:translateX(-50%) translateY(-100px);background:var(--green);color:#fff;padding:14px 28px;border-radius:12px;font-size:14px;box-shadow:var(--shadow-lg);z-index:1000;transition:transform .4s cubic-bezier(.16,1,.3,1);display:flex;align-items:center;gap:8px;font-weight:500}
+.toast.show{transform:translateX(-50%) translateY(0)}
+.toast.error{background:var(--accent)}
+.spinner{width:16px;height:16px;border:2px solid rgba(255,255,255,.3);border-top-color:#fff;border-radius:50%;animation:spin .8s linear infinite;display:inline-block}
+@keyframes spin{to{transform:rotate(360deg)}}
+.tool-num{display:inline-flex;align-items:center;gap:6px;font-family:'Fraunces',serif;font-size:12px;letter-spacing:.15em;color:var(--muted);text-transform:uppercase}
+.info-card{background:var(--green-light);border:1px solid var(--border);border-radius:16px;padding:24px;transition:var(--transition)}
+.info-card:hover{box-shadow:var(--shadow-sm)}
+.hidden{display:none!important}
+.result-container{position:relative}
+.stat-box{background:var(--bg-2);border-radius:12px;padding:16px;text-align:center;transition:var(--transition)}
+.stat-box:hover{transform:translateY(-2px);box-shadow:var(--shadow-sm)}
+.stat-box .val{font-size:24px;font-weight:700;color:var(--green)}
+.stat-box .lbl{font-size:12px;color:var(--muted);margin-top:4px}
+.range-slider{-webkit-appearance:none;width:100%;height:6px;border-radius:3px;background:var(--border);outline:none}
+.range-slider::-webkit-slider-thumb{-webkit-appearance:none;width:20px;height:20px;border-radius:50%;background:var(--green);cursor:pointer;border:2px solid #fff;box-shadow:0 2px 6px rgba(0,0,0,.2);transition:transform .2s}
+.range-slider::-webkit-slider-thumb:hover{transform:scale(1.2)}
+.qr-preview{background:#fff;padding:24px;border-radius:20px;border:1px solid var(--border);display:flex;align-items:center;justify-content:center;min-height:300px;transition:var(--transition)}
+.qr-preview:hover{box-shadow:var(--shadow-sm)}
+.qr-preview canvas,.qr-preview img{max-width:100%;max-height:400px;image-rendering:pixelated}
+.format-card{cursor:pointer;border:2px solid transparent;transition:var(--transition);border-radius:12px}
+.format-card:hover{transform:translateY(-2px);box-shadow:var(--shadow-sm)}
+.format-card.active{border-color:var(--green);background:var(--green-light)}
+.mock-result{font-family:monospace;font-size:14px;line-height:1.8;white-space:pre-wrap;background:var(--bg-2);padding:20px;border-radius:12px;min-height:300px;max-height:500px;overflow-y:auto;border:1px solid var(--border)}
+.date-result-card{background:var(--green-light);border:1px solid var(--border);border-radius:20px;padding:32px;text-align:center;transition:var(--transition)}
+.date-result-card:hover{box-shadow:var(--shadow-md)}
+.date-result-card .big-num{font-size:48px;font-weight:800;color:var(--green);line-height:1}
+.date-result-card .big-lbl{font-size:14px;color:var(--ink-soft);margin-top:8px}
+.page-enter{animation:pageEnter .4s ease forwards}
+@keyframes pageEnter{from{opacity:0;transform:translateY(20px)}to{opacity:1;transform:translateY(0)}}
+@media (max-width: 768px) {
+.tool-card{padding:20px}
+.tool-icon{width:48px;height:48px;margin-bottom:16px}
+.btn{padding:8px 16px;font-size:13px}
+.input,.textarea{padding:12px 16px;font-size:14px}
+.result-box{font-size:20px;padding:16px}
+.drop-zone{padding:32px 16px}
+}
+:focus-visible{outline:2px solid var(--green);outline-offset:2px}
+.bg-decoration{position:fixed;top:0;left:0;width:100%;height:100%;z-index:0;pointer-events:none;overflow:hidden}
+.bg-decoration::before{content:'';position:absolute;top:-20%;right:-10%;width:50%;height:50%;background:radial-gradient(circle,rgba(26,58,50,.05) 0%,transparent 70%);border-radius:50%}
+.bg-decoration::after{content:'';position:absolute;bottom:-20%;left:-10%;width:50%;height:50%;background:radial-gradient(circle,rgba(194,65,12,.03) 0%,transparent 70%);border-radius:50%}
+.color-info-box {
+cursor: pointer;
+transition: var(--transition);
+}
+.color-info-box:hover {
+background: var(--bg-2) !important;
+border-color: var(--ink-soft) !important;
+}
+</style>
 </head>
 <body>
 <div class="bg-decoration"></div>
@@ -190,199 +127,185 @@
 // 1. 工具函数与图标系统
 // ═══════════════════════════════════════════
 const Icons = {
-  tool1: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>',
-  tool2: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21,15 16,10 5,21"/></svg>',
-  tool3: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/></svg>',
-  tool4: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>',
-  tool5: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M4 12h10M4 17h16"/></svg>',
-  tool6: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3h-3zM19 14h2v2h-2zM14 19h2v2h-2zM19 19h2v2h-2z"/></svg>',
-  tool7: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/><circle cx="12" cy="12" r="3"/></svg>',
-  tool8: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>',
-  tool9: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M11 7l6 6"/><path d="M4 16l4 4 4-4"/><path d="M20 8l-4-4-4 4"/><circle cx="14" cy="13" r="1.5" fill="currentColor"/></svg>',
-  copy: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>',
-  get: (name) => Icons[name] || ''
+tool1: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>',
+tool2: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21,15 16,10 5,21"/></svg>',
+tool3: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14,2 14,8 20,8"/></svg>',
+tool4: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>',
+tool5: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M4 7h16M4 12h10M4 17h16"/></svg>',
+tool6: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="7" height="7"/><rect x="14" y="3" width="7" height="7"/><rect x="3" y="14" width="7" height="7"/><path d="M14 14h3v3h-3zM19 14h2v2h-2zM14 19h2v2h-2zM19 19h2v2h-2z"/></svg>',
+tool7: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/><circle cx="12" cy="12" r="3"/></svg>',
+tool8: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>',
+tool9: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M11 7l6 6"/><path d="M4 16l4 4 4-4"/><path d="M20 8l-4-4-4 4"/><circle cx="14" cy="13" r="1.5" fill="currentColor"/></svg>',
+copy: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>',
+get: (name) => Icons[name] || ''
 };
-
 const Utils = {
-  _toastTimer: null, _toastEl: null,
-  showToast(msg, isError = false) {
-    if (!this._toastEl) {
-      this._toastEl = Object.assign(document.createElement('div'), { className: 'toast' });
-      this._toastEl.innerHTML = `<svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 8L7 11L12 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg><span></span>`;
-      document.body.appendChild(this._toastEl);
-    }
-    this._toastEl.querySelector('span').textContent = msg;
-    this._toastEl.classList.toggle('error', isError);
-    this._toastEl.classList.add('show');
-    clearTimeout(this._toastTimer);
-    this._toastTimer = setTimeout(() => this._toastEl.classList.remove('show'), 2500);
-  },
-  copy(text) {
-    if (navigator.clipboard && window.isSecureContext) return navigator.clipboard.writeText(text);
-    return new Promise((res, rej) => {
-      const ta = Object.assign(document.createElement('textarea'), { value: text, style: 'position:fixed;opacity:0' });
-      document.body.appendChild(ta); ta.select();
-      try { document.execCommand('copy'); res(); } catch (e) { rej(e); }
-      document.body.removeChild(ta);
-    });
-  },
-  copyImage(canvas) {
-    return new Promise((res, rej) => {
-      canvas.toBlob(blob => {
-        if (!blob) return rej('Canvas to Blob failed');
-        try { navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]).then(res).catch(rej); } catch (e) { rej(e); }
-      }, 'image/png');
-    });
-  },
-  downloadBlob(bytes, name, type = 'application/pdf') {
-    const a = document.createElement('a');
-    a.href = URL.createObjectURL(new Blob([bytes], { type }));
-    a.download = name; a.click(); URL.revokeObjectURL(a.href);
-  },
-  downloadDataURL(dataUrl, name) {
-    const a = document.createElement('a'); a.href = dataUrl; a.download = name; a.click();
-  },
-  isHeic(f) { const t = f.type.toLowerCase(), n = f.name.toLowerCase(); return t.includes('heic') || t.includes('heif') || n.endsWith('.heic') || n.endsWith('.heif'); },
-  debounce(fn, delay) { let t; return function(...args) { clearTimeout(t); t = setTimeout(() => fn.apply(this, args), delay); }; },
-  formatSize(bytes) { if (bytes < 1024) return bytes + ' B'; if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB'; return (bytes / 1048576).toFixed(2) + ' MB'; },
-  formatDate(d) {
-    if (!d) return '';
-    const y = d.getFullYear(), m = String(d.getMonth() + 1).padStart(2, '0'), day = String(d.getDate()).padStart(2, '0');
-    const weekDays = ['日', '一', '二', '三', '四', '五', '六'];
-    return `${y}-${m}-${day} (周${weekDays[d.getDay()]})`;
-  },
-  numberToChinese(num) {
-    const str = String(num).trim(); if (!str || isNaN(num)) return ''; if (parseFloat(str) === 0) return '零元整';
-    const neg = str.startsWith('-'), abs = neg ? str.slice(1) : str;
-    const [rawInt, rawDec = ''] = abs.split('.');
-    const intStr = rawInt.replace(/^0+/, '') || '0', decStr = rawDec.slice(0, 2);
-    if (intStr.length > 16) return '数字超出支持范围';
-    const D = '零壹贰叁肆伍陆柒捌玖', R = ['', '拾', '佰', '仟'], U = ['', '万', '亿', '万亿'];
-    const groups = []; for (let i = intStr.length; i > 0; i -= 4) groups.unshift(intStr.slice(Math.max(0, i - 4), i));
-    let intRes = '', needZero = false;
-    for (let i = 0; i < groups.length; i++) {
-      const g = groups[i], uIdx = groups.length - 1 - i; let gStr = '', zc = 0, allZero = true;
-      for (let j = 0; j < g.length; j++) {
-        const d = +g[j], rIdx = g.length - 1 - j;
-        if (d === 0) zc++; else { allZero = false; if (zc > 0 || (j === 0 && needZero)) gStr += '零'; gStr += D[d] + R[rIdx]; zc = 0; needZero = false; }
-      }
-      if (!allZero) { intRes += gStr + U[uIdx]; needZero = zc > 0; } else needZero = true;
-    }
-    let decRes = ''; if (decStr) { if (+decStr[0]) decRes += D[+decStr[0]] + '角'; if (decStr[1] && +decStr[1]) decRes += D[+decStr[1]] + '分'; }
-    return (neg ? '负' : '') + (intRes ? intRes + '元' : '') + (decRes || (intRes ? '整' : ''));
-  },
-  convertCase(text, mode) {
-    if (!text) return '';
-    switch(mode) {
-      case 'upper': return text.toUpperCase();
-      case 'lower': return text.toLowerCase();
-      case 'sentence': return text.toLowerCase().replace(/(^\s*\p{L}|[.!?。！？]\s*\p{L})/gu, c => c.toUpperCase());
-      case 'title': return text.toLowerCase().replace(/\b\p{L}/gu, c => c.toUpperCase());
-      case 'first': return text.charAt(0).toUpperCase() + text.slice(1).toLowerCase();
-      default: return text;
-    }
-  }
-};
-
-// 修复：UUID 生成兼容 file:// 协议
-function generateUUID() {
-  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
-    try { return crypto.randomUUID(); } catch (e) {}
-  }
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
-    const r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
-    return v.toString(16);
-  });
+_toastTimer: null, _toastEl: null,
+showToast(msg, isError = false) {
+if (!this._toastEl) {
+this._toastEl = Object.assign(document.createElement('div'), { className: 'toast' });
+this._toastEl.innerHTML = `<svg width="16" height="16" viewBox="0 0 16 16" fill="none"><path d="M4 8L7 11L12 5" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"/></svg><span></span>`;
+document.body.appendChild(this._toastEl);
 }
-
+this._toastEl.querySelector('span').textContent = msg;
+this._toastEl.classList.toggle('error', isError);
+this._toastEl.classList.add('show');
+clearTimeout(this._toastTimer);
+this._toastTimer = setTimeout(() => this._toastEl.classList.remove('show'), 2500);
+},
+copy(text) {
+if (navigator.clipboard && window.isSecureContext) return navigator.clipboard.writeText(text);
+return new Promise((res, rej) => {
+const ta = Object.assign(document.createElement('textarea'), { value: text, style: 'position:fixed;opacity:0' });
+document.body.appendChild(ta); ta.select();
+try { document.execCommand('copy'); res(); } catch (e) { rej(e); }
+document.body.removeChild(ta);
+});
+},
+copyImage(canvas) {
+return new Promise((res, rej) => {
+canvas.toBlob(blob => {
+if (!blob) return rej('Canvas to Blob failed');
+try { navigator.clipboard.write([new ClipboardItem({ 'image/png': blob })]).then(res).catch(rej); } catch (e) { rej(e); }
+}, 'image/png');
+});
+},
+downloadBlob(bytes, name, type = 'application/pdf') {
+const a = document.createElement('a');
+a.href = URL.createObjectURL(new Blob([bytes], { type }));
+a.download = name; a.click(); URL.revokeObjectURL(a.href);
+},
+downloadDataURL(dataUrl, name) {
+const a = document.createElement('a'); a.href = dataUrl; a.download = name; a.click();
+},
+isHeic(f) { const t = f.type.toLowerCase(), n = f.name.toLowerCase(); return t.includes('heic') || t.includes('heif') || n.endsWith('.heic') || n.endsWith('.heif'); },
+debounce(fn, delay) { let t; return function(...args) { clearTimeout(t); t = setTimeout(() => fn.apply(this, args), delay); }; },
+formatSize(bytes) { if (bytes < 1024) return bytes + ' B'; if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB'; return (bytes / 1048576).toFixed(2) + ' MB'; },
+formatDate(d) {
+if (!d) return '';
+const y = d.getFullYear(), m = String(d.getMonth() + 1).padStart(2, '0'), day = String(d.getDate()).padStart(2, '0');
+const weekDays = ['日', '一', '二', '三', '四', '五', '六'];
+return `${y}-${m}-${day} (周${weekDays[d.getDay()]})`;
+},
+numberToChinese(num) {
+const str = String(num).trim(); if (!str || isNaN(num)) return ''; if (parseFloat(str) === 0) return '零元整';
+const neg = str.startsWith('-'), abs = neg ? str.slice(1) : str;
+const [rawInt, rawDec = ''] = abs.split('.');
+const intStr = rawInt.replace(/^0+/, '') || '0', decStr = rawDec.slice(0, 2);
+if (intStr.length > 16) return '数字超出支持范围';
+const D = '零壹贰叁肆伍陆柒捌玖', R = ['', '拾', '佰', '仟'], U = ['', '万', '亿', '万亿'];
+const groups = []; for (let i = intStr.length; i > 0; i -= 4) groups.unshift(intStr.slice(Math.max(0, i - 4), i));
+let intRes = '', needZero = false;
+for (let i = 0; i < groups.length; i++) {
+const g = groups[i], uIdx = groups.length - 1 - i; let gStr = '', zc = 0, allZero = true;
+for (let j = 0; j < g.length; j++) {
+const d = +g[j], rIdx = g.length - 1 - j;
+if (d === 0) zc++; else { allZero = false; if (zc > 0 || (j === 0 && needZero)) gStr += '零'; gStr += D[d] + R[rIdx]; zc = 0; needZero = false; }
+}
+if (!allZero) { intRes += gStr + U[uIdx]; needZero = zc > 0; } else needZero = true;
+}
+let decRes = ''; if (decStr) { if (+decStr[0]) decRes += D[+decStr[0]] + '角'; if (decStr[1] && +decStr[1]) decRes += D[+decStr[1]] + '分'; }
+return (neg ? '负' : '') + (intRes ? intRes + '元' : '') + (decRes || (intRes ? '整' : ''));
+},
+convertCase(text, mode) {
+if (!text) return '';
+switch(mode) {
+case 'upper': return text.toUpperCase();
+case 'lower': return text.toLowerCase();
+case 'sentence': return text.toLowerCase().replace(/(^\s*\p{L}|[.!?。！？]\s*\p{L})/gu, c => c.toUpperCase());
+case 'title': return text.toLowerCase().replace(/\b\p{L}/gu, c => c.toUpperCase());
+case 'first': return text.charAt(0).toUpperCase() + text.slice(1).toLowerCase();
+default: return text;
+}
+}
+};
+function generateUUID() {
+if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+try { return crypto.randomUUID(); } catch (e) {}
+}
+return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
+const r = Math.random() * 16 | 0, v = c === 'x' ? r : (r & 0x3 | 0x8);
+return v.toString(16);
+});
+}
 // ═══════════════════════════════════════════
-// 2. 状态管理 (优化：移除 structuredClone 避免大文件克隆卡顿)
+// 2. 状态管理
 // ═══════════════════════════════════════════
 const createStore = (initial) => {
-  let state = initial;
-  return {
-    get: () => state,
-    set: (updater) => { 
-      state = typeof updater === 'function' ? updater(state) : updater; 
-    }
-  };
+let state = initial;
+return {
+get: () => state,
+set: (updater) => {
+state = typeof updater === 'function' ? updater(state) : updater;
+}
 };
-
+};
 const imageStore = createStore({ files: [], mode: 'fit', orient: 'auto', quality: 0.8 });
 const pdfStore = createStore({ mode: 'split', split: { file: null, fileName: '', pageCount: 0, method: 'pages', pages: 1, start: 1, end: 1 }, merge: { files: [] } });
 const compressStore = createStore({ file: null, url: '', name: '', origSize: 0, quality: 0.8, format: 'jpeg', scale: 100, resultBlob: null, resultUrl: '', estimates: { jpeg: 0, webp: 0, png: 0 } });
 const textStore = createStore({ input: '', mode: 'upper' });
 const qrStore = createStore({ text: '', logoUrl: '', mode: 'generate', parseResult: '' });
 const mockStore = createStore({
-  type: 'uuid', count: 10,
-  pwdLen: 12, pwdOpts: { upper: true, lower: true, num: true, sym: true },
-  numMin: 1, numMax: 100, numDec: 2,
-  listText: '', listCount: 1,
-  result: ''
+type: 'uuid', count: 10,
+pwdLen: 12, pwdOpts: { upper: true, lower: true, num: true, sym: true },
+numMin: 1, numMax: 100, numDec: 2,
+listText: '', listCount: 1,
+result: ''
 });
 const dateStore = createStore({
-  mode: 'diff',
-  startDate: '', endDate: '',
-  baseDate: '', offset: 1, unit: 'days',
-  result: null
+mode: 'diff',
+startDate: '', endDate: '',
+baseDate: '', offset: 1, unit: 'days',
+result: null
 });
-const pickerStore = createStore({ image: null, scale: 10 });
-
 let sortableInst = null, compressTaskId = 0;
 let pickerPasteHandler = null;
 
-// 优化：提取离屏 Canvas 为全局单例，避免重复创建
-const pickerOffscreen = document.createElement('canvas');
-const pickerOffCtx = pickerOffscreen.getContext('2d', { willReadFrequently: true });
-
 function resetStore(store, initial) {
-  const oldState = store.get();
-  if (oldState.files) oldState.files.forEach(f => f.url && URL.revokeObjectURL(f.url));
-  if (oldState.url) URL.revokeObjectURL(oldState.url);
-  if (oldState.resultUrl) URL.revokeObjectURL(oldState.resultUrl);
-  if (oldState.logoUrl) URL.revokeObjectURL(oldState.logoUrl);
-  store.set(structuredClone(initial));
-  const base = (location.hash.slice(1) || '/').split('?')[0];
-  (ROUTES[base] || renderHome)();
+const oldState = store.get();
+if (oldState.files) oldState.files.forEach(f => f.url && URL.revokeObjectURL(f.url));
+if (oldState.url) URL.revokeObjectURL(oldState.url);
+if (oldState.resultUrl) URL.revokeObjectURL(oldState.resultUrl);
+if (oldState.logoUrl) URL.revokeObjectURL(oldState.logoUrl);
+store.set(structuredClone(initial));
+const base = (location.hash.slice(1) || '/').split('?')[0];
+(ROUTES[base] || renderHome)();
 }
-
 // ═══════════════════════════════════════════
 // 3. Web组件
 // ═══════════════════════════════════════════
 class DropZone extends HTMLElement {
-  connectedCallback() {
-    if (this._init) return; this._init = true;
-    const text = this.getAttribute('text') || '点击或拖拽文件到此处', hint = this.getAttribute('hint') || '';
-    const accept = this.getAttribute('accept') || '*/*', multi = this.hasAttribute('multiple') ? 'multiple' : '';
-    this.classList.add('drop-zone');
-    this.innerHTML = `<input type="file" class="hidden" ${multi} accept="${accept}"><div class="tool-icon mx-auto mb-4" style="width:52px;height:52px">${Icons.tool4}</div><p class="font-medium text-[--ink] mb-1 text-base">${text}</p><p class="text-xs text-[--muted]">${hint}</p>`;
-    const input = this.querySelector('input');
-    this.addEventListener('click', () => input.click());
-    this.addEventListener('dragover', e => { e.preventDefault(); this.classList.add('dragover'); });
-    this.addEventListener('dragleave', e => { e.preventDefault(); this.classList.remove('dragover'); });
-    this.addEventListener('drop', e => { e.preventDefault(); this.classList.remove('dragover'); if (e.dataTransfer.files.length) this.dispatchEvent(new CustomEvent('files-selected', { detail: e.dataTransfer.files, bubbles: true })); });
-    input.addEventListener('change', e => { if (e.target.files.length) this.dispatchEvent(new CustomEvent('files-selected', { detail: e.target.files, bubbles: true })); });
-  }
+connectedCallback() {
+if (this._init) return; this._init = true;
+const text = this.getAttribute('text') || '点击或拖拽文件到此处', hint = this.getAttribute('hint') || '';
+const accept = this.getAttribute('accept') || '*/*', multi = this.hasAttribute('multiple') ? 'multiple' : '';
+this.classList.add('drop-zone');
+this.innerHTML = `<input type="file" class="hidden" ${multi} accept="${accept}"><div class="tool-icon mx-auto mb-4" style="width:52px;height:52px">${Icons.tool4}</div><p class="font-medium text-[--ink] mb-1 text-base">${text}</p><p class="text-xs text-[--muted]">${hint}</p>`;
+const input = this.querySelector('input');
+this.addEventListener('click', () => input.click());
+this.addEventListener('dragover', e => { e.preventDefault(); this.classList.add('dragover'); });
+this.addEventListener('dragleave', e => { e.preventDefault(); this.classList.remove('dragover'); });
+this.addEventListener('drop', e => { e.preventDefault(); this.classList.remove('dragover'); if (e.dataTransfer.files.length) this.dispatchEvent(new CustomEvent('files-selected', { detail: e.dataTransfer.files, bubbles: true })); });
+input.addEventListener('change', e => { if (e.target.files.length) this.dispatchEvent(new CustomEvent('files-selected', { detail: e.target.files, bubbles: true })); });
+}
 }
 customElements.define('drop-zone', DropZone);
-
 // ═══════════════════════════════════════════
 // 4. 配置
 // ═══════════════════════════════════════════
 const TOOLS = [
-  { id: 'text-case', name: '大小写转换', desc: '一键转换英文大小写，支持句首、词首等5种模式。', icon: 'tool5' },
-  { id: 'qrcode-generator', name: '二维码生成与解析', desc: '生成高清二维码，或上传图片识别二维码内容。', icon: 'tool6' },
-  { id: 'pdf-split-merge', name: 'PDF拆分与合并', desc: '轻松拆分PDF文件或合并多个PDF文档，本地处理。', icon: 'tool3' },
-  { id: 'date-calculator', name: '日期计算器', desc: '计算日期差值、工作日天数，或推算合同到期日。', icon: 'tool8' },
-  { id: 'number-to-chinese', name: '数字转中文大写', desc: '输入阿拉伯数字，自动转换为人民币大写金额格式。', icon: 'tool1' },
-  { id: 'mock-generator', name: '随机数据生成', desc: '批量生成UUID、随机密码、测试数据或幸运抽签。', icon: 'tool7' },
-  { id: 'image-compress', name: '图片压缩', desc: '智能压缩图片体积，支持格式转换与多格式预估。', icon: 'tool4' },
-  { id: 'image-to-pdf', name: '图片转 PDF', desc: '将多张图片合并为单个 PDF 文件，支持排序与压缩。', icon: 'tool2' },
-  { id: 'color-picker', name: '颜色取色器', desc: '放大图片像素，精准提取颜色HEX与RGB值。', icon: 'tool9' }
+{ id: 'text-case', name: '大小写转换', desc: '一键转换英文大小写，支持句首、词首等5种模式。', icon: 'tool5' },
+{ id: 'qrcode-generator', name: '二维码生成与解析', desc: '生成高清二维码，或上传图片识别二维码内容。', icon: 'tool6' },
+{ id: 'pdf-split-merge', name: 'PDF拆分与合并', desc: '轻松拆分PDF文件或合并多个PDF文档，本地处理。', icon: 'tool3' },
+{ id: 'date-calculator', name: '日期计算器', desc: '计算日期差值、工作日天数，或推算合同到期日。', icon: 'tool8' },
+{ id: 'number-to-chinese', name: '数字转中文大写', desc: '输入阿拉伯数字，自动转换为人民币大写金额格式。', icon: 'tool1' },
+{ id: 'mock-generator', name: '随机数据生成', desc: '批量生成UUID、随机密码、测试数据或幸运抽签。', icon: 'tool7' },
+{ id: 'image-compress', name: '图片压缩', desc: '智能压缩图片体积，支持格式转换与多格式预估。', icon: 'tool4' },
+{ id: 'image-to-pdf', name: '图片转 PDF', desc: '将多张图片合并为单个 PDF 文件，支持排序与压缩。', icon: 'tool2' },
+{ id: 'color-picker', name: '颜色取色器', desc: '放大图片像素，精准提取颜色HEX与RGB值。', icon: 'tool9' }
 ];
 const IMG_OPTS = { mode: [{ v: 'fit', l: '贴合图片', s: '无白边' }, { v: 'a4', l: 'A4 标准页', s: '带白边' }], orient: [{ v: 'auto', l: '自动' }, { v: 'portrait', l: '纵向' }, { v: 'landscape', l: '横向' }], quality: [{ v: '1', l: '原图' }, { v: '0.8', l: '平衡' }, { v: '0.5', l: '极限' }] };
 const CASE_OPTS = [{ v: 'upper', l: '全部大写' }, { v: 'lower', l: '全部小写' }, { v: 'sentence', l: '句首大写' }, { v: 'title', l: '词首大写' }, { v: 'first', l: '仅首字母大写' }];
-
 // ═══════════════════════════════════════════
 // 5. 渲染辅助函数
 // ═══════════════════════════════════════════
@@ -391,901 +314,807 @@ const $header = (title, num) => `<header class="max-w-5xl mx-auto px-6 py-8 flex
 const $optGroup = (key, cur) => IMG_OPTS[key].map(o => `<div class="orient-option ${String(cur) === o.v ? 'active' : ''}" data-${key}="${o.v}" role="button" tabindex="0">${o.l}${o.s ? `<br><span class="text-xs opacity-70">${o.s}</span>` : ''}</div>`).join('');
 const $toolCard = (t, i) => `<a href="#/${t.id}" class="tool-card page-enter" style="animation-delay:${i * 0.05}s"><div class="tool-icon">${Icons.get(t.icon)}</div><div class="flex items-center justify-between mb-3"><h3 class="text-xl font-semibold text-[--ink]">${t.name}</h3><span class="tool-num">${String(i + 1).padStart(2, '0')}</span></div><p class="text-sm text-[--ink-soft] leading-relaxed mb-6">${t.desc}</p><div class="flex items-center gap-2 text-xs text-[--green] font-medium"><span>进入工具</span><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><path d="M3 7H11M11 7L7 3M11 7L7 11" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div></a>`;
 const $infoCard = (title, items) => `<div class="info-card mt-12"><h4 class="text-sm font-semibold text-[--green] mb-3 flex items-center gap-2"><svg width="14" height="14" viewBox="0 0 14 14" fill="none"><circle cx="7" cy="7" r="6" stroke="currentColor" stroke-width="1.3"/><path d="M7 4V7.5M7 9.5V10" stroke="currentColor" stroke-width="1.5" stroke-linecap="round"/></svg>${title}</h4><ul class="text-xs text-[--ink-soft] space-y-1.5 leading-relaxed">${items.map(i => `<li>${i}</li>`).join('')}</ul></div>`;
-
 // ═══════════════════════════════════════════
 // 6. 页面渲染器
 // ═══════════════════════════════════════════
 function renderHome() {
-  app.innerHTML = `<main class="max-w-6xl mx-auto px-6 py-16"><div class="text-center mb-12 page-enter"><h1 class="text-5xl font-bold mb-4" style="background:linear-gradient(135deg,var(--green) 0%,var(--green-2) 50%,var(--accent) 100%);-webkit-background-clip:text;color:transparent">效率工具集</h1><p class="text-[--ink-soft] text-lg mb-8">简洁、纯粹、专注的本地化工具，解决日常办公需求。</p><div class="flex gap-8 justify-center text-sm text-[--ink-soft]"><div><span class="font-bold text-[--green] text-xl">${TOOLS.length}</span> 个实用工具</div><div><span class="font-bold text-[--green] text-xl">100%</span> 本地运行</div><div><span class="font-bold text-[--green] text-xl">0</span> 数据上传</div></div></div><div id="tools-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">${TOOLS.map($toolCard).join('')}</div></main>`;
+app.innerHTML = `<main class="max-w-6xl mx-auto px-6 py-16"><div class="text-center mb-12 page-enter"><h1 class="text-5xl font-bold mb-4" style="background:linear-gradient(135deg,var(--green) 0%,var(--green-2) 50%,var(--accent) 100%);-webkit-background-clip:text;color:transparent">效率工具集</h1><p class="text-[--ink-soft] text-lg mb-8">简洁、纯粹、专注的本地化工具，解决日常办公需求。</p><div class="flex gap-8 justify-center text-sm text-[--ink-soft]"><div><span class="font-bold text-[--green] text-xl">${TOOLS.length}</span> 个实用工具</div><div><span class="font-bold text-[--green] text-xl">100%</span> 本地运行</div><div><span class="font-bold text-[--green] text-xl">0</span> 数据上传</div></div></div><div id="tools-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">${TOOLS.map($toolCard).join('')}</div></main>`;
 }
-
 function renderTextCaseTool() {
-  const S = textStore.get();
-  app.innerHTML = `${$header('大小写转换', 'Tool 01')}<main class="max-w-5xl mx-auto px-6 pb-16 page-enter"><div class="flex flex-wrap gap-3 mb-6 justify-center">${CASE_OPTS.map(o => `<button class="btn ${S.mode === o.v ? 'btn-primary' : 'btn-ghost'}" data-case-mode="${o.v}">${o.l}</button>`).join('')}</div><div class="grid grid-cols-1 lg:grid-cols-2 gap-6"><div><label class="block text-sm font-medium text-[--ink-soft] mb-2">输入文本</label><textarea id="tc-input" class="textarea" placeholder="在此输入或粘贴文本...">${S.input}</textarea></div><div><label class="block text-sm font-medium text-[--ink-soft] mb-2">转换结果</label><textarea id="tc-output" class="textarea bg-[--green-light] text-[--green]" readonly></textarea></div></div><div class="flex gap-3 mt-6 justify-center"><button class="btn btn-primary" id="tc-copy-btn">复制结果</button><button class="btn btn-ghost" id="reset-text">重置</button></div><div class="grid grid-cols-3 gap-4 mt-8 max-w-md mx-auto"><div class="stat-box"><div class="val" id="tc-chars">0</div><div class="lbl">字符数</div></div><div class="stat-box"><div class="val" id="tc-words">0</div><div class="lbl">单词数</div></div><div class="stat-box"><div class="val" id="tc-lines">0</div><div class="lbl">行数</div></div></div>${$infoCard('使用说明', ['全部大写/小写：转换所有英文字母', '句首大写：每句话的第一个字母大写', '词首大写：每个单词的首字母大写', '仅首字母大写：整个文本的第一个字母大写，其余小写'])}</main>`;
-  doTextCase();
+const S = textStore.get();
+app.innerHTML = `${$header('大小写转换', 'Tool 01')}<main class="max-w-5xl mx-auto px-6 pb-16 page-enter"><div class="flex flex-wrap gap-3 mb-6 justify-center">${CASE_OPTS.map(o => `<button class="btn ${S.mode === o.v ? 'btn-primary' : 'btn-ghost'}" data-case-mode="${o.v}">${o.l}</button>`).join('')}</div><div class="grid grid-cols-1 lg:grid-cols-2 gap-6"><div><label class="block text-sm font-medium text-[--ink-soft] mb-2">输入文本</label><textarea id="tc-input" class="textarea" placeholder="在此输入或粘贴文本...">${S.input}</textarea></div><div><label class="block text-sm font-medium text-[--ink-soft] mb-2">转换结果</label><textarea id="tc-output" class="textarea bg-[--green-light] text-[--green]" readonly></textarea></div></div><div class="flex gap-3 mt-6 justify-center"><button class="btn btn-primary" id="tc-copy-btn">复制结果</button><button class="btn btn-ghost" id="reset-text">重置</button></div><div class="grid grid-cols-3 gap-4 mt-8 max-w-md mx-auto"><div class="stat-box"><div class="val" id="tc-chars">0</div><div class="lbl">字符数</div></div><div class="stat-box"><div class="val" id="tc-words">0</div><div class="lbl">单词数</div></div><div class="stat-box"><div class="val" id="tc-lines">0</div><div class="lbl">行数</div></div></div>${$infoCard('使用说明', ['全部大写/小写：转换所有英文字母', '句首大写：每句话的第一个字母大写', '词首大写：每个单词的首字母大写', '仅首字母大写：整个文本的第一个字母大写，其余小写'])}</main>`;
+doTextCase();
 }
-
 function renderQrTool() {
-  const S = qrStore.get();
-  app.innerHTML = `${$header('二维码生成与解析', 'Tool 02')}<main class="max-w-5xl mx-auto px-6 pb-16 page-enter">
-    <div class="flex gap-4 mb-8 justify-center">
-      <button class="btn ${S.mode === 'generate' ? 'btn-primary' : 'btn-ghost'}" data-qr-mode="generate">生成二维码</button>
-      <button class="btn ${S.mode === 'parse' ? 'btn-primary' : 'btn-ghost'}" data-qr-mode="parse">解析二维码</button>
-    </div>
-    <div id="qr-gen-view" class="${S.mode !== 'generate' ? 'hidden' : ''}">
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <div class="space-y-6">
-          <div><label class="block text-sm font-medium text-[--ink-soft] mb-2">输入文本或链接</label><textarea id="qr-input" class="textarea" placeholder="输入网址、文本或名片信息...">${S.text}</textarea></div>
-          <div><label class="block text-sm font-medium text-[--ink-soft] mb-2">添加中心 Logo (可选)</label><drop-zone id="qr-logo-drop" text="点击上传 Logo" hint="建议透明背景 PNG" accept="image/*" style="padding:24px"></drop-zone></div>
-          <div class="flex gap-3"><button class="btn btn-primary flex-1" id="qr-dl-png">下载 PNG</button><button class="btn btn-ghost flex-1" id="qr-dl-svg">下载 SVG</button><button class="btn btn-ghost" id="qr-copy-img" title="复制图片">复制</button></div>
-        </div>
-        <div><div class="qr-preview" id="qr-preview-box"><span id="qr-placeholder" class="text-[--muted]">输入内容后生成二维码</span></div></div>
-      </div>
-    </div>
-    <div id="qr-parse-view" class="${S.mode !== 'parse' ? 'hidden' : ''}">
-      <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-        <div><drop-zone id="qr-parse-drop" text="上传二维码图片" hint="支持 JPG, PNG" accept="image/*"></drop-zone></div>
-        <div><label class="block text-sm font-medium text-[--ink-soft] mb-2">识别结果</label><div class="result-container"><div id="qr-parse-output" class="result-box text-base font-sans font-normal text-[--ink]">${S.parseResult || '等待上传图片...'}</div><button class="btn btn-sm btn-primary copy-result-btn" id="qr-parse-copy">复制结果</button></div></div>
-      </div>
-    </div>
-    <div class="flex gap-3 mt-8 justify-center"><button class="btn btn-ghost" id="reset-qr">重置工具</button></div>
-    ${$infoCard('使用说明', ['生成：支持任意文本、网址，添加 Logo 自动启用高容错率', '解析：上传二维码图片，自动识别内容并支持一键复制', '所有操作均在本地浏览器完成，保护隐私'])}
-  </main>`;
-  if (S.mode === 'generate') doGenerateQR();
+const S = qrStore.get();
+app.innerHTML = `${$header('二维码生成与解析', 'Tool 02')}<main class="max-w-5xl mx-auto px-6 pb-16 page-enter">
+<div class="flex gap-4 mb-8 justify-center">
+<button class="btn ${S.mode === 'generate' ? 'btn-primary' : 'btn-ghost'}" data-qr-mode="generate">生成二维码</button>
+<button class="btn ${S.mode === 'parse' ? 'btn-primary' : 'btn-ghost'}" data-qr-mode="parse">解析二维码</button>
+</div>
+<div id="qr-gen-view" class="${S.mode !== 'generate' ? 'hidden' : ''}">
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+<div class="space-y-6">
+<div><label class="block text-sm font-medium text-[--ink-soft] mb-2">输入文本或链接</label><textarea id="qr-input" class="textarea" placeholder="输入网址、文本或名片信息...">${S.text}</textarea></div>
+<div><label class="block text-sm font-medium text-[--ink-soft] mb-2">添加中心 Logo (可选)</label><drop-zone id="qr-logo-drop" text="点击上传 Logo" hint="建议透明背景 PNG" accept="image/*" style="padding:24px"></drop-zone></div>
+<div class="flex gap-3"><button class="btn btn-primary flex-1" id="qr-dl-png">下载 PNG</button><button class="btn btn-ghost flex-1" id="qr-dl-svg">下载 SVG</button><button class="btn btn-ghost" id="qr-copy-img" title="复制图片">复制</button></div>
+</div>
+<div><div class="qr-preview" id="qr-preview-box"><span id="qr-placeholder" class="text-[--muted]">输入内容后生成二维码</span></div></div>
+</div>
+</div>
+<div id="qr-parse-view" class="${S.mode !== 'parse' ? 'hidden' : ''}">
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+<div><drop-zone id="qr-parse-drop" text="上传二维码图片" hint="支持 JPG, PNG" accept="image/*"></drop-zone></div>
+<div><label class="block text-sm font-medium text-[--ink-soft] mb-2">识别结果</label><div class="result-container"><div id="qr-parse-output" class="result-box text-base font-sans font-normal text-[--ink]">${S.parseResult || '等待上传图片...'}</div><button class="btn btn-sm btn-primary copy-result-btn" id="qr-parse-copy">复制结果</button></div></div>
+</div>
+</div>
+<div class="flex gap-3 mt-8 justify-center"><button class="btn btn-ghost" id="reset-qr">重置工具</button></div>
+${$infoCard('使用说明', ['生成：支持任意文本、网址，添加 Logo 自动启用高容错率', '解析：上传二维码图片，自动识别内容并支持一键复制', '所有操作均在本地浏览器完成，保护隐私'])}
+</main>`;
+if (S.mode === 'generate') doGenerateQR();
 }
-
 function renderPdfTool() {
-  const S = pdfStore.get(), split = S.split;
-  app.innerHTML = `${$header('PDF拆分与合并', 'Tool 03')}<main class="max-w-4xl mx-auto px-6 pb-16 page-enter"><div class="flex gap-4 mb-8 justify-center"><button class="btn ${S.mode === 'split' ? 'btn-primary' : 'btn-ghost'}" data-pdf-mode="split">拆分 PDF</button><button class="btn ${S.mode === 'merge' ? 'btn-primary' : 'btn-ghost'}" data-pdf-mode="merge">合并 PDF</button></div><div id="split-view" class="${S.mode !== 'split' ? 'hidden' : ''}"><drop-zone id="split-drop" text="上传 PDF 文件" hint="支持 .pdf 格式，单个文件最大 50MB" accept=".pdf"></drop-zone><div id="split-preview" class="${split.file ? '' : 'hidden'} mt-6 p-4 bg-white rounded-xl border border-[--border] flex items-center justify-between"><div><div class="font-medium text-[--ink]" id="split-fname">${split.fileName}</div><div class="text-xs text-[--muted]">共 <span id="split-pcount">${split.pageCount}</span> 页</div></div><button class="btn btn-ghost btn-sm" id="split-remove">移除文件</button></div><div id="split-opts" class="${split.file ? '' : 'hidden'} mt-6 space-y-4"><div class="flex gap-4 items-center"><label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="split-method" value="pages" ${split.method === 'pages' ? 'checked' : ''}> 按固定页数</label><input type="number" class="input w-24" id="split-pages" value="${split.pages}" min="1"></div><div class="flex items-center gap-4"><label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="split-method" value="range" ${split.method === 'range' ? 'checked' : ''}> 按页码范围</label><span>从</span><input type="number" class="input w-20" id="split-start" value="${split.start}" min="1"><span>到</span><input type="number" class="input w-20" id="split-end" value="${split.end}" min="1"></div></div><div class="mt-8 text-center"><button class="btn btn-primary px-10" id="split-btn">开始拆分</button></div></div><div id="merge-view" class="${S.mode !== 'merge' ? 'hidden' : ''}"><drop-zone id="merge-drop" text="上传多个 PDF 文件" hint="支持 .pdf 格式，最多20个或总计200MB" accept=".pdf" multiple></drop-zone><div id="merge-list" class="hidden mt-6 space-y-3"></div><div class="mt-8 flex gap-4 justify-center"><button class="btn btn-primary px-10" id="merge-btn" ${S.merge.files.length < 2 ? 'disabled' : ''}>开始合并</button><button class="btn btn-ghost" id="reset-pdf">重置</button></div></div>${$infoCard('使用说明', ['所有PDF处理均在本地完成', '支持按固定页数或自定义页码范围拆分', '支持将多个PDF合并为一个文档'])}</main>`;
-  if (S.mode === 'merge') renderMergeList();
+const S = pdfStore.get(), split = S.split;
+app.innerHTML = `${$header('PDF拆分与合并', 'Tool 03')}<main class="max-w-4xl mx-auto px-6 pb-16 page-enter"><div class="flex gap-4 mb-8 justify-center"><button class="btn ${S.mode === 'split' ? 'btn-primary' : 'btn-ghost'}" data-pdf-mode="split">拆分 PDF</button><button class="btn ${S.mode === 'merge' ? 'btn-primary' : 'btn-ghost'}" data-pdf-mode="merge">合并 PDF</button></div><div id="split-view" class="${S.mode !== 'split' ? 'hidden' : ''}"><drop-zone id="split-drop" text="上传 PDF 文件" hint="支持 .pdf 格式，单个文件最大 50MB" accept=".pdf"></drop-zone><div id="split-preview" class="${split.file ? '' : 'hidden'} mt-6 p-4 bg-white rounded-xl border border-[--border] flex items-center justify-between"><div><div class="font-medium text-[--ink]" id="split-fname">${split.fileName}</div><div class="text-xs text-[--muted]">共 <span id="split-pcount">${split.pageCount}</span> 页</div></div><button class="btn btn-ghost btn-sm" id="split-remove">移除文件</button></div><div id="split-opts" class="${split.file ? '' : 'hidden'} mt-6 space-y-4"><div class="flex gap-4 items-center"><label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="split-method" value="pages" ${split.method === 'pages' ? 'checked' : ''}> 按固定页数</label><input type="number" class="input w-24" id="split-pages" value="${split.pages}" min="1"></div><div class="flex items-center gap-4"><label class="flex items-center gap-2 cursor-pointer"><input type="radio" name="split-method" value="range" ${split.method === 'range' ? 'checked' : ''}> 按页码范围</label><span>从</span><input type="number" class="input w-20" id="split-start" value="${split.start}" min="1"><span>到</span><input type="number" class="input w-20" id="split-end" value="${split.end}" min="1"></div></div><div class="mt-8 text-center"><button class="btn btn-primary px-10" id="split-btn">开始拆分</button></div></div><div id="merge-view" class="${S.mode !== 'merge' ? 'hidden' : ''}"><drop-zone id="merge-drop" text="上传多个 PDF 文件" hint="支持 .pdf 格式，最多20个或总计200MB" accept=".pdf" multiple></drop-zone><div id="merge-list" class="hidden mt-6 space-y-3"></div><div class="mt-8 flex gap-4 justify-center"><button class="btn btn-primary px-10" id="merge-btn" ${S.merge.files.length < 2 ? 'disabled' : ''}>开始合并</button><button class="btn btn-ghost" id="reset-pdf">重置</button></div></div>${$infoCard('使用说明', ['所有PDF处理均在本地完成', '支持按固定页数或自定义页码范围拆分', '支持将多个PDF合并为一个文档'])}</main>`;
+if (S.mode === 'merge') renderMergeList();
 }
-
 function renderDateTool() {
-  const S = dateStore.get();
-  const today = new Date().toISOString().split('T')[0];
-  app.innerHTML = `${$header('日期计算器', 'Tool 04')}<main class="max-w-4xl mx-auto px-6 pb-16 page-enter">
-    <div class="flex gap-4 mb-8 justify-center">
-      <button class="btn ${S.mode==='diff'?'btn-primary':'btn-ghost'}" data-date-mode="diff">计算日期差 (间隔)</button>
-      <button class="btn ${S.mode==='calc'?'btn-primary':'btn-ghost'}" data-date-mode="calc">推算日期 (加减)</button>
-    </div>
-    
-    <div id="date-diff-view" class="${S.mode!=='diff'?'hidden':''}">
-      <div class="bg-white p-8 rounded-2xl border border-[--border] space-y-6">
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div><label class="block text-sm font-medium text-[--ink-soft] mb-2">开始日期</label><input type="date" id="date-start" class="input" value="${S.startDate || today}"></div>
-          <div><label class="block text-sm font-medium text-[--ink-soft] mb-2">结束日期</label><input type="date" id="date-end" class="input" value="${S.endDate || today}"></div>
-        </div>
-        <button class="btn btn-primary w-full" id="date-calc-diff-btn">计算间隔</button>
-        <div id="date-diff-result" class="hidden mt-6"></div>
-      </div>
-    </div>
-
-    <div id="date-calc-view" class="${S.mode!=='calc'?'hidden':''}">
-      <div class="bg-white p-8 rounded-2xl border border-[--border] space-y-6">
-        <div><label class="block text-sm font-medium text-[--ink-soft] mb-2">基准日期</label><input type="date" id="date-base" class="input" value="${S.baseDate || today}"></div>
-        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-          <div>
-            <label class="block text-sm font-medium text-[--ink-soft] mb-2">增加/减少</label>
-            <input type="number" id="date-offset" class="input" value="${S.offset}">
-          </div>
-          <div>
-            <label class="block text-sm font-medium text-[--ink-soft] mb-2">时间单位</label>
-            <select id="date-unit" class="input">
-              <option value="days" ${S.unit==='days'?'selected':''}>天</option>
-              <option value="weeks" ${S.unit==='weeks'?'selected':''}>周</option>
-              <option value="months" ${S.unit==='months'?'selected':''}>月</option>
-              <option value="years" ${S.unit==='years'?'selected':''}>年</option>
-            </select>
-          </div>
-        </div>
-        <button class="btn btn-primary w-full" id="date-calc-offset-btn">推算日期</button>
-        <div id="date-calc-result" class="hidden mt-6"></div>
-      </div>
-    </div>
-
-    <div class="flex gap-3 mt-8 justify-center"><button class="btn btn-ghost" id="reset-date">重置工具</button></div>
-    ${$infoCard('办公场景', ['HR：计算员工入职天数、年假剩余、合同到期日', '法务/行政：计算租房到期日、执照有效期', '财务：计算账期、利息天数、发票到期日', '注意：月份加减已自动处理"月末溢出"问题（如1月31日加1个月为2月28日）'])}
-  </main>`;
-  
-  if (S.result && S.mode === 'diff') renderDateDiffResult(S.result);
-  if (S.result && S.mode === 'calc') renderDateCalcResult(S.result);
+const S = dateStore.get();
+const today = new Date().toISOString().split('T')[0];
+app.innerHTML = `${$header('日期计算器', 'Tool 04')}<main class="max-w-4xl mx-auto px-6 pb-16 page-enter">
+<div class="flex gap-4 mb-8 justify-center">
+<button class="btn ${S.mode==='diff'?'btn-primary':'btn-ghost'}" data-date-mode="diff">计算日期差 (间隔)</button>
+<button class="btn ${S.mode==='calc'?'btn-primary':'btn-ghost'}" data-date-mode="calc">推算日期 (加减)</button>
+</div>
+<div id="date-diff-view" class="${S.mode!=='diff'?'hidden':''}">
+<div class="bg-white p-8 rounded-2xl border border-[--border] space-y-6">
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<div><label class="block text-sm font-medium text-[--ink-soft] mb-2">开始日期</label><input type="date" id="date-start" class="input" value="${S.startDate || today}"></div>
+<div><label class="block text-sm font-medium text-[--ink-soft] mb-2">结束日期</label><input type="date" id="date-end" class="input" value="${S.endDate || today}"></div>
+</div>
+<button class="btn btn-primary w-full" id="date-calc-diff-btn">计算间隔</button>
+<div id="date-diff-result" class="hidden mt-6"></div>
+</div>
+</div>
+<div id="date-calc-view" class="${S.mode!=='calc'?'hidden':''}">
+<div class="bg-white p-8 rounded-2xl border border-[--border] space-y-6">
+<div><label class="block text-sm font-medium text-[--ink-soft] mb-2">基准日期</label><input type="date" id="date-base" class="input" value="${S.baseDate || today}"></div>
+<div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+<div>
+<label class="block text-sm font-medium text-[--ink-soft] mb-2">增加/减少</label>
+<input type="number" id="date-offset" class="input" value="${S.offset}">
+</div>
+<div>
+<label class="block text-sm font-medium text-[--ink-soft] mb-2">时间单位</label>
+<select id="date-unit" class="input">
+<option value="days" ${S.unit==='days'?'selected':''}>天</option>
+<option value="weeks" ${S.unit==='weeks'?'selected':''}>周</option>
+<option value="months" ${S.unit==='months'?'selected':''}>月</option>
+<option value="years" ${S.unit==='years'?'selected':''}>年</option>
+</select>
+</div>
+</div>
+<button class="btn btn-primary w-full" id="date-calc-offset-btn">推算日期</button>
+<div id="date-calc-result" class="hidden mt-6"></div>
+</div>
+</div>
+<div class="flex gap-3 mt-8 justify-center"><button class="btn btn-ghost" id="reset-date">重置工具</button></div>
+${$infoCard('办公场景', ['HR：计算员工入职天数、年假剩余、合同到期日', '法务/行政：计算租房到期日、执照有效期', '财务：计算账期、利息天数、发票到期日', '注意：月份加减已自动处理"月末溢出"问题（如1月31日加1个月为2月28日）'])}
+</main>`;
+if (S.result && S.mode === 'diff') renderDateDiffResult(S.result);
+if (S.result && S.mode === 'calc') renderDateCalcResult(S.result);
 }
-
 function renderNumberTool() {
-  app.innerHTML = `${$header('数字转中文大写', 'Tool 05')}<main class="max-w-4xl mx-auto px-6 pb-16 page-enter">
-    <div class="bg-white p-8 rounded-2xl border border-[--border]">
-      <div class="mb-6">
-        <label class="block text-sm font-medium text-[--ink-soft] mb-2">输入数字</label>
-        <div class="relative">
-          <span class="absolute left-4 top-1/2 -translate-y-1/2 text-[--muted] text-xl">¥</span>
-          <input type="text" id="num-input" class="input pl-10 text-xl" placeholder="请输入金额" value="">
-        </div>
-      </div>
-      
-      <div class="mb-6">
-        <label class="block text-sm font-medium text-[--ink-soft] mb-2">中文大写结果</label>
-        <div id="num-output" class="result-box" title="点击复制结果">
-          <span class="text-[--muted] text-base font-sans font-normal">结果将显示在这里</span>
-          <div class="copy-icon">${Icons.copy}</div>
-        </div>
-      </div>
-      
-      <div class="flex justify-center">
-        <button class="btn btn-ghost" id="reset-number">重置</button>
-      </div>
-    </div>
-    
-    ${$infoCard('使用说明', ['支持整数、小数（最多两位）、负数', '最大支持16位整数'])}
-  </main>`;
+app.innerHTML = `${$header('数字转中文大写', 'Tool 05')}<main class="max-w-4xl mx-auto px-6 pb-16 page-enter">
+<div class="bg-white p-8 rounded-2xl border border-[--border]">
+<div class="mb-6">
+<label class="block text-sm font-medium text-[--ink-soft] mb-2">输入数字</label>
+<div class="relative">
+<span class="absolute left-4 top-1/2 -translate-y-1/2 text-[--muted] text-xl">¥</span>
+<input type="text" id="num-input" class="input pl-10 text-xl" placeholder="请输入金额" value="">
+</div>
+</div>
+<div class="mb-6">
+<label class="block text-sm font-medium text-[--ink-soft] mb-2">中文大写结果</label>
+<div id="num-output" class="result-box" title="点击复制结果">
+<span class="text-[--muted] text-base font-sans font-normal">结果将显示在这里</span>
+<div class="copy-icon">${Icons.copy}</div>
+</div>
+</div>
+<div class="flex justify-center">
+<button class="btn btn-ghost" id="reset-number">重置</button>
+</div>
+</div>
+${$infoCard('使用说明', ['支持整数、小数（最多两位）、负数', '最大支持16位整数'])}
+</main>`;
 }
-
 function renderMockTool() {
-  const S = mockStore.get();
-  app.innerHTML = `${$header('随机数据生成', 'Tool 06')}<main class="max-w-5xl mx-auto px-6 pb-16 page-enter">
-    <div class="flex gap-2 mb-8 justify-center flex-wrap">
-      <button class="btn ${S.type==='uuid'?'btn-primary':'btn-ghost'}" data-mock-type="uuid">UUID 序列</button>
-      <button class="btn ${S.type==='password'?'btn-primary':'btn-ghost'}" data-mock-type="password">随机密码</button>
-      <button class="btn ${S.type==='number'?'btn-primary':'btn-ghost'}" data-mock-type="number">随机数字/金额</button>
-      <button class="btn ${S.type==='picker'?'btn-primary':'btn-ghost'}" data-mock-type="picker">幸运抽签/抽取</button>
-    </div>
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
-      <div class="bg-white p-6 rounded-2xl border border-[--border]">
-        <h3 class="text-lg font-semibold mb-4 text-[--ink]">生成设置</h3>
-        <div class="space-y-4">
-          <div>
-            <label class="block text-sm font-medium text-[--ink-soft] mb-2">生成数量</label>
-            <input type="number" id="mock-count" class="input" value="${S.count}" min="1" max="1000">
-          </div>
-          <div id="mock-opts-pwd" class="${S.type!=='password'?'hidden':''} space-y-3">
-            <label class="block text-sm font-medium text-[--ink-soft]">密码长度: ${S.pwdLen}</label>
-            <input type="range" class="range-slider" id="mock-pwd-len" min="4" max="32" value="${S.pwdLen}">
-            <div class="grid grid-cols-2 gap-2 text-sm">
-              <label class="flex items-center gap-2"><input type="checkbox" id="pwd-upper" ${S.pwdOpts.upper?'checked':''}> 大写字母</label>
-              <label class="flex items-center gap-2"><input type="checkbox" id="pwd-lower" ${S.pwdOpts.lower?'checked':''}> 小写字母</label>
-              <label class="flex items-center gap-2"><input type="checkbox" id="pwd-num" ${S.pwdOpts.num?'checked':''}> 数字</label>
-              <label class="flex items-center gap-2"><input type="checkbox" id="pwd-sym" ${S.pwdOpts.sym?'checked':''}> 特殊符号</label>
-            </div>
-          </div>
-          <div id="mock-opts-num" class="${S.type!=='number'?'hidden':''} grid grid-cols-3 gap-3">
-            <div><label class="text-xs text-[--muted]">最小值</label><input type="number" id="mock-num-min" class="input" value="${S.numMin}"></div>
-            <div><label class="text-xs text-[--muted]">最大值</label><input type="number" id="mock-num-max" class="input" value="${S.numMax}"></div>
-            <div><label class="text-xs text-[--muted]">小数位数</label><input type="number" id="mock-num-dec" class="input" value="${S.numDec}" min="0" max="6"></div>
-          </div>
-          <div id="mock-opts-picker" class="${S.type!=='picker'?'hidden':''}">
-            <label class="block text-sm font-medium text-[--ink-soft] mb-2">候选名单 (每行一个)</label>
-            <textarea id="mock-list" class="textarea" placeholder="张三&#10;李四&#10;王五">${S.listText}</textarea>
-          </div>
-          <button class="btn btn-primary w-full mt-4" id="mock-gen-btn">立即生成</button>
-        </div>
-      </div>
-      <div class="bg-white p-6 rounded-2xl border border-[--border] flex flex-col">
-        <div class="flex items-center justify-between mb-4">
-          <h3 class="text-lg font-semibold text-[--ink]">生成结果</h3>
-          <div class="flex gap-2">
-            <button class="btn btn-sm btn-ghost" id="mock-copy-btn">复制全部</button>
-            <button class="btn btn-sm btn-ghost" id="mock-clear-btn">清空</button>
-          </div>
-        </div>
-        <div id="mock-result" class="mock-result flex-1">${S.result || '点击"立即生成"查看结果...'}</div>
-      </div>
-    </div>
-    <div class="flex gap-3 mt-8 justify-center"><button class="btn btn-ghost" id="reset-mock">重置工具</button></div>
-    ${$infoCard('使用场景', ['UUID：生成系统测试用的唯一订单号、用户ID', '密码：生成高强度的随机初始密码', '数字：生成财务/销售测试用的随机金额', '抽签：从名单中随机抽取幸运儿或分配任务'])}
-  </main>`;
+const S = mockStore.get();
+app.innerHTML = `${$header('随机数据生成', 'Tool 06')}<main class="max-w-5xl mx-auto px-6 pb-16 page-enter">
+<div class="flex gap-2 mb-8 justify-center flex-wrap">
+<button class="btn ${S.type==='uuid'?'btn-primary':'btn-ghost'}" data-mock-type="uuid">UUID 序列</button>
+<button class="btn ${S.type==='password'?'btn-primary':'btn-ghost'}" data-mock-type="password">随机密码</button>
+<button class="btn ${S.type==='number'?'btn-primary':'btn-ghost'}" data-mock-type="number">随机数字/金额</button>
+<button class="btn ${S.type==='picker'?'btn-primary':'btn-ghost'}" data-mock-type="picker">幸运抽签/抽取</button>
+</div>
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+<div class="bg-white p-6 rounded-2xl border border-[--border]">
+<h3 class="text-lg font-semibold mb-4 text-[--ink]">生成设置</h3>
+<div class="space-y-4">
+<div>
+<label class="block text-sm font-medium text-[--ink-soft] mb-2">生成数量</label>
+<input type="number" id="mock-count" class="input" value="${S.count}" min="1" max="1000">
+</div>
+<div id="mock-opts-pwd" class="${S.type!=='password'?'hidden':''} space-y-3">
+<label class="block text-sm font-medium text-[--ink-soft]">密码长度: ${S.pwdLen}</label>
+<input type="range" class="range-slider" id="mock-pwd-len" min="4" max="32" value="${S.pwdLen}">
+<div class="grid grid-cols-2 gap-2 text-sm">
+<label class="flex items-center gap-2"><input type="checkbox" id="pwd-upper" ${S.pwdOpts.upper?'checked':''}> 大写字母</label>
+<label class="flex items-center gap-2"><input type="checkbox" id="pwd-lower" ${S.pwdOpts.lower?'checked':''}> 小写字母</label>
+<label class="flex items-center gap-2"><input type="checkbox" id="pwd-num" ${S.pwdOpts.num?'checked':''}> 数字</label>
+<label class="flex items-center gap-2"><input type="checkbox" id="pwd-sym" ${S.pwdOpts.sym?'checked':''}> 特殊符号</label>
+</div>
+</div>
+<div id="mock-opts-num" class="${S.type!=='number'?'hidden':''} grid grid-cols-3 gap-3">
+<div><label class="text-xs text-[--muted]">最小值</label><input type="number" id="mock-num-min" class="input" value="${S.numMin}"></div>
+<div><label class="text-xs text-[--muted]">最大值</label><input type="number" id="mock-num-max" class="input" value="${S.numMax}"></div>
+<div><label class="text-xs text-[--muted]">小数位数</label><input type="number" id="mock-num-dec" class="input" value="${S.numDec}" min="0" max="6"></div>
+</div>
+<div id="mock-opts-picker" class="${S.type!=='picker'?'hidden':''}">
+<label class="block text-sm font-medium text-[--ink-soft] mb-2">候选名单 (每行一个)</label>
+<textarea id="mock-list" class="textarea" placeholder="张三&#10;李四&#10;王五">${S.listText}</textarea>
+</div>
+<button class="btn btn-primary w-full mt-4" id="mock-gen-btn">立即生成</button>
+</div>
+</div>
+<div class="bg-white p-6 rounded-2xl border border-[--border] flex flex-col">
+<div class="flex items-center justify-between mb-4">
+<h3 class="text-lg font-semibold text-[--ink]">生成结果</h3>
+<div class="flex gap-2">
+<button class="btn btn-sm btn-ghost" id="mock-copy-btn">复制全部</button>
+<button class="btn btn-sm btn-ghost" id="mock-clear-btn">清空</button>
+</div>
+</div>
+<div id="mock-result" class="mock-result flex-1">${S.result || '点击"立即生成"查看结果...'}</div>
+</div>
+</div>
+<div class="flex gap-3 mt-8 justify-center"><button class="btn btn-ghost" id="reset-mock">重置工具</button></div>
+${$infoCard('使用场景', ['UUID：生成系统测试用的唯一订单号、用户ID', '密码：生成高强度的随机初始密码', '数字：生成财务/销售测试用的随机金额', '抽签：从名单中随机抽取幸运儿或分配任务'])}
+</main>`;
 }
-
 function renderCompressTool() {
-  const S = compressStore.get();
-  app.innerHTML = `${$header('图片压缩', 'Tool 07')}<main class="max-w-5xl mx-auto px-6 pb-16 page-enter"><div class="grid grid-cols-1 lg:grid-cols-2 gap-8"><div><drop-zone id="comp-drop" text="点击或拖拽图片到此处" hint="支持 JPG, PNG, WEBP" accept="image/*"></drop-zone><div id="comp-ctrl" class="hidden mt-6 space-y-6"><div><label class="block text-sm font-medium text-[--ink-soft] mb-3">选择格式 (智能预估)</label><div class="grid grid-cols-3 gap-3" id="format-cards"></div></div><div><label class="block text-sm font-medium text-[--ink-soft] mb-2">质量: <span id="comp-q-val">${Math.round(S.quality * 100)}</span>%</label><input type="range" class="range-slider" id="comp-q" min="10" max="100" value="${S.quality * 100}"></div><div><label class="block text-sm font-medium text-[--ink-soft] mb-2">缩放比例: <span id="comp-s-val">${S.scale}</span>%</label><input type="range" class="range-slider" id="comp-s" min="10" max="100" value="${S.scale}"></div></div></div><div><div class="grid grid-cols-2 gap-4 mb-6"><div class="stat-box"><div class="val" id="comp-orig-size">-</div><div class="lbl">原始大小</div></div><div class="stat-box"><div class="val text-[--accent]" id="comp-new-size">-</div><div class="lbl">压缩后大小</div></div></div><div class="bg-white rounded-xl border border-[--border] p-4 flex items-center justify-center min-h-[300px]"><img id="comp-preview" class="max-w-full max-h-[400px] rounded-lg hidden" alt="preview"><span id="comp-placeholder" class="text-[--muted]">上传图片后预览</span></div><div class="flex gap-3 mt-6"><button class="btn btn-primary flex-1" id="comp-dl-btn" disabled>下载压缩图片</button><button class="btn btn-ghost" id="reset-compress">重置</button></div></div></div>${$infoCard('使用说明', ['所有压缩处理均在本地浏览器完成，不上传服务器', '上传图片后会自动计算各格式预估大小', '点击格式卡片即可切换，WebP 通常体积最小'])}</main>`;
-  renderFormatCards();
+const S = compressStore.get();
+app.innerHTML = `${$header('图片压缩', 'Tool 07')}<main class="max-w-5xl mx-auto px-6 pb-16 page-enter"><div class="grid grid-cols-1 lg:grid-cols-2 gap-8"><div><drop-zone id="comp-drop" text="点击或拖拽图片到此处" hint="支持 JPG, PNG, WEBP" accept="image/*"></drop-zone><div id="comp-ctrl" class="hidden mt-6 space-y-6"><div><label class="block text-sm font-medium text-[--ink-soft] mb-3">选择格式 (智能预估)</label><div class="grid grid-cols-3 gap-3" id="format-cards"></div></div><div><label class="block text-sm font-medium text-[--ink-soft] mb-2">质量: <span id="comp-q-val">${Math.round(S.quality * 100)}</span>%</label><input type="range" class="range-slider" id="comp-q" min="10" max="100" value="${S.quality * 100}"></div><div><label class="block text-sm font-medium text-[--ink-soft] mb-2">缩放比例: <span id="comp-s-val">${S.scale}</span>%</label><input type="range" class="range-slider" id="comp-s" min="10" max="100" value="${S.scale}"></div></div></div><div><div class="grid grid-cols-2 gap-4 mb-6"><div class="stat-box"><div class="val" id="comp-orig-size">-</div><div class="lbl">原始大小</div></div><div class="stat-box"><div class="val text-[--accent]" id="comp-new-size">-</div><div class="lbl">压缩后大小</div></div></div><div class="bg-white rounded-xl border border-[--border] p-4 flex items-center justify-center min-h-[300px]"><img id="comp-preview" class="max-w-full max-h-[400px] rounded-lg hidden" alt="preview"><span id="comp-placeholder" class="text-[--muted]">上传图片后预览</span></div><div class="flex gap-3 mt-6"><button class="btn btn-primary flex-1" id="comp-dl-btn" disabled>下载压缩图片</button><button class="btn btn-ghost" id="reset-compress">重置</button></div></div></div>${$infoCard('使用说明', ['所有压缩处理均在本地浏览器完成，不上传服务器', '上传图片后会自动计算各格式预估大小', '点击格式卡片即可切换，WebP 通常体积最小'])}</main>`;
+renderFormatCards();
 }
-
 function renderImageTool() {
-  const S = imageStore.get();
-  app.innerHTML = `${$header('图片转 PDF', 'Tool 08')}<main class="max-w-4xl mx-auto px-6 pb-16 page-enter"><drop-zone id="img-drop" text="点击或拖拽图片到此处" hint="支持 JPG, PNG, WEBP, HEIC" accept="image/*,.heic,.heif" multiple></drop-zone><div id="img-section" class="hidden mt-8"><div class="flex items-center justify-between mb-4"><h3 class="text-lg font-semibold text-[--ink]">已选图片 <span id="img-count" class="text-[--muted] font-normal text-sm"></span></h3><button class="btn btn-ghost btn-sm" id="reset-image">重置</button></div><div id="img-list" class="thumb-grid"></div></div><div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8"><div><label class="block text-sm font-medium text-[--ink-soft] mb-3">页面模式</label><div class="flex gap-3">${$optGroup('mode', S.mode)}</div></div><div><label class="block text-sm font-medium text-[--ink-soft] mb-3">页面方向</label><div class="flex gap-3">${$optGroup('orient', S.orient)}</div></div><div><label class="block text-sm font-medium text-[--ink-soft] mb-3">压缩等级</label><div class="flex gap-3">${$optGroup('quality', S.quality)}</div></div></div><div class="mt-10 text-center"><button class="btn btn-primary text-lg px-12 py-4" id="convert-img-btn">生成并下载 PDF</button></div>${$infoCard('使用说明', ['所有图片处理均在本地完成', 'HEIC/HEIF 格式将自动转换为 JPEG', '拖拽排序：长按缩略图拖动调整顺序'])}</main>`;
-  const list = app.querySelector('#img-list');
-  if (sortableInst) sortableInst.destroy();
-  sortableInst = Sortable.create(list, { animation: 150, ghostClass: 'dragging', onEnd: e => { const files = imageStore.get().files; const movedItem = files.splice(e.oldIndex, 1)[0]; files.splice(e.newIndex, 0, movedItem); imageStore.set(s => ({ ...s, files })); } });
-  syncImageListDOM();
+const S = imageStore.get();
+app.innerHTML = `${$header('图片转 PDF', 'Tool 08')}<main class="max-w-4xl mx-auto px-6 pb-16 page-enter"><drop-zone id="img-drop" text="点击或拖拽图片到此处" hint="支持 JPG, PNG, WEBP, HEIC" accept="image/*,.heic,.heif" multiple></drop-zone><div id="img-section" class="hidden mt-8"><div class="flex items-center justify-between mb-4"><h3 class="text-lg font-semibold text-[--ink]">已选图片 <span id="img-count" class="text-[--muted] font-normal text-sm"></span></h3><button class="btn btn-ghost btn-sm" id="reset-image">重置</button></div><div id="img-list" class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-4"></div></div><div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8"><div><label class="block text-sm font-medium text-[--ink-soft] mb-3">页面模式</label><div class="flex gap-3">${$optGroup('mode', S.mode)}</div></div><div><label class="block text-sm font-medium text-[--ink-soft] mb-3">页面方向</label><div class="flex gap-3">${$optGroup('orient', S.orient)}</div></div><div><label class="block text-sm font-medium text-[--ink-soft] mb-3">压缩等级</label><div class="flex gap-3">${$optGroup('quality', S.quality)}</div></div></div><div class="mt-10 text-center"><button class="btn btn-primary text-lg px-12 py-4" id="convert-img-btn">生成并下载 PDF</button></div>${$infoCard('使用说明', ['所有图片处理均在本地完成', 'HEIC/HEIF 格式将自动转换为 JPEG', '拖拽排序：长按缩略图拖动调整顺序'])}</main>`;
+const list = app.querySelector('#img-list');
+if (sortableInst) sortableInst.destroy();
+sortableInst = Sortable.create(list, { animation: 150, ghostClass: 'dragging', onEnd: e => { const files = imageStore.get().files; const movedItem = files.splice(e.oldIndex, 1)[0]; files.splice(e.newIndex, 0, movedItem); imageStore.set(s => ({ ...s, files })); } });
+syncImageListDOM();
 }
-
 function renderColorPickerTool() {
-  app.innerHTML = `${$header('颜色取色器', 'Tool 09')}<main class="max-w-5xl mx-auto px-6 pb-16 page-enter">
-    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
-      <div class="space-y-6">
-        <drop-zone id="picker-drop" text="拖拽图片到此处，或点击选择" hint="支持 Ctrl+V 粘贴截图" accept="image/*"></drop-zone>
-        <div class="picker-canvas-wrapper">
-          <canvas id="picker-canvas" width="400" height="400"></canvas>
-        </div>
-      </div>
-      
-      <div class="space-y-5">
-        <div>
-          <label class="block text-sm font-medium text-[--ink-soft] mb-2">当前颜色预览</label>
-          <div id="color-preview" class="w-full h-32 rounded-xl border border-[--border] bg-white shadow-sm transition-colors duration-300"></div>
-        </div>
-        
-        <div class="color-info-box" id="hex-container" title="点击复制">
-          <div class="text-xs text-[--muted] mb-1 font-medium">HEX</div>
-          <div class="flex items-center justify-between bg-white p-4 rounded-xl border border-[--border]">
-            <span id="hex-val" class="font-mono text-lg text-[--ink]">#FFFFFF</span>
-            <span class="text-xs text-[--muted]">点击复制</span>
-          </div>
-        </div>
-        
-        <div class="color-info-box" id="rgb-container" title="点击复制">
-          <div class="text-xs text-[--muted] mb-1 font-medium">RGB</div>
-          <div class="flex items-center justify-between bg-white p-4 rounded-xl border border-[--border]">
-            <span id="rgb-val" class="font-mono text-lg text-[--ink]">255, 255, 255</span>
-            <span class="text-xs text-[--muted]">点击复制</span>
-          </div>
-        </div>
+app.innerHTML = `${$header('颜色取色器', 'Tool 09')}<main class="max-w-5xl mx-auto px-6 pb-16 page-enter">
+<div class="grid grid-cols-1 lg:grid-cols-2 gap-8 items-start">
+<div class="space-y-6">
+<drop-zone id="picker-drop" text="拖拽图片到此处，或点击选择" hint="支持 Ctrl+V 粘贴截图" accept="image/*"></drop-zone>
+<div id="picker-img-wrapper" class="hidden relative w-full rounded-xl border border-[--border] overflow-hidden bg-[--bg-2] flex items-center justify-center" style="min-height: 300px;">
+<img id="picker-source-img" class="max-w-full max-h-[500px] object-contain cursor-crosshair select-none" draggable="false">
+</div>
+</div>
+<div class="space-y-5">
+<div>
+<label class="block text-sm font-medium text-[--ink-soft] mb-2">当前颜色预览</label>
+<div id="color-preview" class="w-full h-32 rounded-xl border border-[--border] bg-white shadow-sm transition-colors duration-300"></div>
+</div>
+<div class="color-info-box" id="hex-container" title="点击复制">
+<div class="text-xs text-[--muted] mb-1 font-medium">HEX</div>
+<div class="flex items-center justify-between bg-white p-4 rounded-xl border border-[--border]">
+<span id="hex-val" class="font-mono text-lg text-[--ink]">#FFFFFF</span>
+<span class="text-xs text-[--muted]">点击复制</span>
+</div>
+</div>
+<div class="color-info-box" id="rgb-container" title="点击复制">
+<div class="text-xs text-[--muted] mb-1 font-medium">RGB</div>
+<div class="flex items-center justify-between bg-white p-4 rounded-xl border border-[--border]">
+<span id="rgb-val" class="font-mono text-lg text-[--ink]">255, 255, 255</span>
+<span class="text-xs text-[--muted]">点击复制</span>
+</div>
+</div>
+<div class="flex gap-3 mt-6">
+<button class="btn btn-ghost flex-1" id="reset-picker">重置图片</button>
+</div>
+</div>
+</div>
+${$infoCard('使用说明', ['支持拖拽上传、点击选择或直接 Ctrl+V 粘贴截图', '鼠标在图片上移动即可实时取色，右侧显示放大镜预览', '点击图片可复制 HEX 值，点击外部区域放大镜自动消失'])}
+</main>
+<div id="picker-magnifier" class="hidden fixed w-[120px] h-[120px] rounded-full border-2 border-[--green] shadow-lg overflow-hidden pointer-events-none z-[1000] bg-white">
+<canvas id="picker-mag-canvas" width="240" height="240"></canvas>
+<div class="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-3 h-3 border border-white rounded-full shadow-[0_0_0_1px_rgba(0,0,0,0.3)]"></div>
+</div>`;
 
-        <div class="flex gap-3 mt-6">
-          <button class="btn btn-ghost flex-1" id="reset-picker">重置图片</button>
-        </div>
-      </div>
-    </div>
-    
-    ${$infoCard('使用说明', ['支持拖拽上传、点击选择或直接 Ctrl+V 粘贴截图', '鼠标在画布上移动即可实时取色，点击画布复制 HEX', '点击右侧 HEX 或 RGB 数值框可直接复制对应格式'])}
-  </main>`;
+if (pickerPasteHandler) document.removeEventListener('paste', pickerPasteHandler);
 
-  if (pickerPasteHandler) document.removeEventListener('paste', pickerPasteHandler);
-  
-  const canvas = app.querySelector('#picker-canvas');
-  const ctx = canvas.getContext('2d', { willReadFrequently: true });
-  let currentImage = null;
-  const scale = 10;
+const dropZone = app.querySelector('#picker-drop');
+const imgWrapper = app.querySelector('#picker-img-wrapper');
+const sourceImg = app.querySelector('#picker-source-img');
+const magnifier = app.querySelector('#picker-magnifier');
+const magCanvas = app.querySelector('#picker-mag-canvas');
+const magCtx = magCanvas.getContext('2d', { willReadFrequently: true });
 
-  function drawPlaceholder() {
-    ctx.fillStyle = '#f0ebe0';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    ctx.fillStyle = '#8b9690';
-    ctx.font = '14px "Noto Sans SC", sans-serif';
-    ctx.textAlign = 'center';
-    ctx.fillText('请上传图片或粘贴截图', canvas.width / 2, canvas.height / 2);
-  }
-  drawPlaceholder();
+let currentImageLoaded = false;
 
-  function loadImage(img) {
-    currentImage = img;
-    pickerOffscreen.width = img.width;
-    pickerOffscreen.height = img.height;
-    pickerOffCtx.drawImage(img, 0, 0);
-    renderMagnifier(canvas.width / 2, canvas.height / 2);
-    const color = getColorAt(canvas.width / 2, canvas.height / 2);
-    updateUI(color);
-  }
-
-  function renderMagnifier(mx, my) {
-    if (!currentImage) return;
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-    ctx.fillStyle = '#fff';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-
-    const srcX = mx / scale;
-    const srcY = my / scale;
-    const sw = canvas.width / scale;
-    const sh = canvas.height / scale;
-    const sx = Math.max(0, Math.min(srcX - sw / 2, pickerOffscreen.width - sw));
-    const sy = Math.max(0, Math.min(srcY - sh / 2, pickerOffscreen.height - sh));
-
-    ctx.drawImage(pickerOffscreen, sx, sy, sw, sh, 0, 0, canvas.width, canvas.height);
-
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.7)';
-    ctx.lineWidth = 1;
-    ctx.beginPath();
-    ctx.moveTo(mx, 0);
-    ctx.lineTo(mx, canvas.height);
-    ctx.moveTo(0, my);
-    ctx.lineTo(canvas.width, my);
-    ctx.stroke();
-
-    ctx.strokeStyle = 'red';
-    ctx.lineWidth = 2;
-    ctx.strokeRect(mx - scale/2, my - scale/2, scale, scale);
-  }
-
-  function getColorAt(mx, my) {
-    if (!currentImage) return null;
-    const srcX = Math.floor(mx / scale);
-    const srcY = Math.floor(my / scale);
-    try {
-      const pixel = pickerOffCtx.getImageData(srcX, srcY, 1, 1).data;
-      return { r: pixel[0], g: pixel[1], b: pixel[2] };
-    } catch (e) {
-      return null;
-    }
-  }
-
-  function updateUI(color) {
-    if (!color) return;
-    const hex = "#" + (1 << 24 | color.r << 16 | color.g << 8 | color.b).toString(16).slice(1).toUpperCase();
-    app.querySelector('#hex-val').textContent = hex;
-    app.querySelector('#rgb-val').textContent = `${color.r}, ${color.g}, ${color.b}`;
-    app.querySelector('#color-preview').style.backgroundColor = hex;
-  }
-
-  const pickerMoveHandler = (e) => {
-    if (!currentImage) return;
-    const rect = canvas.getBoundingClientRect();
-    const mx = (e.clientX - rect.left) * (canvas.width / rect.width);
-    const my = (e.clientY - rect.top) * (canvas.height / rect.height);
-    renderMagnifier(mx, my);
-    const color = getColorAt(mx, my);
-    updateUI(color);
-  };
-  canvas.addEventListener('mousemove', pickerMoveHandler);
-
-  canvas.addEventListener('click', () => {
-    const hex = app.querySelector('#hex-val').textContent;
-    Utils.copy(hex).then(() => Utils.showToast(`已复制: ${hex}`));
-  });
-
-  app.querySelector('#hex-container').addEventListener('click', () => {
-    const hex = app.querySelector('#hex-val').textContent;
-    Utils.copy(hex).then(() => Utils.showToast(`已复制: ${hex}`));
-  });
-
-  app.querySelector('#rgb-container').addEventListener('click', () => {
-    const rgb = app.querySelector('#rgb-val').textContent;
-    Utils.copy(`rgb(${rgb})`).then(() => Utils.showToast(`已复制: rgb(${rgb})`));
-  });
-
-  pickerPasteHandler = (e) => {
-    if ((location.hash.slice(1) || '/').split('?')[0] !== '/color-picker') return;
-    const items = e.clipboardData.items;
-    for (let item of items) {
-      if (item.type.startsWith('image/')) {
-        const blob = item.getAsFile();
-        const img = new Image();
-        img.onload = () => loadImage(img);
-        img.src = URL.createObjectURL(blob);
-        break;
-      }
-    }
-  };
-  document.addEventListener('paste', pickerPasteHandler);
-
-  const dropZone = app.querySelector('#picker-drop');
-  dropZone.addEventListener('files-selected', e => {
-    const file = e.detail[0];
-    if (file && file.type.startsWith('image/')) {
-      const img = new Image();
-      img.onload = () => loadImage(img);
-      img.src = URL.createObjectURL(file);
-    }
-  });
+function showImage(src) {
+sourceImg.src = src;
+dropZone.classList.add('hidden');
+imgWrapper.classList.remove('hidden');
+currentImageLoaded = true;
+updateUI({r:255, g:255, b:255});
 }
 
+function hideImage() {
+sourceImg.src = '';
+dropZone.classList.remove('hidden');
+imgWrapper.classList.add('hidden');
+magnifier.classList.add('hidden');
+currentImageLoaded = false;
+}
+
+function updateUI(color) {
+if (!color) return;
+const hex = "#" + (1 << 24 | color.r << 16 | color.g << 8 | color.b).toString(16).slice(1).toUpperCase();
+app.querySelector('#hex-val').textContent = hex;
+app.querySelector('#rgb-val').textContent = `${color.r}, ${color.g}, ${color.b}`;
+app.querySelector('#color-preview').style.backgroundColor = hex;
+}
+
+sourceImg.addEventListener('mousemove', (e) => {
+if (!currentImageLoaded) return;
+const rect = sourceImg.getBoundingClientRect();
+const x = e.clientX - rect.left;
+const y = e.clientY - rect.top;
+const scaleX = sourceImg.naturalWidth / rect.width;
+const scaleY = sourceImg.naturalHeight / rect.height;
+const srcX = x * scaleX;
+const srcY = y * scaleY;
+
+const size = 30;
+magCtx.clearRect(0, 0, 240, 240);
+const drawX = Math.max(0, srcX - size/2);
+const drawY = Math.max(0, srcY - size/2);
+const drawW = Math.min(size, sourceImg.naturalWidth - drawX);
+const drawH = Math.min(size, sourceImg.naturalHeight - drawY);
+magCtx.drawImage(sourceImg, drawX, drawY, drawW, drawH, 0, 0, 240, 240);
+
+let magX = e.clientX + 20;
+let magY = e.clientY - 60;
+if (magX + 120 > window.innerWidth) magX = e.clientX - 140;
+if (magY < 0) magY = 10;
+magnifier.style.left = magX + 'px';
+magnifier.style.top = magY + 'px';
+magnifier.classList.remove('hidden');
+
+try {
+const pixel = magCtx.getImageData(120, 120, 1, 1).data;
+updateUI({ r: pixel[0], g: pixel[1], b: pixel[2] });
+} catch(err) {}
+});
+
+sourceImg.addEventListener('mouseleave', () => {
+magnifier.classList.add('hidden');
+});
+
+sourceImg.addEventListener('click', () => {
+const hex = app.querySelector('#hex-val').textContent;
+Utils.copy(hex).then(() => Utils.showToast(`已复制: ${hex}`));
+});
+
+document.addEventListener('click', (e) => {
+if (currentImageLoaded && !e.target.closest('#picker-img-wrapper') && !e.target.closest('#picker-magnifier')) {
+magnifier.classList.add('hidden');
+}
+});
+
+app.querySelector('#hex-container').addEventListener('click', () => {
+const hex = app.querySelector('#hex-val').textContent;
+Utils.copy(hex).then(() => Utils.showToast(`已复制: ${hex}`));
+});
+app.querySelector('#rgb-container').addEventListener('click', () => {
+const rgb = app.querySelector('#rgb-val').textContent;
+Utils.copy(`rgb(${rgb})`).then(() => Utils.showToast(`已复制: rgb(${rgb})`));
+});
+
+pickerPasteHandler = (e) => {
+if ((location.hash.slice(1) || '/').split('?')[0] !== '/color-picker') return;
+const items = e.clipboardData.items;
+for (let item of items) {
+if (item.type.startsWith('image/')) {
+const blob = item.getAsFile();
+const url = URL.createObjectURL(blob);
+showImage(url);
+break;
+}
+}
+};
+document.addEventListener('paste', pickerPasteHandler);
+
+dropZone.addEventListener('files-selected', e => {
+const file = e.detail[0];
+if (file && file.type.startsWith('image/')) {
+const url = URL.createObjectURL(file);
+showImage(url);
+}
+});
+
+app.querySelector('#reset-picker').addEventListener('click', () => {
+hideImage();
+updateUI({r:255, g:255, b:255});
+});
+}
 function renderMergeList() {
-  const el = app.querySelector('#merge-list'); if (!el) return;
-  const files = pdfStore.get().merge.files; if (!files.length) { el.classList.add('hidden'); return; }
-  el.classList.remove('hidden');
-  el.innerHTML = files.map((f, i) => `<div class="flex items-center justify-between p-3 bg-white rounded-lg border border-[--border]"><div class="flex items-center gap-3"><div class="w-10 h-10 bg-[--bg-2] rounded flex items-center justify-center text-[--muted] text-xs font-bold">PDF</div><div><div class="font-medium text-[--ink] text-sm">${f.name}</div><div class="text-xs text-[--muted]">${(f.size / 1048576).toFixed(2)} MB</div></div></div><button class="btn btn-ghost btn-sm" data-rm-pdf="${i}">移除</button></div>`).join('');
-  const mergeBtn = app.querySelector('#merge-btn');
-  if (mergeBtn) files.length < 2 ? mergeBtn.setAttribute('disabled', '') : mergeBtn.removeAttribute('disabled');
+const el = app.querySelector('#merge-list'); if (!el) return;
+const files = pdfStore.get().merge.files; if (!files.length) { el.classList.add('hidden'); return; }
+el.classList.remove('hidden');
+el.innerHTML = files.map((f, i) => `<div class="flex items-center justify-between p-3 bg-white rounded-lg border border-[--border]"><div class="flex items-center gap-3"><div class="w-10 h-10 bg-[--bg-2] rounded flex items-center justify-center text-[--muted] text-xs font-bold">PDF</div><div><div class="font-medium text-[--ink] text-sm">${f.name}</div><div class="text-xs text-[--muted]">${(f.size / 1048576).toFixed(2)} MB</div></div></div><button class="btn btn-ghost btn-sm" data-rm-pdf="${i}">移除</button></div>`).join('');
+const mergeBtn = app.querySelector('#merge-btn');
+if (mergeBtn) files.length < 2 ? mergeBtn.setAttribute('disabled', '') : mergeBtn.removeAttribute('disabled');
 }
-
 function renderFormatCards() {
-  const S = compressStore.get();
-  const container = app.querySelector('#format-cards');
-  if (!container) return;
-  const formats = ['jpeg', 'webp', 'png'];
-  container.innerHTML = formats.map(f => {
-    const size = S.estimates[f];
-    const isActive = S.format === f;
-    return `<div class="format-card p-4 border border-[--border] rounded-xl text-center ${isActive ? 'active' : ''}" data-cfmt="${f}"><div class="font-bold text-[--ink] uppercase">${f}</div><div class="text-sm text-[--muted] mt-1">${size ? Utils.formatSize(size) : '计算中...'}</div></div>`;
-  }).join('');
+const S = compressStore.get();
+const container = app.querySelector('#format-cards');
+if (!container) return;
+const formats = ['jpeg', 'webp', 'png'];
+container.innerHTML = formats.map(f => {
+const size = S.estimates[f];
+const isActive = S.format === f;
+return `<div class="format-card p-4 border border-[--border] rounded-xl text-center ${isActive ? 'active' : ''}" data-cfmt="${f}"><div class="font-bold text-[--ink] uppercase">${f}</div><div class="text-sm text-[--muted] mt-1">${size ? Utils.formatSize(size) : '计算中...'}</div></div>`;
+}).join('');
 }
-
 function syncImageListDOM() {
-  const files = imageStore.get().files;
-  const list = app.querySelector('#img-list');
-  const sec = app.querySelector('#img-section');
-  if (!list || !sec) return;
-  if (!files.length) { sec.classList.add('hidden'); list.innerHTML = ''; return; }
-  sec.classList.remove('hidden');
-  app.querySelector('#img-count').textContent = `(${files.length} 张)`;
-  list.innerHTML = files.map((f, i) => `<div class="thumb" data-idx="${i}" tabindex="0" role="button" aria-label="图片 ${i + 1}, ${f.name}"><img src="${f.url}" alt="${f.name}"><span class="thumb-num">${i + 1}</span><span class="thumb-orient">${f.w > f.h ? '横' : '竖'}</span><button class="thumb-remove" data-rm-img="${i}" aria-label="删除图片 ${i + 1}"><svg width="10" height="10" viewBox="0 0 10 10"><path d="M2 2L8 8M8 2L2 8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></button></div>`).join('');
+const files = imageStore.get().files;
+const list = app.querySelector('#img-list');
+const sec = app.querySelector('#img-section');
+if (!list || !sec) return;
+if (!files.length) { sec.classList.add('hidden'); list.innerHTML = ''; return; }
+sec.classList.remove('hidden');
+app.querySelector('#img-count').textContent = `(${files.length} 张)`;
+list.innerHTML = files.map((f, i) => `<div class="thumb" data-idx="${i}"><img src="${f.url}" alt="${f.name}"><span class="thumb-num">${i + 1}</span><span class="thumb-orient">${f.w > f.h ? '横' : '竖'}</span><button class="thumb-remove" data-rm-img="${i}"><svg width="10" height="10" viewBox="0 0 10 10"><path d="M2 2L8 8M8 2L2 8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></button></div>`).join('');
 }
-
 function renderDateDiffResult(res) {
-  const el = app.querySelector('#date-diff-result');
-  if (!el) return;
-  el.classList.remove('hidden');
-  el.innerHTML = `
-    <div class="date-result-card">
-      <div class="big-num">${res.totalDays}</div>
-      <div class="big-lbl">总计相差天数</div>
-      <div class="grid grid-cols-2 gap-4 mt-6 text-left">
-        <div class="stat-box"><div class="val">${res.workDays}</div><div class="lbl">实际工作日</div></div>
-        <div class="stat-box"><div class="val">${res.weekendDays}</div><div class="lbl">周末天数</div></div>
-      </div>
-      <div class="mt-4 text-sm text-[--ink-soft]">相当于 ${res.years} 年 ${res.months} 个月 ${res.days} 天</div>
-    </div>
-  `;
+const el = app.querySelector('#date-diff-result');
+if (!el) return;
+el.classList.remove('hidden');
+el.innerHTML = `
+<div class="date-result-card">
+<div class="big-num">${res.totalDays}</div>
+<div class="big-lbl">总计相差天数</div>
+<div class="grid grid-cols-2 gap-4 mt-6 text-left">
+<div class="stat-box"><div class="val">${res.workDays}</div><div class="lbl">实际工作日</div></div>
+<div class="stat-box"><div class="val">${res.weekendDays}</div><div class="lbl">周末天数</div></div>
+</div>
+<div class="mt-4 text-sm text-[--ink-soft]">相当于 ${res.years} 年 ${res.months} 个月 ${res.days} 天</div>
+</div>
+`;
 }
-
 function renderDateCalcResult(res) {
-  const el = app.querySelector('#date-calc-result');
-  if (!el) return;
-  el.classList.remove('hidden');
-  el.innerHTML = `
-    <div class="date-result-card">
-      <div class="text-sm text-[--muted] mb-2">推算结果日期</div>
-      <div class="big-num text-3xl" style="font-size:32px">${res.dateStr}</div>
-      <div class="mt-4 text-sm text-[--ink-soft]">
-        ${res.offset > 0 ? '增加' : '减少'} ${Math.abs(res.offset)} ${res.unitName}
-        ${res.isWorkday ? '' : '<span class="text-[--accent] ml-2">(注意：该日为周末)</span>'}
-      </div>
-    </div>
-  `;
+const el = app.querySelector('#date-calc-result');
+if (!el) return;
+el.classList.remove('hidden');
+el.innerHTML = `
+<div class="date-result-card">
+<div class="text-sm text-[--muted] mb-2">推算结果日期</div>
+<div class="big-num text-3xl" style="font-size:32px">${res.dateStr}</div>
+<div class="mt-4 text-sm text-[--ink-soft]">
+${res.offset > 0 ? '增加' : '减少'} ${Math.abs(res.offset)} ${res.unitName}
+${res.isWorkday ? '' : '<span class="text-[--accent] ml-2">(注意：该日为周末)</span>'}
+</div>
+</div>
+`;
 }
-
 // ═══════════════════════════════════════════
 // 7. 业务逻辑
 // ═══════════════════════════════════════════
 function doConvert() {
-  const input = app.querySelector('#num-input'), output = app.querySelector('#num-output'); if (!input || !output) return;
-  let val = input.value.replace(/[^\d.-]/g, '').replace(/-/g, (m, o) => o === 0 ? '-' : '').replace(/\./g, (m, o, s) => s.indexOf('.') === o ? '.' : '');
-  if (val !== input.value) input.value = val;
-  if (!val || val === '-' || val === '.') { 
-    output.innerHTML = '<span class="text-[--muted] text-base font-sans font-normal">结果将显示在这里</span><div class="copy-icon" style="display:none">' + Icons.copy + '</div>'; 
-    return; 
-  }
-  const res = Utils.numberToChinese(val);
-  if (res === '数字超出支持范围') {
-    output.innerHTML = '<span class="text-[--accent] text-base font-sans font-normal">数字超出支持范围（最大16位整数）</span><div class="copy-icon" style="display:none">' + Icons.copy + '</div>';
-  } else {
-    output.innerHTML = `<span>${res}</span><div class="copy-icon">${Icons.copy}</div>`;
-  }
+const input = app.querySelector('#num-input'), output = app.querySelector('#num-output'); if (!input || !output) return;
+let val = input.value.replace(/[^\d.-]/g, '').replace(/-/g, (m, o) => o === 0 ? '-' : '').replace(/\./g, (m, o, s) => s.indexOf('.') === o ? '.' : '');
+if (val !== input.value) input.value = val;
+if (!val || val === '-' || val === '.') {
+output.innerHTML = '<span class="text-[--muted] text-base font-sans font-normal">结果将显示在这里</span><div class="copy-icon" style="display:none">' + Icons.copy + '</div>';
+return;
 }
-
+const res = Utils.numberToChinese(val);
+if (res === '数字超出支持范围') {
+output.innerHTML = '<span class="text-[--accent] text-base font-sans font-normal">数字超出支持范围（最大16位整数）</span><div class="copy-icon" style="display:none">' + Icons.copy + '</div>';
+} else {
+output.innerHTML = `<span>${res}</span><div class="copy-icon">${Icons.copy}</div>`;
+}
+}
 async function handleImageFiles(fileList) {
-  const valid = Array.from(fileList).filter(f => f.type.startsWith('image/') || f.name.match(/\.(jpg|jpeg|png|webp|bmp|heic|heif)$/i)); if (!valid.length) return;
-  const results = await Promise.all(valid.map(async file => {
-    try {
-      let blob = file; if (Utils.isHeic(file)) { const res = await heic2any({ blob: file, toType: 'image/jpeg', quality: 0.92 }); blob = Array.isArray(res) ? res[0] : res; }
-      const url = URL.createObjectURL(blob);
-      const { w, h } = await new Promise((res, rej) => { const img = new Image(); img.onload = () => res({ w: img.width, h: img.height }); img.onerror = rej; img.src = url; });
-      return { url, blob, w, h, name: file.name };
-    } catch { Utils.showToast('处理失败: ' + file.name, true); return null; }
-  }));
-  imageStore.set(s => ({ ...s, files: [...s.files, ...results.filter(Boolean)] }));
-  syncImageListDOM();
+const valid = Array.from(fileList).filter(f => f.type.startsWith('image/') || f.name.match(/\.(jpg|jpeg|png|webp|bmp|heic|heif)$/i)); if (!valid.length) return;
+const results = await Promise.all(valid.map(async file => {
+try {
+let blob = file; if (Utils.isHeic(file)) { const res = await heic2any({ blob: file, toType: 'image/jpeg', quality: 0.92 }); blob = Array.isArray(res) ? res[0] : res; }
+const url = URL.createObjectURL(blob);
+const { w, h } = await new Promise((res, rej) => { const img = new Image(); img.onload = () => res({ w: img.width, h: img.height }); img.onerror = rej; img.src = url; });
+return { url, blob, w, h, name: file.name };
+} catch { Utils.showToast('处理失败: ' + file.name, true); return null; }
+}));
+imageStore.set(s => ({ ...s, files: [...s.files, ...results.filter(Boolean)] }));
+syncImageListDOM();
 }
-
 async function convertToPdf() {
-  const files = imageStore.get().files; if (!files.length) return Utils.showToast('请先选择图片', true);
-  const btn = app.querySelector('#convert-img-btn'); btn.setAttribute('disabled', ''); btn.innerHTML = '<div class="spinner"></div> 正在生成...';
-  try {
-    const { jsPDF } = window.jspdf; let pdf = null;
-    for (const f of files) {
-      const img = new Image(); img.src = f.url; await new Promise(r => img.onload = r);
-      const c = document.createElement('canvas'); c.width = f.w; c.height = f.h;
-      const ctx = c.getContext('2d'); ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, f.w, f.h); ctx.drawImage(img, 0, 0, f.w, f.h);
-      const S = imageStore.get();
-      if (S.mode === 'fit') {
-        const o = f.w >= f.h ? 'landscape' : 'portrait'; if (!pdf) pdf = new jsPDF({ unit: 'pt', format: [f.w, f.h], orientation: o }); else pdf.addPage([f.w, f.h], o);
-        pdf.addImage(c, 'JPEG', 0, 0, f.w, f.h, undefined, 'FAST');
-      } else {
-        const o = S.orient === 'auto' ? (f.w > f.h ? 'landscape' : 'portrait') : S.orient; if (!pdf) pdf = new jsPDF({ orientation: o, unit: 'mm', format: 'a4' }); else pdf.addPage('a4', o);
-        const pw = pdf.internal.pageSize.getWidth(), ph = pdf.internal.pageSize.getHeight(), r = Math.min((pw - 20) / f.w, (ph - 20) / f.h);
-        pdf.addImage(c, 'JPEG', (pw - f.w * r) / 2, (ph - f.h * r) / 2, f.w * r, f.h * r, undefined, 'FAST');
-      }
-    }
-    pdf.save(`images_${new Date().toISOString().slice(0, 10)}.pdf`); Utils.showToast('PDF 已生成并下载');
-  } catch (e) { Utils.showToast('生成失败: ' + e.message, true); } finally { btn.removeAttribute('disabled'); btn.innerHTML = '生成并下载 PDF'; }
+const files = imageStore.get().files; if (!files.length) return Utils.showToast('请先选择图片', true);
+const btn = app.querySelector('#convert-img-btn'); btn.setAttribute('disabled', ''); btn.innerHTML = '<div class="spinner"></div> 正在生成...';
+try {
+const { jsPDF } = window.jspdf; let pdf = null;
+for (const f of files) {
+const img = new Image(); img.src = f.url; await new Promise(r => img.onload = r);
+const c = document.createElement('canvas'); c.width = f.w; c.height = f.h;
+const ctx = c.getContext('2d'); ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, f.w, f.h); ctx.drawImage(img, 0, 0, f.w, f.h);
+const S = imageStore.get();
+if (S.mode === 'fit') {
+const o = f.w >= f.h ? 'landscape' : 'portrait'; if (!pdf) pdf = new jsPDF({ unit: 'pt', format: [f.w, f.h], orientation: o }); else pdf.addPage([f.w, f.h], o);
+pdf.addImage(c, 'JPEG', 0, 0, f.w, f.h, undefined, 'FAST');
+} else {
+const o = S.orient === 'auto' ? (f.w > f.h ? 'landscape' : 'portrait') : S.orient; if (!pdf) pdf = new jsPDF({ orientation: o, unit: 'mm', format: 'a4' }); else pdf.addPage('a4', o);
+const pw = pdf.internal.pageSize.getWidth(), ph = pdf.internal.pageSize.getHeight(), r = Math.min((pw - 20) / f.w, (ph - 20) / f.h);
+pdf.addImage(c, 'JPEG', (pw - f.w * r) / 2, (ph - f.h * r) / 2, f.w * r, f.h * r, undefined, 'FAST');
 }
-
+}
+pdf.save(`images_${new Date().toISOString().slice(0, 10)}.pdf`); Utils.showToast('PDF 已生成并下载');
+} catch (e) { Utils.showToast('生成失败: ' + e.message, true); } finally { btn.removeAttribute('disabled'); btn.innerHTML = '生成并下载 PDF'; }
+}
 async function splitPdf() {
-  const split = pdfStore.get().split; if (!split.file) return; 
-  const { method, pages, start, end } = split;
-  const btn = app.querySelector('#split-btn'); btn.setAttribute('disabled', ''); btn.innerHTML = '<div class="spinner"></div> 处理中...';
-  try {
-    const doc = await PDFLib.PDFDocument.load(await split.file.arrayBuffer()), total = doc.getPageCount();
-    if (method === 'pages') {
-      for (let i = 0; i < total; i += pages) { const nd = await PDFLib.PDFDocument.create(); (await nd.copyPages(doc, Array.from({ length: Math.min(pages, total - i) }, (_, j) => i + j))).forEach(p => nd.addPage(p)); Utils.downloadBlob(await nd.save(), `split_${Math.floor(i / pages) + 1}.pdf`); }
-    } else {
-      const s = start - 1, e = end; 
-      const nd = await PDFLib.PDFDocument.create(); (await nd.copyPages(doc, Array.from({ length: e - s }, (_, j) => s + j))).forEach(p => nd.addPage(p)); Utils.downloadBlob(await nd.save(), 'split_range.pdf');
-    }
-    Utils.showToast('拆分完成！');
-  } catch (e) { Utils.showToast('拆分失败: ' + e.message, true); } finally { btn.removeAttribute('disabled'); btn.innerHTML = '开始拆分'; }
+const split = pdfStore.get().split; if (!split.file) return;
+const { method, pages, start, end } = split;
+const btn = app.querySelector('#split-btn'); btn.setAttribute('disabled', ''); btn.innerHTML = '<div class="spinner"></div> 处理中...';
+try {
+const doc = await PDFLib.PDFDocument.load(await split.file.arrayBuffer()), total = doc.getPageCount();
+if (method === 'pages') {
+for (let i = 0; i < total; i += pages) { const nd = await PDFLib.PDFDocument.create(); (await nd.copyPages(doc, Array.from({ length: Math.min(pages, total - i) }, (_, j) => i + j))).forEach(p => nd.addPage(p)); Utils.downloadBlob(await nd.save(), `split_${Math.floor(i / pages) + 1}.pdf`); }
+} else {
+const s = start - 1, e = end;
+const nd = await PDFLib.PDFDocument.create(); (await nd.copyPages(doc, Array.from({ length: e - s }, (_, j) => s + j))).forEach(p => nd.addPage(p)); Utils.downloadBlob(await nd.save(), 'split_range.pdf');
 }
-
+Utils.showToast('拆分完成！');
+} catch (e) { Utils.showToast('拆分失败: ' + e.message, true); } finally { btn.removeAttribute('disabled'); btn.innerHTML = '开始拆分'; }
+}
 async function mergePdf() {
-  const files = pdfStore.get().merge.files; if (files.length < 2) return Utils.showToast('请至少选择2个PDF文件', true); 
-  const btn = app.querySelector('#merge-btn'); btn.setAttribute('disabled', ''); btn.innerHTML = '<div class="spinner"></div> 处理中...';
-  try {
-    const merged = await PDFLib.PDFDocument.create();
-    for (const f of files) { const doc = await PDFLib.PDFDocument.load(await f.arrayBuffer()); (await merged.copyPages(doc, doc.getPageIndices())).forEach(p => merged.addPage(p)); }
-    Utils.downloadBlob(await merged.save(), 'merged.pdf'); Utils.showToast('合并完成！');
-  } catch (e) { Utils.showToast('合并失败: ' + e.message, true); } finally { btn.removeAttribute('disabled'); btn.innerHTML = '开始合并'; }
+const files = pdfStore.get().merge.files; if (files.length < 2) return Utils.showToast('请至少选择2个PDF文件', true);
+const btn = app.querySelector('#merge-btn'); btn.setAttribute('disabled', ''); btn.innerHTML = '<div class="spinner"></div> 处理中...';
+try {
+const merged = await PDFLib.PDFDocument.create();
+for (const f of files) { const doc = await PDFLib.PDFDocument.load(await f.arrayBuffer()); (await merged.copyPages(doc, doc.getPageIndices())).forEach(p => merged.addPage(p)); }
+Utils.downloadBlob(await merged.save(), 'merged.pdf'); Utils.showToast('合并完成！');
+} catch (e) { Utils.showToast('合并失败: ' + e.message, true); } finally { btn.removeAttribute('disabled'); btn.innerHTML = '开始合并'; }
 }
-
 async function calculateEstimates(file) {
-  const url = URL.createObjectURL(file); const img = new Image(); img.src = url; await new Promise(r => img.onload = r); URL.revokeObjectURL(url);
-  const c = document.createElement('canvas'); c.width = img.width; c.height = img.height;
-  const ctx = c.getContext('2d'); ctx.drawImage(img, 0, 0);
-  const getBlobSize = (type, q) => new Promise(r => c.toBlob(b => r(b ? b.size : 0), type, q));
-  const [jpeg, webp, png] = await Promise.all([getBlobSize('image/jpeg', 0.8), getBlobSize('image/webp', 0.8), getBlobSize('image/png', 1.0)]);
-  compressStore.set(s => ({ ...s, estimates: { jpeg, webp, png } }));
-  renderFormatCards();
+const url = URL.createObjectURL(file); const img = new Image(); img.src = url; await new Promise(r => img.onload = r); URL.revokeObjectURL(url);
+const c = document.createElement('canvas'); c.width = img.width; c.height = img.height;
+const ctx = c.getContext('2d'); ctx.drawImage(img, 0, 0);
+const getBlobSize = (type, q) => new Promise(r => c.toBlob(b => r(b ? b.size : 0), type, q));
+const [jpeg, webp, png] = await Promise.all([getBlobSize('image/jpeg', 0.8), getBlobSize('image/webp', 0.8), getBlobSize('image/png', 1.0)]);
+compressStore.set(s => ({ ...s, estimates: { jpeg, webp, png } }));
+renderFormatCards();
 }
-
 async function doCompress() {
-  const S = compressStore.get(); if (!S.file) return;
-  const taskId = ++compressTaskId;
-  const img = new Image(); img.src = S.url; await new Promise(r => img.onload = r);
-  const w = Math.round(img.width * (S.scale / 100)), h = Math.round(img.height * (S.scale / 100));
-  const c = document.createElement('canvas'); c.width = w; c.height = h;
-  const ctx = c.getContext('2d'); ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, w, h); ctx.drawImage(img, 0, 0, w, h);
-  const blob = await new Promise(r => c.toBlob(r, `image/${S.format}`, S.quality));
-  if (taskId !== compressTaskId) return;
-  if (S.resultUrl) URL.revokeObjectURL(S.resultUrl);
-  compressStore.set(s => ({ ...s, resultBlob: blob, resultUrl: URL.createObjectURL(blob) }));
-  const preview = app.querySelector('#comp-preview'), placeholder = app.querySelector('#comp-placeholder');
-  if (preview) { preview.src = compressStore.get().resultUrl; preview.classList.remove('hidden'); placeholder?.classList.add('hidden'); }
-  const elSize = app.querySelector('#comp-new-size'); if (elSize) elSize.textContent = Utils.formatSize(blob.size);
-  const dlBtn = app.querySelector('#comp-dl-btn'); if (dlBtn) dlBtn.removeAttribute('disabled');
+const S = compressStore.get(); if (!S.file) return;
+const taskId = ++compressTaskId;
+const img = new Image(); img.src = S.url; await new Promise(r => img.onload = r);
+const w = Math.round(img.width * (S.scale / 100)), h = Math.round(img.height * (S.scale / 100));
+const c = document.createElement('canvas'); c.width = w; c.height = h;
+const ctx = c.getContext('2d'); ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, w, h); ctx.drawImage(img, 0, 0, w, h);
+const blob = await new Promise(r => c.toBlob(r, `image/${S.format}`, S.quality));
+if (taskId !== compressTaskId) return;
+if (S.resultUrl) URL.revokeObjectURL(S.resultUrl);
+compressStore.set(s => ({ ...s, resultBlob: blob, resultUrl: URL.createObjectURL(blob) }));
+const preview = app.querySelector('#comp-preview'), placeholder = app.querySelector('#comp-placeholder');
+if (preview) { preview.src = compressStore.get().resultUrl; preview.classList.remove('hidden'); placeholder?.classList.add('hidden'); }
+const elSize = app.querySelector('#comp-new-size'); if (elSize) elSize.textContent = Utils.formatSize(blob.size);
+const dlBtn = app.querySelector('#comp-dl-btn'); if (dlBtn) dlBtn.removeAttribute('disabled');
 }
-
 function doTextCase() {
-  const input = app.querySelector('#tc-input'), output = app.querySelector('#tc-output'); if (!input || !output) return;
-  textStore.set(s => ({ ...s, input: input.value }));
-  output.value = Utils.convertCase(input.value, textStore.get().mode);
-  const chars = input.value.length, words = input.value.trim() ? input.value.trim().split(/\s+/).length : 0, lines = input.value ? input.value.split('\n').length : 0;
-  const cEl = app.querySelector('#tc-chars'), wEl = app.querySelector('#tc-words'), lEl = app.querySelector('#tc-lines');
-  if (cEl) cEl.textContent = chars; if (wEl) wEl.textContent = words; if (lEl) lEl.textContent = lines;
+const input = app.querySelector('#tc-input'), output = app.querySelector('#tc-output'); if (!input || !output) return;
+textStore.set(s => ({ ...s, input: input.value }));
+output.value = Utils.convertCase(input.value, textStore.get().mode);
+const chars = input.value.length, words = input.value.trim() ? input.value.trim().split(/\s+/).length : 0, lines = input.value ? input.value.split('\n').length : 0;
+const cEl = app.querySelector('#tc-chars'), wEl = app.querySelector('#tc-words'), lEl = app.querySelector('#tc-lines');
+if (cEl) cEl.textContent = chars; if (wEl) wEl.textContent = words; if (lEl) lEl.textContent = lines;
 }
-
 async function doGenerateQR() {
-  const S = qrStore.get(), box = app.querySelector('#qr-preview-box'); if (!box) return;
-  if (!S.text) { box.innerHTML = '<span id="qr-placeholder" class="text-[--muted]">输入内容后生成二维码</span>'; return; }
-  let qr;
-  try { qr = qrcode(0, S.logoUrl ? 'H' : 'M'); qr.addData(S.text, 'Byte'); qr.make(); } catch (e) { box.innerHTML = `<span class="text-[--accent]">文本过长或包含非法字符</span>`; return; }
-  const count = qr.getModuleCount(), cell = 10, size = count * cell;
-  const canvas = document.createElement('canvas'); canvas.width = size; canvas.height = size;
-  const ctx = canvas.getContext('2d'); ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, size, size); ctx.fillStyle = '#000';
-  for (let r = 0; r < count; r++) for (let c = 0; c < count; c++) if (qr.isDark(r, c)) ctx.fillRect(c * cell, r * cell, cell, cell);
-  if (S.logoUrl) {
-    const img = new Image(); img.src = S.logoUrl; 
-    try { await img.decode(); } catch(e) { await new Promise(r => img.onload = r); }
-    const lw = size * 0.2, lh = size * 0.2, lx = (size - lw) / 2, ly = (size - lh) / 2;
-    ctx.fillStyle = '#fff'; ctx.fillRect(lx - 8, ly - 8, lw + 16, lh + 16); ctx.drawImage(img, lx, ly, lw, lh);
-  }
-  box.innerHTML = ''; box.appendChild(canvas);
+const S = qrStore.get(), box = app.querySelector('#qr-preview-box'); if (!box) return;
+if (!S.text) { box.innerHTML = '<span id="qr-placeholder" class="text-[--muted]">输入内容后生成二维码</span>'; return; }
+let qr;
+try { qr = qrcode(0, S.logoUrl ? 'H' : 'M'); qr.addData(S.text, 'Byte'); qr.make(); } catch (e) { box.innerHTML = `<span class="text-[--accent]">文本过长或包含非法字符</span>`; return; }
+const count = qr.getModuleCount(), cell = 10, size = count * cell;
+const canvas = document.createElement('canvas'); canvas.width = size; canvas.height = size;
+const ctx = canvas.getContext('2d'); ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, size, size); ctx.fillStyle = '#000';
+for (let r = 0; r < count; r++) for (let c = 0; c < count; c++) if (qr.isDark(r, c)) ctx.fillRect(c * cell, r * cell, cell, cell);
+if (S.logoUrl) {
+const img = new Image(); img.src = S.logoUrl;
+try { await img.decode(); } catch(e) { await new Promise(r => img.onload = r); }
+const lw = size * 0.2, lh = size * 0.2, lx = (size - lw) / 2, ly = (size - lh) / 2;
+ctx.fillStyle = '#fff'; ctx.fillRect(lx - 8, ly - 8, lw + 16, lh + 16); ctx.drawImage(img, lx, ly, lw, lh);
 }
-
+box.innerHTML = ''; box.appendChild(canvas);
+}
 async function doParseQR(file) {
-  const url = URL.createObjectURL(file); const img = new Image(); img.src = url; await new Promise(r => img.onload = r); URL.revokeObjectURL(url);
-  const c = document.createElement('canvas'); c.width = img.width; c.height = img.height;
-  const ctx = c.getContext('2d'); ctx.drawImage(img, 0, 0);
-  const imageData = ctx.getImageData(0, 0, c.width, c.height);
-  const code = jsQR(imageData.data, imageData.width, imageData.height);
-  const output = app.querySelector('#qr-parse-output');
-  if (code) { qrStore.set(s => ({ ...s, parseResult: code.data })); output.textContent = code.data; Utils.showToast('识别成功'); } 
-  else { qrStore.set(s => ({ ...s, parseResult: '' })); output.innerHTML = '<span class="text-[--accent]">未识别到二维码内容</span>'; Utils.showToast('未识别到二维码', true); }
+const url = URL.createObjectURL(file); const img = new Image(); img.src = url; await new Promise(r => img.onload = r); URL.revokeObjectURL(url);
+const c = document.createElement('canvas'); c.width = img.width; c.height = img.height;
+const ctx = c.getContext('2d'); ctx.drawImage(img, 0, 0);
+const imageData = ctx.getImageData(0, 0, c.width, c.height);
+const code = jsQR(imageData.data, imageData.width, imageData.height);
+const output = app.querySelector('#qr-parse-output');
+if (code) { qrStore.set(s => ({ ...s, parseResult: code.data })); output.textContent = code.data; Utils.showToast('识别成功'); }
+else { qrStore.set(s => ({ ...s, parseResult: '' })); output.innerHTML = '<span class="text-[--accent]">未识别到二维码内容</span>'; Utils.showToast('未识别到二维码', true); }
 }
-
 function doGenerateMock() {
-  const S = mockStore.get();
-  const count = Math.max(1, Math.min(1000, S.count));
-  let results = [];
-  
-  try {
-    if (S.type === 'uuid') {
-      for (let i = 0; i < count; i++) results.push(generateUUID());
-    } else if (S.type === 'password') {
-      let chars = '';
-      if (S.pwdOpts.upper) chars += 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
-      if (S.pwdOpts.lower) chars += 'abcdefghijklmnopqrstuvwxyz';
-      if (S.pwdOpts.num) chars += '0123456789';
-      if (S.pwdOpts.sym) chars += '!@#$%^&*()_+~`|{}[]:;?><,./-=';
-      if (!chars) return Utils.showToast('请至少选择一种字符类型', true);
-      for (let i = 0; i < count; i++) {
-        let pwd = '';
-        const arr = new Uint32Array(S.pwdLen);
-        crypto.getRandomValues(arr);
-        for (let j = 0; j < S.pwdLen; j++) pwd += chars[arr[j] % chars.length];
-        results.push(pwd);
-      }
-    } else if (S.type === 'number') {
-      const min = parseFloat(S.numMin) || 0;
-      const max = parseFloat(S.numMax) || 100;
-      const dec = Math.max(0, Math.min(6, S.numDec));
-      for (let i = 0; i < count; i++) {
-        const val = Math.random() * (max - min) + min;
-        results.push(val.toFixed(dec));
-      }
-    } else if (S.type === 'picker') {
-      const list = S.listText.split('\n').map(s => s.trim()).filter(Boolean);
-      if (!list.length) return Utils.showToast('请输入候选名单', true);
-      const pickCount = Math.min(count, list.length);
-      const shuffled = [...list].sort(() => crypto.getRandomValues(new Uint32Array(1))[0] / 4294967295 - 0.5);
-      results = shuffled.slice(0, pickCount);
-    }
-    
-    const resStr = results.join('\n');
-    mockStore.set(s => ({ ...s, result: resStr }));
-    const el = app.querySelector('#mock-result');
-    if (el) el.textContent = resStr;
-    Utils.showToast(`成功生成 ${results.length} 条数据`);
-  } catch (e) {
-    Utils.showToast('生成失败: ' + e.message, true);
-  }
+const S = mockStore.get();
+const count = Math.max(1, Math.min(1000, S.count));
+let results = [];
+try {
+if (S.type === 'uuid') {
+for (let i = 0; i < count; i++) results.push(generateUUID());
+} else if (S.type === 'password') {
+let chars = '';
+if (S.pwdOpts.upper) chars += 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+if (S.pwdOpts.lower) chars += 'abcdefghijklmnopqrstuvwxyz';
+if (S.pwdOpts.num) chars += '0123456789';
+if (S.pwdOpts.sym) chars += '!@#$%^&*()_+~`|{}[]:;?><,./-=';
+if (!chars) return Utils.showToast('请至少选择一种字符类型', true);
+for (let i = 0; i < count; i++) {
+let pwd = '';
+const arr = new Uint32Array(S.pwdLen);
+crypto.getRandomValues(arr);
+for (let j = 0; j < S.pwdLen; j++) pwd += chars[arr[j] % chars.length];
+results.push(pwd);
 }
-
+} else if (S.type === 'number') {
+const min = parseFloat(S.numMin) || 0;
+const max = parseFloat(S.numMax) || 100;
+const dec = Math.max(0, Math.min(6, S.numDec));
+for (let i = 0; i < count; i++) {
+const val = Math.random() * (max - min) + min;
+results.push(val.toFixed(dec));
+}
+} else if (S.type === 'picker') {
+const list = S.listText.split('\n').map(s => s.trim()).filter(Boolean);
+if (!list.length) return Utils.showToast('请输入候选名单', true);
+const pickCount = Math.min(count, list.length);
+const shuffled = [...list].sort(() => crypto.getRandomValues(new Uint32Array(1))[0] / 4294967295 - 0.5);
+results = shuffled.slice(0, pickCount);
+}
+const resStr = results.join('\n');
+mockStore.set(s => ({ ...s, result: resStr }));
+const el = app.querySelector('#mock-result');
+if (el) el.textContent = resStr;
+Utils.showToast(`成功生成 ${results.length} 条数据`);
+} catch (e) {
+Utils.showToast('生成失败: ' + e.message, true);
+}
+}
 function doCalculateDateDiff() {
-  const startStr = app.querySelector('#date-start').value;
-  const endStr = app.querySelector('#date-end').value;
-  
-  if (!startStr || !endStr) return Utils.showToast('请选择完整的日期', true);
-  
-  const start = new Date(startStr);
-  const end = new Date(endStr);
-  start.setHours(0,0,0,0);
-  end.setHours(0,0,0,0);
-  
-  if (isNaN(start) || isNaN(end)) return Utils.showToast('日期格式无效', true);
-  
-  const totalDays = Math.abs(Math.round((end - start) / (1000 * 60 * 60 * 24)));
-  
-  let workDays = 0, weekendDays = 0;
-  const s = start <= end ? start : end;
-  const e = start <= end ? end : start;
-  let current = new Date(s);
-  
-  while (current < e) {
-    const day = current.getDay();
-    if (day !== 0 && day !== 6) workDays++;
-    else weekendDays++;
-    current.setDate(current.getDate() + 1);
-  }
-  
-  const later = start <= end ? end : start;
-  const earlier = start <= end ? start : end;
-  
-  let years = later.getFullYear() - earlier.getFullYear();
-  let months = later.getMonth() - earlier.getMonth();
-  let days = later.getDate() - earlier.getDate();
-  if (days < 0) { months--; days += new Date(later.getFullYear(), later.getMonth(), 0).getDate(); }
-  if (months < 0) { years--; months += 12; }
-  
-  const res = { totalDays, workDays, weekendDays, years, months, days };
-  dateStore.set(s => ({ ...s, startDate: startStr, endDate: endStr, result: res }));
-  renderDateDiffResult(res);
+const startStr = app.querySelector('#date-start').value;
+const endStr = app.querySelector('#date-end').value;
+if (!startStr || !endStr) return Utils.showToast('请选择完整的日期', true);
+const start = new Date(startStr);
+const end = new Date(endStr);
+start.setHours(0,0,0,0);
+end.setHours(0,0,0,0);
+if (isNaN(start) || isNaN(end)) return Utils.showToast('日期格式无效', true);
+const totalDays = Math.abs(Math.round((end - start) / (1000 * 60 * 60 * 24)));
+let workDays = 0, weekendDays = 0;
+const s = start <= end ? start : end;
+const e = start <= end ? end : start;
+let current = new Date(s);
+while (current < e) {
+const day = current.getDay();
+if (day !== 0 && day !== 6) workDays++;
+else weekendDays++;
+current.setDate(current.getDate() + 1);
 }
-
+const later = start <= end ? end : start;
+const earlier = start <= end ? start : end;
+let years = later.getFullYear() - earlier.getFullYear();
+let months = later.getMonth() - earlier.getMonth();
+let days = later.getDate() - earlier.getDate();
+if (days < 0) { months--; days += new Date(later.getFullYear(), later.getMonth(), 0).getDate(); }
+if (months < 0) { years--; months += 12; }
+const res = { totalDays, workDays, weekendDays, years, months, days };
+dateStore.set(s => ({ ...s, startDate: startStr, endDate: endStr, result: res }));
+renderDateDiffResult(res);
+}
 function doCalculateDateOffset() {
-  const baseStr = app.querySelector('#date-base').value;
-  const offset = parseInt(app.querySelector('#date-offset').value) || 0;
-  const unit = app.querySelector('#date-unit').value;
-  
-  if (!baseStr) return Utils.showToast('请选择基准日期', true);
-  
-  const base = new Date(baseStr);
-  if (isNaN(base)) return Utils.showToast('日期格式无效', true);
-  
-  const resultDate = new Date(base);
-  
-  if (unit === 'days') resultDate.setDate(resultDate.getDate() + offset);
-  else if (unit === 'weeks') resultDate.setDate(resultDate.getDate() + (offset * 7));
-  else if (unit === 'years') resultDate.setFullYear(resultDate.getFullYear() + offset);
-  else if (unit === 'months') {
-    // 修复：月份加减的溢出逻辑
-    const dayOfMonth = base.getDate();
-    resultDate.setDate(1); // 防止中间状态溢出
-    resultDate.setMonth(base.getMonth() + offset);
-    const lastDay = new Date(resultDate.getFullYear(), resultDate.getMonth() + 1, 0).getDate();
-    resultDate.setDate(Math.min(dayOfMonth, lastDay));
-  }
-  
-  const unitNames = { days: '天', weeks: '周', months: '个月', years: '年' };
-  const dayOfWeek = resultDate.getDay();
-  const isWorkday = dayOfWeek !== 0 && dayOfWeek !== 6;
-  
-  const res = {
-    dateStr: Utils.formatDate(resultDate),
-    offset,
-    unitName: unitNames[unit],
-    isWorkday
-  };
-  
-  dateStore.set(s => ({ ...s, baseDate: baseStr, offset, unit, result: res }));
-  renderDateCalcResult(res);
+const baseStr = app.querySelector('#date-base').value;
+const offset = parseInt(app.querySelector('#date-offset').value) || 0;
+const unit = app.querySelector('#date-unit').value;
+if (!baseStr) return Utils.showToast('请选择基准日期', true);
+const base = new Date(baseStr);
+if (isNaN(base)) return Utils.showToast('日期格式无效', true);
+const resultDate = new Date(base);
+if (unit === 'days') resultDate.setDate(resultDate.getDate() + offset);
+else if (unit === 'weeks') resultDate.setDate(resultDate.getDate() + (offset * 7));
+else if (unit === 'years') resultDate.setFullYear(resultDate.getFullYear() + offset);
+else if (unit === 'months') {
+const dayOfMonth = base.getDate();
+resultDate.setDate(1);
+resultDate.setMonth(base.getMonth() + offset);
+const lastDay = new Date(resultDate.getFullYear(), resultDate.getMonth() + 1, 0).getDate();
+resultDate.setDate(Math.min(dayOfMonth, lastDay));
 }
-
+const unitNames = { days: '天', weeks: '周', months: '个月', years: '年' };
+const dayOfWeek = resultDate.getDay();
+const isWorkday = dayOfWeek !== 0 && dayOfWeek !== 6;
+const res = {
+dateStr: Utils.formatDate(resultDate),
+offset,
+unitName: unitNames[unit],
+isWorkday
+};
+dateStore.set(s => ({ ...s, baseDate: baseStr, offset, unit, result: res }));
+renderDateCalcResult(res);
+}
 // ═══════════════════════════════════════════
 // 8. 事件委托与防抖实例化
 // ═══════════════════════════════════════════
-// 修复：提取防抖函数为单例，避免每次 input 事件创建新定时器导致防抖失效
 const debouncedQRGenerate = Utils.debounce(doGenerateQR, 300);
 const debouncedCompress = Utils.debounce(doCompress, 300);
-
 app.addEventListener('click', async e => {
-  const t = e.target, closest = sel => t.closest(sel);
-  if (closest('[data-action="home"]')) return location.hash = '#/';
-  
-  // 处理缩略图点击选中
-  const thumbEl = closest('.thumb');
-  if (thumbEl && !closest('.thumb-remove') && app.querySelector('#img-list')) {
-    app.querySelectorAll('.thumb').forEach(t => t.classList.remove('active'));
-    thumbEl.classList.add('active');
-    return;
-  }
-  
-  if (closest('#reset-number')) { 
-    const i = app.querySelector('#num-input'), o = app.querySelector('#num-output'); 
-    if(i) i.value=''; 
-    if(o) o.innerHTML = '<span class="text-[--muted] text-base font-sans font-normal">结果将显示在这里</span><div class="copy-icon" style="display:none">' + Icons.copy + '</div>'; 
-    return; 
-  }
-  
-  if (closest('#num-output')) {
-    const output = app.querySelector('#num-output');
-    const text = output.querySelector('span').textContent;
-    if (text && !text.includes('结果将显示在这里') && !text.includes('数字超出支持范围')) {
-      Utils.copy(text).then(() => Utils.showToast('已复制结果'));
-    }
-    return;
-  }
-  
-  if (closest('#reset-image')) return resetStore(imageStore, { files: [], mode: 'fit', orient: 'auto', quality: 0.8 });
-  if (closest('#reset-pdf')) return resetStore(pdfStore, { mode: 'split', split: { file: null, fileName: '', pageCount: 0, method: 'pages', pages: 1, start: 1, end: 1 }, merge: { files: [] } });
-  if (closest('#reset-compress')) return resetStore(compressStore, { file: null, url: '', name: '', origSize: 0, quality: 0.8, format: 'jpeg', scale: 100, resultBlob: null, resultUrl: '', estimates: { jpeg: 0, webp: 0, png: 0 } });
-  if (closest('#reset-text')) return resetStore(textStore, { input: '', mode: 'upper' });
-  if (closest('#reset-qr')) return resetStore(qrStore, { text: '', logoUrl: '', mode: 'generate', parseResult: '' });
-  if (closest('#reset-mock')) return resetStore(mockStore, { type: 'uuid', count: 10, pwdLen: 12, pwdOpts: { upper: true, lower: true, num: true, sym: true }, numMin: 1, numMax: 100, numDec: 2, listText: '', listCount: 1, result: '' });
-  if (closest('#reset-date')) return resetStore(dateStore, { mode: 'diff', startDate: '', endDate: '', baseDate: '', offset: 1, unit: 'days', result: null });
-  if (closest('#reset-picker')) return renderColorPickerTool();
-
-  for (const key of ['mode', 'orient', 'quality']) { const opt = closest(`[data-${key}]`); if (opt && app.querySelector('#convert-img-btn')) { app.querySelectorAll(`[data-${key}]`).forEach(o => o.classList.remove('active')); opt.classList.add('active'); imageStore.set(s => ({ ...s, [key]: key === 'quality' ? parseFloat(opt.dataset[key]) : opt.dataset[key] })); return; } }
-  
-  const rmImg = closest('[data-rm-img]'); if (rmImg) { const i = +rmImg.dataset.rmImg; const files = imageStore.get().files; URL.revokeObjectURL(files[i].url); files.splice(i, 1); imageStore.set(s => ({ ...s, files })); syncImageListDOM(); return; }
-  if (closest('#convert-img-btn')) return convertToPdf();
-
-  const pm = closest('[data-pdf-mode]'); if (pm) { pdfStore.set(s => ({ ...s, mode: pm.dataset.pdfMode })); return renderPdfTool(); }
-  if (closest('#split-remove')) { pdfStore.set(s => ({ ...s, split: { file: null, fileName: '', pageCount: 0, method: 'pages', pages: 1, start: 1, end: 1 } })); app.querySelector('#split-preview')?.classList.add('hidden'); app.querySelector('#split-opts')?.classList.add('hidden'); return; }
-  if (closest('#split-btn')) return splitPdf();
-  const rmPdf = closest('[data-rm-pdf]'); if (rmPdf) { const files = pdfStore.get().merge.files; files.splice(+rmPdf.dataset.rmPdf, 1); pdfStore.set(s => ({ ...s, merge: { files } })); return renderMergeList(); }
-  if (closest('#merge-btn')) return mergePdf();
-
-  const cfmt = closest('[data-cfmt]'); if (cfmt && app.querySelector('#comp-ctrl')) { app.querySelectorAll('[data-cfmt]').forEach(o => o.classList.remove('active')); cfmt.classList.add('active'); compressStore.set(s => ({ ...s, format: cfmt.dataset.cfmt })); renderFormatCards(); return doCompress(); }
-  if (closest('#comp-dl-btn')) { const s = compressStore.get(); if (s.resultUrl) Utils.downloadDataURL(s.resultUrl, `compressed_${Date.now()}.${s.format}`); return; }
-
-  const cm = closest('[data-case-mode]'); if (cm && app.querySelector('#tc-input')) { textStore.set(s => ({ ...s, mode: cm.dataset.caseMode })); app.querySelectorAll('[data-case-mode]').forEach(b => b.className = `btn ${b.dataset.caseMode === textStore.get().mode ? 'btn-primary' : 'btn-ghost'}`); return doTextCase(); }
-  if (closest('#tc-copy-btn')) { const v = app.querySelector('#tc-output').value; if (!v) return Utils.showToast('结果为空', true); Utils.copy(v).then(() => Utils.showToast('已复制结果')); return; }
-
-  const qm = closest('[data-qr-mode]'); if (qm) { qrStore.set(s => ({ ...s, mode: qm.dataset.qrMode })); return renderQrTool(); }
-  if (closest('#qr-dl-png')) { const canvas = app.querySelector('#qr-preview-box canvas'); if (canvas) Utils.downloadDataURL(canvas.toDataURL('image/png'), `qrcode_${Date.now()}.png`); else Utils.showToast('请先生成二维码', true); return; }
-  if (closest('#qr-dl-svg')) { 
-    const S = qrStore.get(); if(!S.text) return Utils.showToast('请先生成二维码', true);
-    let qr = qrcode(0, 'M'); qr.addData(S.text, 'Byte'); qr.make();
-    const count = qr.getModuleCount(), cell = 10; let rects = '';
-    for (let r = 0; r < count; r++) for (let c = 0; c < count; c++) if (qr.isDark(r, c)) rects += `<rect x="${c*cell}" y="${r*cell}" width="${cell}" height="${cell}"/>`;
-    Utils.downloadBlob(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${count*cell} ${count*cell}" shape-rendering="crispEdges">${rects}</svg>`, `qrcode_${Date.now()}.svg`, 'image/svg+xml'); return; 
-  }
-  if (closest('#qr-copy-img')) { const canvas = app.querySelector('#qr-preview-box canvas'); if (!canvas) return Utils.showToast('请先生成二维码', true); Utils.copyImage(canvas).then(() => Utils.showToast('图片已复制到剪贴板')).catch(() => Utils.showToast('复制失败，请尝试下载', true)); return; }
-  if (closest('#qr-parse-copy')) { const v = qrStore.get().parseResult; if (!v) return Utils.showToast('结果为空', true); Utils.copy(v).then(() => Utils.showToast('已复制结果')); return; }
-
-  const mt = closest('[data-mock-type]'); 
-  if (mt) { 
-    mockStore.set(s => ({ ...s, type: mt.dataset.mockType })); 
-    return renderMockTool(); 
-  }
-  if (closest('#mock-gen-btn')) return doGenerateMock();
-  if (closest('#mock-copy-btn')) { const v = mockStore.get().result; if (!v) return Utils.showToast('结果为空', true); Utils.copy(v).then(() => Utils.showToast('已复制结果')); return; }
-  if (closest('#mock-clear-btn')) { mockStore.set(s => ({ ...s, result: '' })); const el = app.querySelector('#mock-result'); if(el) el.textContent = '点击"立即生成"查看结果...'; return; }
-
-  const dm = closest('[data-date-mode]'); if (dm) { dateStore.set(s => ({ ...s, mode: dm.dataset.dateMode, result: null })); return renderDateTool(); }
-  if (closest('#date-calc-diff-btn')) return doCalculateDateDiff();
-  if (closest('#date-calc-offset-btn')) return doCalculateDateOffset();
+const t = e.target, closest = sel => t.closest(sel);
+if (closest('[data-action="home"]')) return location.hash = '#/';
+if (closest('#reset-number')) {
+const i = app.querySelector('#num-input'), o = app.querySelector('#num-output');
+if(i) i.value='';
+if(o) o.innerHTML = '<span class="text-[--muted] text-base font-sans font-normal">结果将显示在这里</span><div class="copy-icon" style="display:none">' + Icons.copy + '</div>';
+return;
+}
+if (closest('#num-output')) {
+const output = app.querySelector('#num-output');
+const text = output.querySelector('span').textContent;
+if (text && !text.includes('结果将显示在这里') && !text.includes('数字超出支持范围')) {
+Utils.copy(text).then(() => Utils.showToast('已复制结果'));
+}
+return;
+}
+if (closest('#reset-image')) return resetStore(imageStore, { files: [], mode: 'fit', orient: 'auto', quality: 0.8 });
+if (closest('#reset-pdf')) return resetStore(pdfStore, { mode: 'split', split: { file: null, fileName: '', pageCount: 0, method: 'pages', pages: 1, start: 1, end: 1 }, merge: { files: [] } });
+if (closest('#reset-compress')) return resetStore(compressStore, { file: null, url: '', name: '', origSize: 0, quality: 0.8, format: 'jpeg', scale: 100, resultBlob: null, resultUrl: '', estimates: { jpeg: 0, webp: 0, png: 0 } });
+if (closest('#reset-text')) return resetStore(textStore, { input: '', mode: 'upper' });
+if (closest('#reset-qr')) return resetStore(qrStore, { text: '', logoUrl: '', mode: 'generate', parseResult: '' });
+if (closest('#reset-mock')) return resetStore(mockStore, { type: 'uuid', count: 10, pwdLen: 12, pwdOpts: { upper: true, lower: true, num: true, sym: true }, numMin: 1, numMax: 100, numDec: 2, listText: '', listCount: 1, result: '' });
+if (closest('#reset-date')) return resetStore(dateStore, { mode: 'diff', startDate: '', endDate: '', baseDate: '', offset: 1, unit: 'days', result: null });
+for (const key of ['mode', 'orient', 'quality']) { const opt = closest(`[data-${key}]`); if (opt && app.querySelector('#convert-img-btn')) { app.querySelectorAll(`[data-${key}]`).forEach(o => o.classList.remove('active')); opt.classList.add('active'); imageStore.set(s => ({ ...s, [key]: key === 'quality' ? parseFloat(opt.dataset[key]) : opt.dataset[key] })); return; } }
+const rmImg = closest('[data-rm-img]'); if (rmImg) { const i = +rmImg.dataset.rmImg; const files = imageStore.get().files; URL.revokeObjectURL(files[i].url); files.splice(i, 1); imageStore.set(s => ({ ...s, files })); syncImageListDOM(); return; }
+if (closest('#convert-img-btn')) return convertToPdf();
+const pm = closest('[data-pdf-mode]'); if (pm) { pdfStore.set(s => ({ ...s, mode: pm.dataset.pdfMode })); return renderPdfTool(); }
+if (closest('#split-remove')) { pdfStore.set(s => ({ ...s, split: { file: null, fileName: '', pageCount: 0, method: 'pages', pages: 1, start: 1, end: 1 } })); app.querySelector('#split-preview')?.classList.add('hidden'); app.querySelector('#split-opts')?.classList.add('hidden'); return; }
+if (closest('#split-btn')) return splitPdf();
+const rmPdf = closest('[data-rm-pdf]'); if (rmPdf) { const files = pdfStore.get().merge.files; files.splice(+rmPdf.dataset.rmPdf, 1); pdfStore.set(s => ({ ...s, merge: { files } })); return renderMergeList(); }
+if (closest('#merge-btn')) return mergePdf();
+const cfmt = closest('[data-cfmt]'); if (cfmt && app.querySelector('#comp-ctrl')) { app.querySelectorAll('[data-cfmt]').forEach(o => o.classList.remove('active')); cfmt.classList.add('active'); compressStore.set(s => ({ ...s, format: cfmt.dataset.cfmt })); renderFormatCards(); return doCompress(); }
+if (closest('#comp-dl-btn')) { const s = compressStore.get(); if (s.resultUrl) Utils.downloadDataURL(s.resultUrl, `compressed_${Date.now()}.${s.format}`); return; }
+const cm = closest('[data-case-mode]'); if (cm && app.querySelector('#tc-input')) { textStore.set(s => ({ ...s, mode: cm.dataset.caseMode })); app.querySelectorAll('[data-case-mode]').forEach(b => b.className = `btn ${b.dataset.caseMode === textStore.get().mode ? 'btn-primary' : 'btn-ghost'}`); return doTextCase(); }
+if (closest('#tc-copy-btn')) { const v = app.querySelector('#tc-output').value; if (!v) return Utils.showToast('结果为空', true); Utils.copy(v).then(() => Utils.showToast('已复制结果')); return; }
+const qm = closest('[data-qr-mode]'); if (qm) { qrStore.set(s => ({ ...s, mode: qm.dataset.qrMode })); return renderQrTool(); }
+if (closest('#qr-dl-png')) { const canvas = app.querySelector('#qr-preview-box canvas'); if (canvas) Utils.downloadDataURL(canvas.toDataURL('image/png'), `qrcode_${Date.now()}.png`); else Utils.showToast('请先生成二维码', true); return; }
+if (closest('#qr-dl-svg')) {
+const S = qrStore.get(); if(!S.text) return Utils.showToast('请先生成二维码', true);
+let qr = qrcode(0, 'M'); qr.addData(S.text, 'Byte'); qr.make();
+const count = qr.getModuleCount(), cell = 10; let rects = '';
+for (let r = 0; r < count; r++) for (let c = 0; c < count; c++) if (qr.isDark(r, c)) rects += `<rect x="${c*cell}" y="${r*cell}" width="${cell}" height="${cell}"/>`;
+Utils.downloadBlob(`<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 ${count*cell} ${count*cell}" shape-rendering="crispEdges">${rects}</svg>`, `qrcode_${Date.now()}.svg`, 'image/svg+xml'); return;
+}
+if (closest('#qr-copy-img')) { const canvas = app.querySelector('#qr-preview-box canvas'); if (!canvas) return Utils.showToast('请先生成二维码', true); Utils.copyImage(canvas).then(() => Utils.showToast('图片已复制到剪贴板')).catch(() => Utils.showToast('复制失败，请尝试下载', true)); return; }
+if (closest('#qr-parse-copy')) { const v = qrStore.get().parseResult; if (!v) return Utils.showToast('结果为空', true); Utils.copy(v).then(() => Utils.showToast('已复制结果')); return; }
+const mt = closest('[data-mock-type]');
+if (mt) {
+mockStore.set(s => ({ ...s, type: mt.dataset.mockType }));
+return renderMockTool();
+}
+if (closest('#mock-gen-btn')) return doGenerateMock();
+if (closest('#mock-copy-btn')) { const v = mockStore.get().result; if (!v) return Utils.showToast('结果为空', true); Utils.copy(v).then(() => Utils.showToast('已复制结果')); return; }
+if (closest('#mock-clear-btn')) { mockStore.set(s => ({ ...s, result: '' })); const el = app.querySelector('#mock-result'); if(el) el.textContent = '点击"立即生成"查看结果...'; return; }
+const dm = closest('[data-date-mode]'); if (dm) { dateStore.set(s => ({ ...s, mode: dm.dataset.dateMode, result: null })); return renderDateTool(); }
+if (closest('#date-calc-diff-btn')) return doCalculateDateDiff();
+if (closest('#date-calc-offset-btn')) return doCalculateDateOffset();
 });
-
 app.addEventListener('input', e => {
-  const id = e.target.id;
-  if (id === 'num-input') return doConvert();
-  if (id === 'tc-input') return doTextCase();
-  if (id === 'qr-input') { qrStore.set(s => ({ ...s, text: e.target.value })); return debouncedQRGenerate(); }
-  if (id === 'comp-q') { compressStore.set(s => ({ ...s, quality: e.target.value / 100 })); app.querySelector('#comp-q-val').textContent = e.target.value; return debouncedCompress(); }
-  if (id === 'comp-s') { compressStore.set(s => ({ ...s, scale: parseInt(e.target.value) })); app.querySelector('#comp-s-val').textContent = e.target.value; return debouncedCompress(); }
-  
-  if (id === 'split-pages') pdfStore.set(s => ({ ...s, split: { ...s.split, pages: parseInt(e.target.value) } }));
-  if (id === 'split-start') pdfStore.set(s => ({ ...s, split: { ...s.split, start: parseInt(e.target.value) } }));
-  if (id === 'split-end') pdfStore.set(s => ({ ...s, split: { ...s.split, end: parseInt(e.target.value) } }));
-  if (e.target.name === 'split-method') pdfStore.set(s => ({ ...s, split: { ...s.split, method: e.target.value } }));
-
-  if (id === 'mock-count') mockStore.set(s => ({ ...s, count: parseInt(e.target.value) }));
-  if (id === 'mock-pwd-len') { mockStore.set(s => ({ ...s, pwdLen: parseInt(e.target.value) })); e.target.previousElementSibling.textContent = `密码长度: ${e.target.value}`; }
-  if (id === 'pwd-upper') mockStore.set(s => ({ ...s, pwdOpts: { ...s.pwdOpts, upper: e.target.checked } }));
-  if (id === 'pwd-lower') mockStore.set(s => ({ ...s, pwdOpts: { ...s.pwdOpts, lower: e.target.checked } }));
-  if (id === 'pwd-num') mockStore.set(s => ({ ...s, pwdOpts: { ...s.pwdOpts, num: e.target.checked } }));
-  if (id === 'pwd-sym') mockStore.set(s => ({ ...s, pwdOpts: { ...s.pwdOpts, sym: e.target.checked } }));
-  if (id === 'mock-num-min') mockStore.set(s => ({ ...s, numMin: e.target.value }));
-  if (id === 'mock-num-max') mockStore.set(s => ({ ...s, numMax: e.target.value }));
-  if (id === 'mock-num-dec') mockStore.set(s => ({ ...s, numDec: parseInt(e.target.value) }));
-  if (id === 'mock-list') mockStore.set(s => ({ ...s, listText: e.target.value }));
+const id = e.target.id;
+if (id === 'num-input') return doConvert();
+if (id === 'tc-input') return doTextCase();
+if (id === 'qr-input') { qrStore.set(s => ({ ...s, text: e.target.value })); return debouncedQRGenerate(); }
+if (id === 'comp-q') { compressStore.set(s => ({ ...s, quality: e.target.value / 100 })); app.querySelector('#comp-q-val').textContent = e.target.value; return debouncedCompress(); }
+if (id === 'comp-s') { compressStore.set(s => ({ ...s, scale: parseInt(e.target.value) })); app.querySelector('#comp-s-val').textContent = e.target.value; return debouncedCompress(); }
+if (id === 'split-pages') pdfStore.set(s => ({ ...s, split: { ...s.split, pages: parseInt(e.target.value) } }));
+if (id === 'split-start') pdfStore.set(s => ({ ...s, split: { ...s.split, start: parseInt(e.target.value) } }));
+if (id === 'split-end') pdfStore.set(s => ({ ...s, split: { ...s.split, end: parseInt(e.target.value) } }));
+if (e.target.name === 'split-method') pdfStore.set(s => ({ ...s, split: { ...s.split, method: e.target.value } }));
+if (id === 'mock-count') mockStore.set(s => ({ ...s, count: parseInt(e.target.value) }));
+if (id === 'mock-pwd-len') { mockStore.set(s => ({ ...s, pwdLen: parseInt(e.target.value) })); e.target.previousElementSibling.textContent = `密码长度: ${e.target.value}`; }
+if (id === 'pwd-upper') mockStore.set(s => ({ ...s, pwdOpts: { ...s.pwdOpts, upper: e.target.checked } }));
+if (id === 'pwd-lower') mockStore.set(s => ({ ...s, pwdOpts: { ...s.pwdOpts, lower: e.target.checked } }));
+if (id === 'pwd-num') mockStore.set(s => ({ ...s, pwdOpts: { ...s.pwdOpts, num: e.target.checked } }));
+if (id === 'pwd-sym') mockStore.set(s => ({ ...s, pwdOpts: { ...s.pwdOpts, sym: e.target.checked } }));
+if (id === 'mock-num-min') mockStore.set(s => ({ ...s, numMin: e.target.value }));
+if (id === 'mock-num-max') mockStore.set(s => ({ ...s, numMax: e.target.value }));
+if (id === 'mock-num-dec') mockStore.set(s => ({ ...s, numDec: parseInt(e.target.value) }));
+if (id === 'mock-list') mockStore.set(s => ({ ...s, listText: e.target.value }));
 });
-
 app.addEventListener('files-selected', async e => {
-  const zone = e.target;
-  if (zone.id === 'img-drop') return handleImageFiles(e.detail);
-  if (zone.id === 'split-drop') {
-    const file = e.detail[0]; if (!file || file.type !== 'application/pdf') return Utils.showToast('请选择有效的PDF文件', true); if (file.size > 52428800) return Utils.showToast('文件大小不能超过 50MB', true);
-    const doc = await PDFLib.PDFDocument.load(await file.arrayBuffer());
-    const total = doc.getPageCount();
-    pdfStore.set(s => ({ ...s, split: { file, fileName: file.name, pageCount: total, method: 'pages', pages: 1, start: 1, end: total } }));
-    app.querySelector('#split-fname').textContent = file.name;
-    app.querySelector('#split-pcount').textContent = total;
-    app.querySelector('#split-end').value = total;
-    app.querySelector('#split-preview')?.classList.remove('hidden');
-    app.querySelector('#split-opts')?.classList.remove('hidden');
-  }
-  if (zone.id === 'merge-drop') {
-    const valid = Array.from(e.detail).filter(f => f.type === 'application/pdf' && f.size <= 52428800); if (!valid.length) return Utils.showToast('请选择有效的PDF文件', true);
-    const files = pdfStore.get().merge.files;
-    if (files.length + valid.length > 20) return Utils.showToast('最多支持合并 20 个 PDF 文件', true);
-    if ((files.reduce((a, f) => a + f.size, 0) + valid.reduce((a, f) => a + f.size, 0)) > 209715200) return Utils.showToast('合并文件总大小不能超过 200MB', true);
-    pdfStore.set(s => ({ ...s, merge: { files: [...files, ...valid] } })); renderMergeList();
-  }
-  if (zone.id === 'comp-drop') {
-    const file = e.detail[0]; if (!file || !file.type.startsWith('image/')) return Utils.showToast('请选择有效的图片', true);
-    const s = compressStore.get();
-    if (s.url) URL.revokeObjectURL(s.url); if (s.resultUrl) URL.revokeObjectURL(s.resultUrl);
-    const url = URL.createObjectURL(file);
-    compressStore.set({ file, url, name: file.name, origSize: file.size, quality: 0.8, format: 'jpeg', scale: 100, resultBlob: null, resultUrl: '', estimates: { jpeg: 0, webp: 0, png: 0 } });
-    app.querySelector('#comp-ctrl')?.classList.remove('hidden'); app.querySelector('#comp-orig-size').textContent = Utils.formatSize(file.size);
-    app.querySelector('#comp-new-size').textContent = '计算中...';
-    const preview = app.querySelector('#comp-preview'), placeholder = app.querySelector('#comp-placeholder');
-    if (preview) { preview.src = url; preview.classList.remove('hidden'); placeholder?.classList.add('hidden'); }
-    calculateEstimates(file); return doCompress();
-  }
-  if (zone.id === 'qr-logo-drop') {
-    const file = e.detail[0]; if (!file || !file.type.startsWith('image/')) return Utils.showToast('请选择有效的图片', true);
-    if (qrStore.get().logoUrl) URL.revokeObjectURL(qrStore.get().logoUrl);
-    qrStore.set(s => ({ ...s, logoUrl: URL.createObjectURL(file) })); return doGenerateQR();
-  }
-  if (zone.id === 'qr-parse-drop') {
-    const file = e.detail[0]; if (!file || !file.type.startsWith('image/')) return Utils.showToast('请选择有效的图片', true);
-    return doParseQR(file);
-  }
+const zone = e.target;
+if (zone.id === 'img-drop') return handleImageFiles(e.detail);
+if (zone.id === 'split-drop') {
+const file = e.detail[0]; if (!file || file.type !== 'application/pdf') return Utils.showToast('请选择有效的PDF文件', true); if (file.size > 52428800) return Utils.showToast('文件大小不能超过 50MB', true);
+const doc = await PDFLib.PDFDocument.load(await file.arrayBuffer());
+const total = doc.getPageCount();
+pdfStore.set(s => ({ ...s, split: { file, fileName: file.name, pageCount: total, method: 'pages', pages: 1, start: 1, end: total } }));
+app.querySelector('#split-fname').textContent = file.name;
+app.querySelector('#split-pcount').textContent = total;
+app.querySelector('#split-end').value = total;
+app.querySelector('#split-preview')?.classList.remove('hidden');
+app.querySelector('#split-opts')?.classList.remove('hidden');
+}
+if (zone.id === 'merge-drop') {
+const valid = Array.from(e.detail).filter(f => f.type === 'application/pdf' && f.size <= 52428800); if (!valid.length) return Utils.showToast('请选择有效的PDF文件', true);
+const files = pdfStore.get().merge.files;
+if (files.length + valid.length > 20) return Utils.showToast('最多支持合并 20 个 PDF 文件', true);
+if ((files.reduce((a, f) => a + f.size, 0) + valid.reduce((a, f) => a + f.size, 0)) > 209715200) return Utils.showToast('合并文件总大小不能超过 200MB', true);
+pdfStore.set(s => ({ ...s, merge: { files: [...files, ...valid] } })); renderMergeList();
+}
+if (zone.id === 'comp-drop') {
+const file = e.detail[0]; if (!file || !file.type.startsWith('image/')) return Utils.showToast('请选择有效的图片', true);
+const s = compressStore.get();
+if (s.url) URL.revokeObjectURL(s.url); if (s.resultUrl) URL.revokeObjectURL(s.resultUrl);
+const url = URL.createObjectURL(file);
+compressStore.set({ file, url, name: file.name, origSize: file.size, quality: 0.8, format: 'jpeg', scale: 100, resultBlob: null, resultUrl: '', estimates: { jpeg: 0, webp: 0, png: 0 } });
+app.querySelector('#comp-ctrl')?.classList.remove('hidden'); app.querySelector('#comp-orig-size').textContent = Utils.formatSize(file.size);
+app.querySelector('#comp-new-size').textContent = '计算中...';
+const preview = app.querySelector('#comp-preview'), placeholder = app.querySelector('#comp-placeholder');
+if (preview) { preview.src = url; preview.classList.remove('hidden'); placeholder?.classList.add('hidden'); }
+calculateEstimates(file); return doCompress();
+}
+if (zone.id === 'qr-logo-drop') {
+const file = e.detail[0]; if (!file || !file.type.startsWith('image/')) return Utils.showToast('请选择有效的图片', true);
+if (qrStore.get().logoUrl) URL.revokeObjectURL(qrStore.get().logoUrl);
+qrStore.set(s => ({ ...s, logoUrl: URL.createObjectURL(file) })); return doGenerateQR();
+}
+if (zone.id === 'qr-parse-drop') {
+const file = e.detail[0]; if (!file || !file.type.startsWith('image/')) return Utils.showToast('请选择有效的图片', true);
+return doParseQR(file);
+}
 });
-
 window.addEventListener('beforeunload', () => {
-  imageStore.get().files.forEach(f => URL.revokeObjectURL(f.url));
-  const cs = compressStore.get();
-  ['url', 'resultUrl'].forEach(k => { if (cs[k]) URL.revokeObjectURL(cs[k]); });
-  if (qrStore.get().logoUrl) URL.revokeObjectURL(qrStore.get().logoUrl);
-  if (pickerPasteHandler) document.removeEventListener('paste', pickerPasteHandler);
+imageStore.get().files.forEach(f => URL.revokeObjectURL(f.url));
+const cs = compressStore.get();
+['url', 'resultUrl'].forEach(k => { if (cs[k]) URL.revokeObjectURL(cs[k]); });
+if (qrStore.get().logoUrl) URL.revokeObjectURL(qrStore.get().logoUrl);
+if (pickerPasteHandler) document.removeEventListener('paste', pickerPasteHandler);
 });
-
 // ═══════════════════════════════════════════
 // 9. 路由
 // ═══════════════════════════════════════════
-const ROUTES = { 
-  '/': renderHome, 
-  '/text-case': renderTextCaseTool,
-  '/qrcode-generator': renderQrTool,
-  '/pdf-split-merge': renderPdfTool,
-  '/date-calculator': renderDateTool,
-  '/number-to-chinese': renderNumberTool,
-  '/mock-generator': renderMockTool,
-  '/image-compress': renderCompressTool,
-  '/image-to-pdf': renderImageTool,
-  '/color-picker': renderColorPickerTool
+const ROUTES = {
+'/': renderHome,
+'/text-case': renderTextCaseTool,
+'/qrcode-generator': renderQrTool,
+'/pdf-split-merge': renderPdfTool,
+'/date-calculator': renderDateTool,
+'/number-to-chinese': renderNumberTool,
+'/mock-generator': renderMockTool,
+'/image-compress': renderCompressTool,
+'/image-to-pdf': renderImageTool,
+'/color-picker': renderColorPickerTool
 };
-
 function router() {
-  const base = (location.hash.slice(1) || '/').split('?')[0];
-  if (base !== '/image-to-pdf' && sortableInst) { sortableInst.destroy(); sortableInst = null; }
-  if (base !== '/color-picker' && pickerPasteHandler) {
-    document.removeEventListener('paste', pickerPasteHandler);
-    pickerPasteHandler = null;
-  }
-  (ROUTES[base] || renderHome)(); window.scrollTo(0, 0);
+const base = (location.hash.slice(1) || '/').split('?')[0];
+if (base !== '/image-to-pdf' && sortableInst) { sortableInst.destroy(); sortableInst = null; }
+if (base !== '/color-picker' && pickerPasteHandler) {
+document.removeEventListener('paste', pickerPasteHandler);
+pickerPasteHandler = null;
+}
+(ROUTES[base] || renderHome)(); window.scrollTo(0, 0);
 }
 window.addEventListener('hashchange', router);
 window.addEventListener('DOMContentLoaded', () => { if (!location.hash) location.hash = '#/'; else router(); });
