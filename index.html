@@ -109,10 +109,42 @@
     .pdf-thumb.selected .thumb-label{background:var(--green);color:#fff;border-color:var(--green)}
     .thumb-check{position:absolute;top:8px;right:8px;width:24px;height:24px;background:var(--green);color:#fff;border-radius:50%;display:flex;align-items:center;justify-content:center;opacity:0;transform:scale(.5);transition:var(--transition);box-shadow:0 2px 8px rgba(0,0,0,.2)}
     .pdf-thumb.selected .thumb-check{opacity:1;transform:scale(1)}
+    .thumb-edit-btn{position:absolute;top:8px;left:8px;width:28px;height:28px;background:rgba(255,255,255,.9);color:var(--ink-soft);border-radius:8px;display:flex;align-items:center;justify-content:center;opacity:0;transition:var(--transition);cursor:pointer;border:1px solid var(--border);z-index:6}
+    .pdf-thumb:hover .thumb-edit-btn{opacity:1}
+    .thumb-edit-btn:hover{background:var(--green);color:#fff}
+    .thumb-drag-handle{position:absolute;bottom:8px;left:8px;width:24px;height:24px;background:rgba(255,255,255,.9);color:var(--ink-soft);border-radius:6px;display:flex;align-items:center;justify-content:center;opacity:0;transition:var(--transition);cursor:grab;font-size:14px;line-height:1;z-index:6;user-select:none}
+    .pdf-thumb:hover .thumb-drag-handle{opacity:1}
+    .thumb-drag-handle:active{cursor:grabbing}
     .mode-delete .pdf-thumb.selected::after{content:'';position:absolute;inset:0;background:rgba(194,65,12,.2);pointer-events:none;z-index:5}
     .mode-delete .pdf-thumb.selected .thumb-check{background:var(--accent)}
     .mode-delete .pdf-thumb.selected .thumb-check::before{content:'✕';font-weight:bold}
     .mode-delete .pdf-thumb.selected .thumb-label{background:var(--accent);text-decoration:line-through}
+    /* PDF 页面预览 */
+    .pdf-page-preview{position:relative;background:#fff;border:1px solid var(--border);box-shadow:var(--shadow-md);display:flex;align-items:center;justify-content:center;overflow:hidden}
+    .pdf-page-preview img{display:block}
+    .pdf-page-preview .pdf-preview-label{position:absolute;bottom:-24px;left:50%;transform:translateX(-50%);font-size:11px;color:var(--muted);white-space:nowrap}
+    .pdf-thumb.rotated-indicator::before{content:'';position:absolute;top:8px;left:8px;width:20px;height:20px;background:var(--ink-soft);color:#fff;border-radius:4px;z-index:6;display:flex;align-items:center;justify-content:center;font-size:11px}
+    /* 全局 Loading 遮罩 */
+    #global-loading{position:fixed;inset:0;background:rgba(255,255,255,.85);backdrop-filter:blur(4px);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;gap:16px;transition:opacity .3s}
+    #global-loading.hidden{opacity:0;pointer-events:none}
+    #global-loading .spinner{width:40px;height:40px;border:4px solid var(--border);border-top-color:var(--green);border-radius:50%;animation:spin .8s linear infinite}
+    @keyframes spin{to{transform:rotate(360deg)}}
+    /* PDF 编辑器样式 */
+    .editor-toolbar{display:flex;flex-wrap:wrap;gap:8px;align-items:center;padding:12px;background:#fff;border-radius:12px;border:1px solid var(--border);margin-bottom:16px}
+    .editor-tool-btn{display:flex;align-items:center;gap:6px;padding:8px 14px;border-radius:8px;border:2px solid transparent;background:var(--bg-2);color:var(--ink-soft);cursor:pointer;font-size:13px;font-weight:500;transition:var(--transition)}
+    .editor-tool-btn:hover{background:var(--green-light);color:var(--green)}
+    .editor-tool-btn.active{border-color:var(--green);background:var(--green-light);color:var(--green)}
+    .editor-color-swatch{width:28px;height:28px;border-radius:50%;border:2px solid var(--border);cursor:pointer;transition:var(--transition);padding:0}
+    .editor-color-swatch.active{border-color:var(--ink);transform:scale(1.15);box-shadow:0 2px 8px rgba(0,0,0,.15)}
+    .editor-canvas-wrapper{position:relative;display:inline-block;margin:0 auto;background:#f8f9fa;border-radius:12px;overflow:hidden;box-shadow:var(--shadow-md);max-width:100%}
+    .editor-canvas-wrapper canvas{display:block;max-width:100%;height:auto}
+    .editor-overlay{position:absolute;inset:0;cursor:crosshair}
+    .editor-overlay.tool-select{cursor:default}
+    .annotation-node{position:absolute;border:2px solid transparent;box-sizing:border-box}
+    .annotation-node.selected{border-color:var(--green);box-shadow:0 0 0 2px rgba(26,58,50,.2)}
+    .annotation-node .node-label{position:absolute;top:-20px;left:0;font-size:11px;color:var(--ink-soft);background:#fff;padding:1px 6px;border-radius:4px;white-space:nowrap}
+    .annotation-node .node-delete{position:absolute;top:-12px;right:-12px;width:24px;height:24px;background:var(--accent);color:#fff;border-radius:50%;display:none;align-items:center;justify-content:center;cursor:pointer;font-size:14px;box-shadow:0 2px 6px rgba(0,0,0,.2)}
+    .annotation-node.selected .node-delete{display:flex}
     @media (max-width: 768px) {
       .tool-card{padding:20px}
       .tool-icon{width:48px;height:48px;margin-bottom:16px}
@@ -147,11 +179,26 @@ const Icons = {
   img: '<svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2" ry="2"/><circle cx="8.5" cy="8.5" r="1.5"/><polyline points="21 15 16 10 5 21"/></svg>',
   copy: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>',
   check: '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><polyline points="20 6 9 17 4 12"/></svg>',
+  upload: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></svg>',
+  rect: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="3" width="18" height="18" rx="2"/></svg>',
+  circle: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/></svg>',
+  cursor: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 3l7.07 16.97 2.51-7.39 7.39-2.51L3 3z"/></svg>',
+  trash: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/></svg>',
+  back: '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>',
+  close: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>',
+  rotateLeft: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>',
+  rotateRight: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="23 4 23 10 17 10"/><path d="M20.49 15a9 9 0 1 1-2.12-9.36L23 10"/></svg>',
+  undo: '<svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="1 4 1 10 7 10"/><path d="M3.51 15a9 9 0 1 0 2.13-9.36L1 10"/></svg>',
   get: (name) => Icons[name] || ''
 };
 
 const Utils = {
   _toastTimer: null, _toastEl: null,
+  escapeHtml(str) {
+    const d = document.createElement('div');
+    d.textContent = String(str);
+    return d.innerHTML;
+  },
   showToast(msg, isError = false) {
     if (!this._toastEl) {
       this._toastEl = Object.assign(document.createElement('div'), { className: 'toast' });
@@ -183,6 +230,30 @@ const Utils = {
   },
   isHeic(f) { const t = f.type.toLowerCase(), n = f.name.toLowerCase(); return t.includes('heic') || t.includes('heif') || n.endsWith('.heic') || n.endsWith('.heif'); },
   debounce(fn, delay) { let t; return function(...args) { clearTimeout(t); t = setTimeout(() => fn.apply(this, args), delay); }; },
+  hexToRgb(hex) {
+    const r = parseInt(hex.slice(1, 3), 16), g = parseInt(hex.slice(3, 5), 16), b = parseInt(hex.slice(5, 7), 16);
+    return { r, g, b };
+  },
+  hexToPdfColor(hex) {
+    const { r, g, b } = Utils.hexToRgb(hex);
+    return PDFLib.rgb(r / 255, g / 255, b / 255);
+  },
+  uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 8); },
+  showLoading(msg = '处理中...') {
+    let el = document.getElementById('global-loading');
+    if (!el) {
+      el = document.createElement('div');
+      el.id = 'global-loading';
+      el.innerHTML = '<div class="spinner"></div><div class="text-[--ink-soft] text-sm"></div>';
+      document.body.appendChild(el);
+    }
+    el.querySelector('div:last-child').textContent = msg;
+    el.classList.remove('hidden');
+  },
+  hideLoading() {
+    const el = document.getElementById('global-loading');
+    if (el) el.classList.add('hidden');
+  },
   formatSize(bytes) { if (bytes < 1024) return bytes + ' B'; if (bytes < 1048576) return (bytes / 1024).toFixed(1) + ' KB'; return (bytes / 1048576).toFixed(2) + ' MB'; },
   formatDate(d) {
     if (!d) return '';
@@ -235,8 +306,8 @@ const createStore = (initial) => {
 };
 
 const imageStore = createStore({ files: [], mode: 'fit', orient: 'auto', quality: 0.8 });
-const pdfStore = createStore({ fileName: '', pageCount: 0, mode: 'delete', selected: [] });
-const compressStore = createStore({ file: null, url: '', name: '', origSize: 0, quality: 0.8, format: 'jpeg', scale: 100, resultBlob: null, resultUrl: '', estimates: { jpeg: 0, webp: 0, png: 0 } });
+const pdfStore = createStore({ fileName: '', pageCount: 0, mode: 'delete', selected: [], view: 'grid', currentPage: 0, tool: 'select', color: '#ffffff', rotations: {}, annotations: {}, pageOrder: [] });
+const compressStore = createStore({ file: null, url: '', name: '', origSize: 0, quality: 0.8, format: 'jpeg', scale: 100, resultBlob: null, resultUrl: '', estimates: { jpeg: 0, webp: 0, png: 0 }, batchMode: false, batchFiles: [], batchResults: [], batchProcessing: false, batchProgress: 0 });
 const textStore = createStore({ input: '', mode: 'upper' });
 const mockStore = createStore({
   type: 'uuid', count: 10,
@@ -251,10 +322,14 @@ const dateStore = createStore({
   baseDate: '', offset: 1, unit: 'days',
   result: null
 });
-const p2iStore = createStore({ mode: 'word', scale: 1.5, format: 'jpeg' });
+const p2iStore = createStore({ mode: 'zip', scale: 1.5, format: 'jpeg', pendingFile: null });
 
 let sortableInst = null, compressTaskId = 0;
 let currentFile = null, pdfJsDoc = null, pdfObserver = null, pdfArrayBuffer = null;
+let pdfUndoStack = [], pdfResizeTimer = null, pdfEditorState = null;
+let pdfSortable = null, pdfDragFlag = false;
+// 预创建防抖实例，避免每次调用 debounce() 生成新闭包导致防抖失效
+const debouncedDoCompress = Utils.debounce(doCompress, 300);
 
 function resetStore(store, initial) {
   const oldState = store.get();
@@ -268,10 +343,13 @@ function resetStore(store, initial) {
 
 function resetPdfStore() {
   if (pdfObserver) { pdfObserver.disconnect(); pdfObserver = null; }
+  if (pdfSortable) { pdfSortable.destroy(); pdfSortable = null; }
   currentFile = null;
   pdfJsDoc = null;
   pdfArrayBuffer = null;
-  pdfStore.set({ fileName: '', pageCount: 0, mode: 'delete', selected: [] });
+  pdfEditorState = null;
+  pdfUndoStack = [];
+  pdfStore.set({ fileName: '', pageCount: 0, mode: 'delete', selected: [], view: 'grid', currentPage: 0, tool: 'select', color: '#ffffff', rotations: {}, annotations: {}, pageOrder: [] });
   renderPdfTool();
 }
 
@@ -301,7 +379,7 @@ customElements.define('drop-zone', DropZone);
 const TOOLS = [
   { id: 'text-case', name: '大小写转换', desc: '一键转换英文大小写，支持句首、词首等5种模式。', icon: 'tool5' },
   { id: 'pdf-split-merge', name: 'PDF 可视化工作台', desc: '上传 PDF 可视化选择删除或保留页面，缩略图懒加载，本地处理。', icon: 'pdf' },
-  { id: 'pdf-to-image', name: 'PDF 转图片', desc: '将 PDF 每页转为高清图片，支持打包 ZIP 或直接嵌入 Word。', icon: 'img' },
+  { id: 'pdf-to-image', name: 'PDF 转图片', desc: '将 PDF 每页转为高清图片，支持打包 ZIP 或直接保存。', icon: 'img' },
   { id: 'date-calculator', name: '日期计算器', desc: '计算日期差值、工作日天数，或推算合同到期日。', icon: 'tool8' },
   { id: 'number-to-chinese', name: '数字转中文大写', desc: '输入阿拉伯数字，自动转换为人民币大写金额格式。', icon: 'tool1' },
   { id: 'mock-generator', name: '随机数据生成', desc: '批量生成UUID、随机密码、测试数据或幸运抽签。', icon: 'tool7' },
@@ -337,6 +415,12 @@ function renderTextCaseTool() {
 // Tool 02: PDF 可视化工作台
 function renderPdfTool() {
   const S = pdfStore.get();
+  if (S.view === 'edit' && S.currentPage > 0) return renderEditView();
+  return renderGridView();
+}
+
+function renderGridView() {
+  const S = pdfStore.get();
   const hasFile = !!currentFile;
   app.innerHTML = `${$header('PDF 可视化工作台', 'Tool 02')}<main class="max-w-6xl mx-auto px-6 pb-16 page-enter">
     <div id="upload-section" class="${hasFile ? 'hidden' : ''}">
@@ -347,7 +431,7 @@ function renderPdfTool() {
         <div class="flex items-center gap-3">
           <div class="w-10 h-10 bg-[--bg-2] rounded flex items-center justify-center text-[--muted]">${Icons.pdf}</div>
           <div>
-            <div class="font-medium text-[--ink] text-sm truncate max-w-xs">${S.fileName}</div>
+            <div class="font-medium text-[--ink] text-sm truncate max-w-xs">${Utils.escapeHtml(S.fileName)}</div>
             <div class="text-xs text-[--muted]" id="pdf-stats">共 ${S.pageCount} 页 · 已选 ${S.selected.length} 页</div>
           </div>
         </div>
@@ -368,38 +452,92 @@ function renderPdfTool() {
           </div>
         </div>
         <div class="flex flex-wrap gap-3 items-center justify-between border-t border-[--border] pt-6">
-          <div class="flex gap-2">
+          <div class="flex gap-2 flex-wrap">
             <button class="btn btn-ghost btn-sm" id="btn-select-all">全选</button>
             <button class="btn btn-ghost btn-sm" id="btn-invert">反选</button>
             <button class="btn btn-ghost btn-sm" id="btn-clear">清空</button>
+            <button class="btn btn-ghost btn-sm" id="btn-rotate-left">${Icons.rotateLeft} 左转</button>
+            <button class="btn btn-ghost btn-sm" id="btn-rotate-right">${Icons.rotateRight} 右转</button>
           </div>
           <button class="btn btn-primary px-8" id="btn-process">处理并下载 PDF</button>
         </div>
       </div>
       <div id="thumb-grid" class="thumb-grid ${S.mode === 'delete' ? 'mode-delete' : ''}"></div>
     </div>
-    ${$infoCard('交互指南', ['上传 PDF 后，系统会自动生成所有页面的缩略图（采用懒加载技术，百页文件也不卡顿）。', '<b>删除模式</b>：点击你想删掉的页面，它们会变红并打上 ✕，最后下载的文件将剔除这些页。', '<b>保留模式</b>：点击你想保留的页面，它们会变绿并打上 ✓，最后下载的文件只包含这些页。', '支持按住 Ctrl/Cmd 键进行多选，或使用顶部的“全选/反选”快捷按钮。'])}
+    ${$infoCard('交互指南', ['上传 PDF 后，系统会自动生成所有页面的缩略图（采用懒加载技术，百页文件也不卡顿）。', '<b>删除模式</b>：点击你想删掉的页面，它们会变红并打上 ✕，最后下载的文件将剔除这些页。', '<b>保留模式</b>：点击你想保留的页面，它们会变绿并打上 ✓，最后下载的文件只包含这些页。', '<b>旋转</b>：先选中页面，再点击左转/右转按钮，可旋转选中页面 90 度。',
+      '<b>重排序</b>：拖拽缩略图左下角的手柄即可调整页面顺序，导出时按新顺序排列。',
+      '<b>标注遮挡</b>：点击缩略图左上角的编辑按钮，进入单页编辑器，支持矩形遮挡、拖拽移动、撤销和颜色选择。', '支持按住 Ctrl/Cmd 键进行多选，或使用顶部的“全选/反选”快捷按钮。'])}
   </main>`;
   if (hasFile) initThumbnails();
+}
+
+function renderEditView() {
+  const S = pdfStore.get();
+  const page = S.currentPage;
+  const anns = S.annotations[page] || [];
+  const rot = S.rotations[page] || 0;
+  const colors = ['#000000', '#ffffff', '#c2410c', '#1a3a32', '#3b82f6', '#ef4444'];
+  app.innerHTML = `${$header('标注遮挡编辑器', 'Tool 02')}<main class="max-w-4xl mx-auto px-6 pb-16 page-enter">
+    <div class="flex items-center justify-between bg-white p-4 rounded-xl border border-[--border] mb-6">
+      <button class="btn btn-ghost btn-sm" id="btn-back-to-grid">${Icons.back} 返回</button>
+      <div class="text-sm font-medium text-[--ink]">第 ${page} 页 / 共 ${S.pageCount} 页</div>
+      <div class="flex gap-2">
+        ${page > 1 ? `<button class="btn btn-ghost btn-sm" id="btn-prev-page">上一页</button>` : ''}
+        ${page < S.pageCount ? `<button class="btn btn-ghost btn-sm" id="btn-next-page">下一页</button>` : ''}
+      </div>
+    </div>
+    <div class="editor-toolbar">
+      <button class="editor-tool-btn ${S.tool === 'select' ? 'active' : ''}" data-editor-tool="select">${Icons.cursor} 选择</button>
+      <button class="editor-tool-btn ${S.tool === 'rect' ? 'active' : ''}" data-editor-tool="rect">${Icons.rect} 矩形</button>
+      <div class="w-px h-6 bg-[--border] mx-2"></div>
+      ${colors.map(c => `<button class="editor-color-swatch ${S.color === c ? 'active' : ''}" data-editor-color="${c}" style="background:${c}"></button>`).join('')}
+      <div class="w-px h-6 bg-[--border] mx-2"></div>
+      <button class="editor-tool-btn" id="btn-undo">${Icons.undo} 撤销</button>
+      <button class="editor-tool-btn" id="btn-delete-ann">${Icons.trash} 删除选中</button>
+      <span class="text-xs text-[--muted] ml-auto">Ctrl+Z 撤销</span>
+    </div>
+    <div class="flex justify-center">
+      <div class="editor-canvas-wrapper" id="editor-canvas-wrapper">
+        <canvas id="editor-canvas"></canvas>
+        <div class="editor-overlay" id="editor-overlay"></div>
+      </div>
+    </div>
+    <div id="editor-annotations-list" class="mt-4 space-y-2 max-w-2xl mx-auto"></div>
+  </main>`;
+  initEditor();
 }
 
 // Tool 03: PDF 转图片
 function renderPdfToImageTool() {
   const S = p2iStore.get();
+  const hasFile = !!S.pendingFile;
   app.innerHTML = `${$header('PDF 转图片', 'Tool 03')}<main class="max-w-4xl mx-auto px-6 pb-16 page-enter">
     <drop-zone id="p2i-drop" text="点击或拖拽 PDF 文件到此处" hint="支持 .pdf 格式，转换后的图片清晰度高" accept=".pdf"></drop-zone>
     
+    ${hasFile ? `
+    <div class="mt-6 bg-white p-4 rounded-xl border border-[--border] flex items-center justify-between">
+      <div class="flex items-center gap-3">
+        <div class="w-10 h-10 bg-[--bg-2] rounded flex items-center justify-center text-[--muted]">${Icons.pdf}</div>
+        <div>
+          <div class="font-medium text-[--ink] text-sm truncate max-w-xs">${Utils.escapeHtml(S.pendingFile.name)}</div>
+          <div class="text-xs text-[--muted]">${Utils.formatSize(S.pendingFile.size)}</div>
+        </div>
+      </div>
+      <button class="btn btn-ghost btn-sm" id="p2i-clear-file">移除</button>
+    </div>
+    ` : ''}
+
     <div class="mt-8 bg-white p-6 rounded-2xl border border-[--border] space-y-6">
       <div>
         <label class="block text-sm font-medium text-[--ink-soft] mb-3">输出模式</label>
         <div class="flex gap-4 flex-wrap">
-          <div class="orient-option ${S.mode === 'word' ? 'active' : ''}" data-p2i-mode="word" role="button" tabindex="0">
-            <div class="font-bold mb-1">嵌入 Word 文档</div>
-            <div class="text-xs opacity-80">每页 PDF 对应一页 Word，生成 .doc 文件</div>
-          </div>
           <div class="orient-option ${S.mode === 'zip' ? 'active' : ''}" data-p2i-mode="zip" role="button" tabindex="0">
             <div class="font-bold mb-1">打包 ZIP 压缩包</div>
             <div class="text-xs opacity-80">每页 PDF 转为单独的图片文件，打包下载</div>
+          </div>
+          <div class="orient-option ${S.mode === 'image' ? 'active' : ''}" data-p2i-mode="image" role="button" tabindex="0">
+            <div class="font-bold mb-1">直接保存图片</div>
+            <div class="text-xs opacity-80">每页转为图片直接下载，适合少量页面的 PDF</div>
           </div>
         </div>
       </div>
@@ -414,7 +552,7 @@ function renderPdfToImageTool() {
             <option value="3" ${S.scale === 3 ? 'selected' : ''}>极清 (216 DPI)</option>
           </select>
         </div>
-        <div class="flex gap-3 items-center ${S.mode === 'zip' ? '' : 'hidden'}" id="p2i-format-wrap">
+        <div class="flex gap-3 items-center" id="p2i-format-wrap">
           <label class="text-sm text-[--ink-soft]">图片格式:</label>
           <select id="p2i-format" class="input w-32 py-2">
             <option value="jpeg" ${S.format === 'jpeg' ? 'selected' : ''}>JPEG (体积小)</option>
@@ -424,6 +562,12 @@ function renderPdfToImageTool() {
       </div>
     </div>
 
+    ${hasFile ? `
+    <div class="mt-8 text-center">
+      <button class="btn btn-primary text-lg px-12 py-4" id="p2i-start-btn">开始转换</button>
+    </div>
+    ` : ''}
+
     <div id="p2i-status" class="hidden mt-6 bg-white p-6 rounded-2xl border border-[--border] text-center">
       <div class="text-lg font-semibold text-[--ink] mb-2" id="p2i-status-title">准备转换</div>
       <div class="text-sm text-[--muted] mb-4" id="p2i-status-detail">请上传 PDF 文件</div>
@@ -432,17 +576,16 @@ function renderPdfToImageTool() {
       </div>
     </div>
 
+    <div id="p2i-gallery" class="hidden mt-6"></div>
+
     ${$infoCard('使用说明', [
-      '<b>嵌入 Word</b>：将 PDF 每页转为图片，嵌入 Word 并分页，生成 .doc 文件，排版绝对不会乱。',
       '<b>打包 ZIP</b>：将 PDF 每页转为独立图片，打包成 .zip 压缩包下载。',
-      '建议选择“高清”或“超清”以保证文字清晰度。极清模式可能会导致内存占用过高。',
+      '<b>直接保存图片</b>：每页转为图片后展示预览，可逐张下载或一键全部下载。特别适合只有 1-2 页的 PDF，方便直接保存到手机或平板。',
+      '上传 PDF 后，选择输出模式和清晰度，点击「开始转换」按钮即可。',
+      '建议选择"高清"或"超清"以保证文字清晰度。极清模式可能会导致内存占用过高。',
       '所有转换均在本地浏览器完成，不上传服务器，安全私密。'
     ])}
   </main>`;
-
-  const fmtWrap = app.querySelector('#p2i-format-wrap');
-  if (S.mode === 'word') fmtWrap.classList.add('hidden');
-  else fmtWrap.classList.remove('hidden');
 }
 
 // Tool 04: 日期计算器
@@ -578,15 +721,152 @@ function renderMockTool() {
 // Tool 07: 图片压缩
 function renderCompressTool() {
   const S = compressStore.get();
-  app.innerHTML = `${$header('图片压缩', 'Tool 07')}<main class="max-w-5xl mx-auto px-6 pb-16 page-enter"><div class="grid grid-cols-1 lg:grid-cols-2 gap-8"><div><drop-zone id="comp-drop" text="点击或拖拽图片到此处" hint="支持 JPG, PNG, WEBP" accept="image/*"></drop-zone><div id="comp-ctrl" class="hidden mt-6 space-y-6"><div><label class="block text-sm font-medium text-[--ink-soft] mb-3">选择格式 (智能预估)</label><div class="grid grid-cols-3 gap-3" id="format-cards"></div></div><div><label class="block text-sm font-medium text-[--ink-soft] mb-2">质量: <span id="comp-q-val">${Math.round(S.quality * 100)}</span>%</label><input type="range" class="range-slider" id="comp-q" min="10" max="100" value="${S.quality * 100}"></div><div><label class="block text-sm font-medium text-[--ink-soft] mb-2">缩放比例: <span id="comp-s-val">${S.scale}</span>%</label><input type="range" class="range-slider" id="comp-s" min="10" max="100" value="${S.scale}"></div></div></div><div><div class="grid grid-cols-2 gap-4 mb-6"><div class="stat-box"><div class="val" id="comp-orig-size">-</div><div class="lbl">原始大小</div></div><div class="stat-box"><div class="val text-[--accent]" id="comp-new-size">-</div><div class="lbl">压缩后大小</div></div></div><div class="bg-white rounded-xl border border-[--border] p-4 flex items-center justify-center min-h-[300px]"><img id="comp-preview" class="max-w-full max-h-[400px] rounded-lg hidden" alt="preview"><span id="comp-placeholder" class="text-[--muted]">上传图片后预览</span></div><div class="flex gap-3 mt-6"><button class="btn btn-primary flex-1" id="comp-dl-btn" disabled>下载压缩图片</button><button class="btn btn-ghost" id="reset-compress">重置</button></div></div></div>${$infoCard('使用说明', ['所有压缩处理均在本地浏览器完成，不上传服务器', '上传图片后会自动计算各格式预估大小', '点击格式卡片即可切换，WebP 通常体积最小'])}</main>`;
+  if (S.batchMode) return renderBatchCompressTool();
+  app.innerHTML = `${$header('图片压缩', 'Tool 07')}<main class="max-w-5xl mx-auto px-6 pb-16 page-enter">
+    <div class="flex gap-3 mb-6">
+      <button class="orient-option active flex-1" data-comp-mode="single" role="button" tabindex="0"><div class="font-bold mb-1">单图压缩</div><div class="text-xs opacity-80">实时预览 + 格式预估</div></button>
+      <button class="orient-option flex-1" data-comp-mode="batch" role="button" tabindex="0"><div class="font-bold mb-1">批量压缩</div><div class="text-xs opacity-80">多图一键打包 ZIP</div></button>
+    </div>
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+      <div>
+        <drop-zone id="comp-drop" text="点击或拖拽图片到此处" hint="支持 JPG, PNG, WEBP" accept="image/*"></drop-zone>
+        <div id="comp-ctrl" class="hidden mt-6 space-y-6">
+          <div>
+            <label class="block text-sm font-medium text-[--ink-soft] mb-3">选择格式 (智能预估)</label>
+            <div class="grid grid-cols-3 gap-3" id="format-cards"></div>
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-[--ink-soft] mb-2">质量: <span id="comp-q-val">${Math.round(S.quality * 100)}</span>%</label>
+            <input type="range" class="range-slider" id="comp-q" min="10" max="100" value="${S.quality * 100}">
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-[--ink-soft] mb-2">缩放比例: <span id="comp-s-val">${S.scale}</span>%</label>
+            <input type="range" class="range-slider" id="comp-s" min="10" max="100" value="${S.scale}">
+          </div>
+        </div>
+      </div>
+      <div>
+        <div class="grid grid-cols-2 gap-4 mb-6">
+          <div class="stat-box"><div class="val" id="comp-orig-size">-</div><div class="lbl">原始大小</div></div>
+          <div class="stat-box"><div class="val text-[--accent]" id="comp-new-size">-</div><div class="lbl">压缩后大小</div></div>
+        </div>
+        <div class="bg-white rounded-xl border border-[--border] p-4 flex items-center justify-center min-h-[300px]">
+          <img id="comp-preview" class="max-w-full max-h-[400px] rounded-lg hidden" alt="preview">
+          <span id="comp-placeholder" class="text-[--muted]">上传图片后预览</span>
+        </div>
+        <div class="flex gap-3 mt-6">
+          <button class="btn btn-primary flex-1" id="comp-dl-btn" disabled>下载压缩图片</button>
+          <button class="btn btn-ghost" id="reset-compress">重置</button>
+        </div>
+      </div>
+    </div>
+    ${$infoCard('使用说明', ['所有压缩处理均在本地浏览器完成，不上传服务器', '上传图片后会自动计算各格式预估大小', '点击格式卡片即可切换，WebP 通常体积最小', '需要批量压缩多张图片？切换到「批量压缩」模式'])}
+  </main>`;
   renderFormatCards();
+}
+
+function renderBatchCompressTool() {
+  const S = compressStore.get();
+  const batchFiles = S.batchFiles;
+  const hasFiles = batchFiles.length > 0;
+  const totalOrig = batchFiles.reduce((s, f) => s + f.size, 0);
+  const totalCompressed = S.batchResults.reduce((s, r) => s + (r?.size || 0), 0);
+  app.innerHTML = `${$header('图片压缩', 'Tool 07')}<main class="max-w-5xl mx-auto px-6 pb-16 page-enter">
+    <div class="flex gap-3 mb-6">
+      <button class="orient-option flex-1" data-comp-mode="single" role="button" tabindex="0"><div class="font-bold mb-1">单图压缩</div><div class="text-xs opacity-80">实时预览 + 格式预估</div></button>
+      <button class="orient-option active flex-1" data-comp-mode="batch" role="button" tabindex="0"><div class="font-bold mb-1">批量压缩</div><div class="text-xs opacity-80">多图一键打包 ZIP</div></button>
+    </div>
+    <drop-zone id="comp-batch-drop" text="点击或拖拽多张图片到此处" hint="支持 JPG, PNG, WEBP，可多选" accept="image/*" multiple></drop-zone>
+    ${hasFiles ? `
+    <div class="mt-8 bg-white p-6 rounded-2xl border border-[--border] space-y-6">
+      <div class="flex items-center justify-between">
+        <h3 class="text-lg font-semibold text-[--ink]">已添加 ${batchFiles.length} 张图片</h3>
+        <button class="btn btn-ghost btn-sm" id="reset-batch">清空列表</button>
+      </div>
+      <div class="grid grid-cols-2 gap-4">
+        <div class="stat-box"><div class="val" id="batch-orig-total">${Utils.formatSize(totalOrig)}</div><div class="lbl">原始总大小</div></div>
+        <div class="stat-box"><div class="val ${totalCompressed ? 'text-[--green]' : 'text-[--muted]'}" id="batch-compressed-total">${totalCompressed ? Utils.formatSize(totalCompressed) : '待压缩'}</div><div class="lbl">${totalCompressed ? `压缩率 ${Math.round((1 - totalCompressed / totalOrig) * 100)}%` : '压缩后总大小'}</div></div>
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-[--ink-soft] mb-2">质量: <span id="batch-q-val">${Math.round(S.quality * 100)}</span>%</label>
+        <input type="range" class="range-slider" id="batch-q" min="10" max="100" value="${S.quality * 100}">
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-[--ink-soft] mb-2">缩放比例: <span id="batch-s-val">${S.scale}</span>%</label>
+        <input type="range" class="range-slider" id="batch-s" min="10" max="100" value="${S.scale}">
+      </div>
+      <div>
+        <label class="block text-sm font-medium text-[--ink-soft] mb-3">输出格式</label>
+        <div class="flex gap-3">
+          <div class="orient-option ${S.format === 'jpeg' ? 'active' : ''}" data-batch-fmt="jpeg" role="button" tabindex="0">JPEG</div>
+          <div class="orient-option ${S.format === 'webp' ? 'active' : ''}" data-batch-fmt="webp" role="button" tabindex="0">WebP</div>
+          <div class="orient-option ${S.format === 'png' ? 'active' : ''}" data-batch-fmt="png" role="button" tabindex="0">PNG</div>
+        </div>
+      </div>
+      ${S.batchProcessing ? `
+        <div>
+          <div class="flex items-center justify-between mb-2">
+            <span class="text-sm text-[--ink-soft]">正在压缩... ${S.batchProgress}/${batchFiles.length}</span>
+            <span class="text-sm text-[--muted]">${Math.round(S.batchProgress / batchFiles.length * 100)}%</span>
+          </div>
+          <div class="w-full bg-[--bg-2] rounded-full h-2 overflow-hidden">
+            <div class="bg-[--green] h-2 rounded-full transition-all duration-300" style="width: ${S.batchProgress / batchFiles.length * 100}%"></div>
+          </div>
+        </div>
+      ` : `
+        <button class="btn btn-primary w-full py-4 text-lg" id="batch-compress-btn">一键压缩并打包 ZIP</button>
+      `}
+      ${S.batchResults.length ? `
+        <div class="border-t border-[--border] pt-4">
+          <div class="text-sm font-medium text-[--ink-soft] mb-3">压缩结果</div>
+          <div class="space-y-2 max-h-60 overflow-y-auto">
+            ${S.batchResults.map((r, i) => `
+              <div class="flex items-center gap-3 text-sm py-2 px-3 bg-[--bg-2] rounded-lg">
+                <span class="text-[--muted] w-6">${i + 1}.</span>
+                <span class="text-[--ink-soft] truncate flex-1">${Utils.escapeHtml(r.name)}</span>
+                <span class="text-[--muted]">${Utils.formatSize(r.origSize)}</span>
+                <span class="text-[--muted]">→</span>
+                <span class="text-[--green] font-medium">${Utils.formatSize(r.size)}</span>
+                <span class="text-[--accent] text-xs">-${Math.round((1 - r.size / r.origSize) * 100)}%</span>
+              </div>
+            `).join('')}
+          </div>
+          <button class="btn btn-primary w-full mt-4" id="batch-download-btn">下载 ZIP 压缩包</button>
+        </div>
+      ` : ''}
+    </div>
+    ` : ''}
+    ${$infoCard('使用说明', ['批量模式下所有图片使用统一的格式、质量和缩放参数', '压缩过程串行执行，避免内存溢出', '完成后自动打包为 ZIP 文件下载', '支持随时清空列表重新添加'])}
+  </main>`;
 }
 
 // Tool 08: 图片转 PDF
 function renderImageTool() {
   const S = imageStore.get();
-  app.innerHTML = `${$header('图片转 PDF', 'Tool 08')}<main class="max-w-4xl mx-auto px-6 pb-16 page-enter"><drop-zone id="img-drop" text="点击或拖拽图片到此处" hint="支持 JPG, PNG, WEBP, HEIC" accept="image/*,.heic,.heif" multiple></drop-zone><div id="img-section" class="hidden mt-8"><div class="flex items-center justify-between mb-4"><h3 class="text-lg font-semibold text-[--ink]">已选图片 <span id="img-count" class="text-[--muted] font-normal text-sm"></span></h3><button class="btn btn-ghost btn-sm" id="reset-image">重置</button></div><div id="img-list" class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-4"></div></div><div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8"><div><label class="block text-sm font-medium text-[--ink-soft] mb-3">页面模式</label><div class="flex gap-3 flex-wrap">${$optGroup('mode', S.mode)}</div></div><div><label class="block text-sm font-medium text-[--ink-soft] mb-3">页面方向</label><div class="flex gap-3 flex-wrap">${$optGroup('orient', S.orient)}</div></div><div><label class="block text-sm font-medium text-[--ink-soft] mb-3">压缩等级</label><div class="flex gap-3 flex-wrap">${$optGroup('quality', S.quality)}</div></div></div><div class="mt-10 text-center"><button class="btn btn-primary text-lg px-12 py-4" id="convert-img-btn">生成并下载 PDF</button></div>${$infoCard('使用说明', ['所有图片处理均在本地完成', 'HEIC/HEIF 格式将自动转换为 JPEG', '拖拽排序：长按缩略图拖动调整顺序'])}</main>`;
+  app.innerHTML = `${$header('图片转 PDF', 'Tool 08')}<main class="max-w-4xl mx-auto px-6 pb-16 page-enter"><drop-zone id="img-drop" text="点击或拖拽图片到此处" hint="支持 JPG, PNG, WEBP, HEIC" accept="image/*,.heic,.heif" multiple></drop-zone>
+    <div id="img-section" class="hidden mt-8">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-lg font-semibold text-[--ink]">已选图片 <span id="img-count" class="text-[--muted] font-normal text-sm"></span></h3>
+        <button class="btn btn-ghost btn-sm" id="reset-image">重置</button>
+      </div>
+      <div id="img-list" class="grid grid-cols-3 sm:grid-cols-4 md:grid-cols-6 gap-4"></div>
+    </div>
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
+      <div><label class="block text-sm font-medium text-[--ink-soft] mb-3">页面模式</label><div class="flex gap-3 flex-wrap">${$optGroup('mode', S.mode)}</div></div>
+      <div><label class="block text-sm font-medium text-[--ink-soft] mb-3">页面方向</label><div class="flex gap-3 flex-wrap">${$optGroup('orient', S.orient)}</div></div>
+      <div><label class="block text-sm font-medium text-[--ink-soft] mb-3">压缩等级</label><div class="flex gap-3 flex-wrap">${$optGroup('quality', S.quality)}</div></div>
+    </div>
+    <div id="pdf-preview-section" class="hidden mt-8">
+      <h3 class="text-lg font-semibold text-[--ink] mb-4">PDF 页面预览 <span class="text-[--muted] font-normal text-sm">（展示第一张图片在 PDF 中的布局）</span></h3>
+      <div class="flex justify-center">
+        <div id="pdf-page-preview" class="pdf-page-preview"></div>
+      </div>
+    </div>
+    <div class="mt-10 text-center"><button class="btn btn-primary text-lg px-12 py-4" id="convert-img-btn">生成并下载 PDF</button></div>
+    ${$infoCard('使用说明', ['所有图片处理均在本地完成', 'HEIC/HEIF 格式将自动转换为 JPEG', '拖拽排序：长按缩略图拖动调整顺序', '页面预览展示第一张图片在 PDF 中的实际布局效果（白边、方向、缩放）'])}
+  </main>`;
   syncImageListDOM();
+  updatePdfPreview();
   const list = app.querySelector('#img-list');
   if (sortableInst) sortableInst.destroy();
   if (list) {
@@ -598,9 +878,36 @@ function renderImageTool() {
         const movedItem = files.splice(e.oldIndex, 1)[0];
         files.splice(e.newIndex, 0, movedItem);
         imageStore.set(s => ({ ...s, files }));
+        updatePdfPreview();
       }
     });
   }
+}
+
+// PDF 页面预览：展示图片在最终 PDF 页面上的布局
+function updatePdfPreview() {
+  const S = imageStore.get();
+  const section = app.querySelector('#pdf-preview-section');
+  const preview = app.querySelector('#pdf-page-preview');
+  if (!section || !preview) return;
+  if (!S.files.length) { section.classList.add('hidden'); return; }
+  section.classList.remove('hidden');
+  const firstImg = S.files[0];
+  // A4 比例：纵向 1:1.414，横向 1.414:1
+  const isLandscape = S.orient === 'landscape' || (S.orient === 'auto' && firstImg.w > firstImg.h);
+  const pageW = isLandscape ? 280 : 198;
+  const pageH = isLandscape ? 198 : 280;
+  let imgStyle = '';
+  if (S.mode === 'fit') {
+    // 贴合模式：图片填满页面，无白边
+    imgStyle = 'width:100%;height:100%;object-fit:fill';
+  } else {
+    // A4 模式：图片居中，保留白边
+    imgStyle = 'max-width:90%;max-height:90%;object-fit:contain';
+  }
+  preview.style.width = pageW + 'px';
+  preview.style.height = pageH + 'px';
+  preview.innerHTML = `<img src="${firstImg.url}" style="${imgStyle}" alt="预览"><div class="pdf-preview-label">${isLandscape ? '横向' : '纵向'} · ${S.mode === 'fit' ? '贴合' : 'A4白边'} · ${firstImg.w}×${firstImg.h}</div>`;
 }
 
 function renderFormatCards() {
@@ -611,7 +918,7 @@ function renderFormatCards() {
   container.innerHTML = formats.map(f => {
     const size = S.estimates[f];
     const isActive = S.format === f;
-    return `<div class="format-card p-4 border border-[--border] rounded-xl text-center ${isActive ? 'active' : ''}" data-cfmt="${f}"><div class="font-bold text-[--ink] uppercase">${f}</div><div class="text-sm text-[--muted] mt-1">${size ? Utils.formatSize(size) : '计算中...'}</div></div>`;
+    return `<div class="format-card p-4 border border-[--border] rounded-xl text-center ${isActive ? 'active' : ''}" data-cfmt="${f}"><div class="font-bold text-[--ink] uppercase">${f}</div><div class="text-sm text-[--muted] mt-1">${size ? Utils.formatSize(size) : (f === 'png' ? '点击查看' : '计算中...')}</div></div>`;
   }).join('');
 }
 
@@ -623,7 +930,7 @@ function syncImageListDOM() {
   if (!files.length) { sec.classList.add('hidden'); list.innerHTML = ''; return; }
   sec.classList.remove('hidden');
   app.querySelector('#img-count').textContent = `(${files.length} 张)`;
-  list.innerHTML = files.map((f, i) => `<div class="thumb" data-idx="${i}"><img src="${f.url}" alt="${f.name}"><span class="thumb-num">${i + 1}</span><span class="thumb-orient">${f.w > f.h ? '横' : '竖'}</span><button class="thumb-remove" data-rm-img="${i}"><svg width="10" height="10" viewBox="0 0 10 10"><path d="M2 2L8 8M8 2L2 8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></button></div>`).join('');
+  list.innerHTML = files.map((f, i) => `<div class="thumb" data-idx="${i}"><img src="${f.url}" alt="${Utils.escapeHtml(f.name)}"><span class="thumb-num">${i + 1}</span><span class="thumb-orient">${f.w > f.h ? '横' : '竖'}</span><button class="thumb-remove" data-rm-img="${i}"><svg width="10" height="10" viewBox="0 0 10 10"><path d="M2 2L8 8M8 2L2 8" stroke="currentColor" stroke-width="1.6" stroke-linecap="round"/></svg></button></div>`).join('');
 }
 
 function renderDateDiffResult(res) {
@@ -674,24 +981,60 @@ async function initThumbnails() {
   if (!grid || !pdfJsDoc) return;
   grid.innerHTML = '';
   if (pdfObserver) pdfObserver.disconnect();
+  if (pdfSortable) { pdfSortable.destroy(); pdfSortable = null; }
   const fragment = document.createDocumentFragment();
   const S = pdfStore.get();
-  for (let i = 1; i <= S.pageCount; i++) {
+  const order = S.pageOrder.length ? S.pageOrder : Array.from({ length: S.pageCount }, (_, i) => i + 1);
+  for (let displayIdx = 0; displayIdx < order.length; displayIdx++) {
+    const origPage = order[displayIdx];
     const div = document.createElement('div');
-    div.className = `pdf-thumb ${S.selected.includes(i) ? 'selected' : ''}`;
-    div.dataset.page = i;
+    div.className = `pdf-thumb ${S.selected.includes(origPage) ? 'selected' : ''}`;
+    div.dataset.page = origPage;
+    div.dataset.displayIdx = displayIdx;
+    const rot = S.rotations[origPage] || 0;
+    const hasAnn = S.annotations[origPage] && S.annotations[origPage].length;
     div.innerHTML = `
       <div class="thumb-canvas-wrapper">
         <canvas class="thumb-canvas"></canvas>
         <div class="thumb-loading">渲染中...</div>
+        <button class="thumb-edit-btn" data-edit-page="${origPage}" title="标注遮挡">${Icons.cursor}</button>
+        <div class="thumb-drag-handle" title="拖拽排序">⠿</div>
       </div>
-      <div class="thumb-label">第 ${i} 页</div>
+      <div class="thumb-label">第 ${displayIdx + 1} 页${rot ? ' [' + rot + '°]' : ''}${hasAnn ? ' [标注]' : ''}</div>
       <div class="thumb-check">${Icons.check}</div>
     `;
-    div.addEventListener('click', () => toggleSelect(i));
+    div.addEventListener('click', (e) => {
+      if (pdfDragFlag) { pdfDragFlag = false; return; }
+      if (e.target.closest('[data-edit-page]')) return;
+      toggleSelect(origPage);
+    });
     fragment.appendChild(div);
   }
   grid.appendChild(fragment);
+  // 启用拖拽排序
+  pdfSortable = Sortable.create(grid, {
+    animation: 150,
+    ghostClass: 'dragging',
+    handle: '.thumb-drag-handle',
+    onStart: () => { pdfDragFlag = true; },
+    onEnd: e => {
+      const order = [...pdfStore.get().pageOrder];
+      const movedItem = order.splice(e.oldIndex, 1)[0];
+      order.splice(e.newIndex, 0, movedItem);
+      pdfStore.set(s => ({ ...s, pageOrder: order }));
+      // 更新所有标签的显示序号
+      const thumbs = grid.querySelectorAll('.pdf-thumb');
+      thumbs.forEach((thumb, idx) => {
+        const origPage = parseInt(thumb.dataset.page);
+        const label = thumb.querySelector('.thumb-label');
+        const rot = pdfStore.get().rotations[origPage] || 0;
+        const hasAnn = pdfStore.get().annotations[origPage] && pdfStore.get().annotations[origPage].length;
+        if (label) label.textContent = `第 ${idx + 1} 页${rot ? ' [' + rot + '°]' : ''}${hasAnn ? ' [标注]' : ''}`;
+        thumb.dataset.displayIdx = idx;
+      });
+      setTimeout(() => { pdfDragFlag = false; }, 100);
+    }
+  });
   pdfObserver = new IntersectionObserver((entries) => {
     entries.forEach(entry => {
       if (entry.isIntersecting) {
@@ -709,11 +1052,27 @@ async function renderThumbCanvas(thumbEl, pageNum) {
   const loading = thumbEl.querySelector('.thumb-loading');
   try {
     const page = await pdfJsDoc.getPage(pageNum);
-    const viewport = page.getViewport({ scale: 0.4 });
-    canvas.height = viewport.height;
+    const rot = pdfStore.get().rotations[pageNum] || 0;
+    // 使用 PDF.js 原生 rotation，canvas 直接渲染旋转后的内容
+    const viewport = page.getViewport({ scale: 0.4, rotation: rot });
     canvas.width = viewport.width;
+    canvas.height = viewport.height;
     const ctx = canvas.getContext('2d');
     await page.render({ canvasContext: ctx, viewport }).promise;
+    // 叠加标注（归一化坐标 → 缩略图像素）
+    const anns = pdfStore.get().annotations[pageNum];
+    if (anns && anns.length) {
+      anns.forEach(ann => {
+        ctx.fillStyle = ann.color;
+        const x = ann.x * canvas.width;
+        const y = ann.y * canvas.height;
+        const w = ann.w * canvas.width;
+        const h = ann.h * canvas.height;
+        if (ann.type === 'rect') {
+          ctx.fillRect(x, y, w, h);
+        }
+      });
+    }
     loading.style.display = 'none';
   } catch (e) {
     loading.textContent = '渲染失败';
@@ -741,27 +1100,100 @@ function updateThumbUI() {
   if (statsEl) statsEl.textContent = `共 ${S.pageCount} 页 · 已选 ${S.selected.length} 页`;
 }
 
+function rotateSelectedPages(direction) {
+  const S = pdfStore.get();
+  if (S.selected.length === 0) return Utils.showToast('请先选中页面再旋转', true);
+  pdfStore.set(s => {
+    const rotations = { ...s.rotations };
+    S.selected.forEach(p => {
+      rotations[p] = ((rotations[p] || 0) + direction + 360) % 360;
+    });
+    return { ...s, rotations };
+  });
+  // 重新渲染受影响的缩略图（旋转后尺寸可能变化，需要重绘）
+  S.selected.forEach(p => {
+    const thumbEl = document.querySelector(`.pdf-thumb[data-page="${p}"]`);
+    if (thumbEl) {
+      const label = thumbEl.querySelector('.thumb-label');
+      const displayIdx = parseInt(thumbEl.dataset.displayIdx);
+      const rot = pdfStore.get().rotations[p] || 0;
+      const hasAnn = pdfStore.get().annotations[p] && pdfStore.get().annotations[p].length;
+      if (label) label.textContent = `第 ${displayIdx + 1} 页${rot ? ' [' + rot + '°]' : ''}${hasAnn ? ' [标注]' : ''}`;
+      // 重新渲染缩略图（用新的旋转角度）
+      renderThumbCanvas(thumbEl, p);
+    }
+  });
+  Utils.showToast(`已${direction > 0 ? '右' : '左'}转 ${S.selected.length} 页`);
+}
+
+// 统一处理 PDF：页面选择 + 旋转 + 标注遮挡
 async function processPdf() {
   const S = pdfStore.get();
   if (!currentFile) return;
   if (S.mode === 'extract' && S.selected.length === 0) return Utils.showToast('提取模式下，请至少选择一页保留', true);
   if (S.mode === 'delete' && S.selected.length === S.pageCount) return Utils.showToast('删除模式下，不能删除所有页面', true);
-  const btn = document.getElementById('btn-process');
-  btn.setAttribute('disabled', '');
-  btn.innerHTML = '<div class="spinner"></div> 处理中...';
+  Utils.showLoading('正在处理 PDF...');
   try {
     const pdfDoc = await PDFLib.PDFDocument.load(pdfArrayBuffer);
     const newDoc = await PDFLib.PDFDocument.create();
-    let pagesToKeep = [];
+    const order = S.pageOrder.length ? S.pageOrder : Array.from({ length: S.pageCount }, (_, i) => i + 1);
+    // 根据模式和 pageOrder 计算最终保留的原始页号（按排序顺序）
+    let finalPages = [];
     if (S.mode === 'delete') {
       const removeSet = new Set(S.selected);
-      for (let i = 1; i <= S.pageCount; i++) if (!removeSet.has(i)) pagesToKeep.push(i - 1);
+      finalPages = order.filter(p => !removeSet.has(p));
     } else {
-      pagesToKeep = S.selected.map(p => p - 1).sort((a, b) => a - b);
+      finalPages = order.filter(p => S.selected.includes(p));
     }
-    if (pagesToKeep.length === 0) throw new Error('没有保留任何页面');
-    const copiedPages = await newDoc.copyPages(pdfDoc, pagesToKeep);
-    copiedPages.forEach(p => newDoc.addPage(p));
+    if (finalPages.length === 0) throw new Error('没有保留任何页面');
+    const pageIndices = finalPages.map(p => p - 1);
+    const copiedPages = await newDoc.copyPages(pdfDoc, pageIndices);
+    for (let i = 0; i < copiedPages.length; i++) {
+      const originalPageNum = finalPages[i];
+      const page = copiedPages[i];
+      newDoc.addPage(page);
+      // 应用旋转
+      const rot = S.rotations[originalPageNum] || 0;
+      if (rot) {
+        const degrees = { 90: PDFLib.degrees(90), 180: PDFLib.degrees(180), 270: PDFLib.degrees(270) };
+        page.setRotation(degrees[rot] || PDFLib.degrees(0));
+      }
+      // 应用标注遮挡
+      const anns = S.annotations[originalPageNum];
+      if (anns && anns.length) {
+        const { width: origW, height: origH } = page.getSize();
+        // 标注存储为旋转后视口的归一化坐标 (0-1)
+        // 需要转换回原始 PDF 坐标系 (原点在左下角，y 向上)
+        anns.forEach(ann => {
+          let ox, oy, ow, oh;
+          if (rot === 0) {
+            ox = ann.x * origW;
+            oy = (1 - ann.y - ann.h) * origH;
+            ow = ann.w * origW;
+            oh = ann.h * origH;
+          } else if (rot === 90) {
+            // 90° 顺时针：宽高互换
+            ox = ann.y * origW;
+            oy = ann.x * origH;
+            ow = ann.h * origW;
+            oh = ann.w * origH;
+          } else if (rot === 180) {
+            ox = (1 - ann.x - ann.w) * origW;
+            oy = ann.y * origH;
+            ow = ann.w * origW;
+            oh = ann.h * origH;
+          } else if (rot === 270) {
+            // 270° 顺时针：宽高互换
+            ox = (1 - ann.y - ann.h) * origW;
+            oy = (1 - ann.x - ann.w) * origH;
+            ow = ann.h * origW;
+            oh = ann.w * origH;
+          }
+          const color = Utils.hexToPdfColor(ann.color);
+          page.drawRectangle({ x: ox, y: oy, width: ow, height: oh, color });
+        });
+      }
+    }
     const bytes = await newDoc.save();
     const prefix = S.mode === 'delete' ? 'deleted_' : 'extracted_';
     Utils.downloadBlob(bytes, `${prefix}${S.fileName}`);
@@ -769,23 +1201,304 @@ async function processPdf() {
   } catch (e) {
     Utils.showToast('处理失败: ' + e.message, true);
   } finally {
-    btn.removeAttribute('disabled');
-    btn.innerHTML = '处理并下载 PDF';
+    Utils.hideLoading();
   }
 }
 
+// PDF 编辑器核心逻辑
+async function initEditor() {
+  const canvas = document.getElementById('editor-canvas');
+  const overlay = document.getElementById('editor-overlay');
+  const wrapper = document.getElementById('editor-canvas-wrapper');
+  if (!canvas || !pdfJsDoc) return;
+
+  const S = pdfStore.get();
+  const page = S.currentPage;
+  const rot = S.rotations[page] || 0;
+
+  try {
+    const pdfPage = await pdfJsDoc.getPage(page);
+    // 使用 PDF.js 原生 rotation 参数，让 canvas 直接渲染旋转后的内容
+    const baseVp = pdfPage.getViewport({ scale: 1, rotation: rot });
+    // 显示尺寸：仅按宽度约束，不限制高度（超高时页面自然滚动）
+    const maxW = Math.min(window.innerWidth - 80, 900);
+    const displayScale = Math.min(maxW / baseVp.width, 1.5);
+    // 渲染分辨率：2 倍显示分辨率，保证清晰度
+    const renderScale = displayScale * 2;
+    const renderVp = pdfPage.getViewport({ scale: renderScale, rotation: rot });
+
+    // canvas 内部高分辨率
+    canvas.width = renderVp.width;
+    canvas.height = renderVp.height;
+    // CSS 显示尺寸（小于内部分辨率，实现高清渲染）
+    const displayWidth = Math.round(baseVp.width * displayScale);
+    const displayHeight = Math.round(baseVp.height * displayScale);
+    canvas.style.width = displayWidth + 'px';
+    canvas.style.height = displayHeight + 'px';
+
+    const ctx = canvas.getContext('2d');
+    await pdfPage.render({ canvasContext: ctx, viewport: renderVp }).promise;
+
+    // overlay 尺寸匹配 CSS 显示尺寸
+    overlay.style.width = displayWidth + 'px';
+    overlay.style.height = displayHeight + 'px';
+
+    // 存储编辑器状态（标注使用归一化坐标 0-1）
+    pdfEditorState = {
+      page,
+      rot,
+      displayScale,
+      renderScale,
+      displayWidth,
+      displayHeight,
+      selectedAnnId: null,
+      isDrawing: false,
+      isDragging: false,
+      dragStart: null,
+      drawStart: null
+    };
+
+    overlay.className = `editor-overlay ${S.tool === 'select' ? 'tool-select' : ''}`;
+    drawAnnotations();
+    setupOverlayEvents();
+    renderAnnotationsList();
+  } catch (e) {
+    Utils.showToast('编辑器初始化失败: ' + e.message, true);
+  }
+}
+
+function drawAnnotations() {
+  if (!pdfEditorState) return;
+  const S = pdfStore.get();
+  const page = S.currentPage;
+  const anns = S.annotations[page] || [];
+  const overlay = document.getElementById('editor-overlay');
+  if (!overlay) return;
+
+  const { displayWidth, displayHeight } = pdfEditorState;
+
+  // 清除旧的标注节点
+  overlay.querySelectorAll('.annotation-node').forEach(n => n.remove());
+
+  anns.forEach(ann => {
+    const node = document.createElement('div');
+    node.className = `annotation-node ${ann.id === pdfEditorState.selectedAnnId ? 'selected' : ''}`;
+    node.dataset.annId = ann.id;
+    // 归一化坐标 → 显示像素
+    node.style.left = (ann.x * displayWidth) + 'px';
+    node.style.top = (ann.y * displayHeight) + 'px';
+    node.style.width = (ann.w * displayWidth) + 'px';
+    node.style.height = (ann.h * displayHeight) + 'px';
+    node.style.background = ann.color;
+    node.innerHTML = `<div class="node-label">矩形遮挡</div><div class="node-delete" data-del-ann="${ann.id}">${Icons.close}</div>`;
+    overlay.appendChild(node);
+  });
+}
+
+function renderAnnotationsList() {
+  const S = pdfStore.get();
+  const page = S.currentPage;
+  const anns = S.annotations[page] || [];
+  const list = document.getElementById('editor-annotations-list');
+  if (!list) return;
+  if (anns.length === 0) {
+    list.innerHTML = '<div class="text-center text-sm text-[--muted] py-4">暂无标注，选择工具后在页面上拖拽绘制</div>';
+    return;
+  }
+  list.innerHTML = anns.map(ann => `
+    <div class="flex items-center gap-3 bg-white p-3 rounded-lg border border-[--border] cursor-pointer ${ann.id === pdfEditorState?.selectedAnnId ? 'ring-2 ring-[--green]' : ''}" data-ann-item="${ann.id}">
+      <div class="w-6 h-6 rounded" style="background:${ann.color}"></div>
+      <span class="text-sm text-[--ink-soft]">矩形遮挡</span>
+      <span class="text-xs text-[--muted] ml-auto">${Math.round(ann.w * 100)}%×${Math.round(ann.h * 100)}%</span>
+      <button class="btn btn-ghost btn-sm" data-del-ann-list="${ann.id}">${Icons.trash}</button>
+    </div>
+  `).join('');
+}
+
+function setupOverlayEvents() {
+  const overlay = document.getElementById('editor-overlay');
+  if (!overlay || !pdfEditorState) return;
+  const { displayWidth, displayHeight } = pdfEditorState;
+
+  overlay.onmousedown = (e) => {
+    const S = pdfStore.get();
+    // 检查是否点击了标注删除按钮
+    const delBtn = e.target.closest('[data-del-ann]');
+    if (delBtn) {
+      e.stopPropagation();
+      deleteAnnotation(delBtn.dataset.delAnn);
+      return;
+    }
+
+    // 检查是否点击了已有标注
+    const annNode = e.target.closest('.annotation-node');
+    if (annNode) {
+      const annId = annNode.dataset.annId;
+      pdfEditorState.selectedAnnId = annId;
+      pdfEditorState.isDragging = true;
+      const rect = overlay.getBoundingClientRect();
+      pdfEditorState.dragStart = { x: e.clientX - rect.left, y: e.clientY - rect.top };
+      drawAnnotations();
+      renderAnnotationsList();
+      return;
+    }
+
+    // 如果是选择工具，点击空白处取消选中
+    if (S.tool === 'select') {
+      pdfEditorState.selectedAnnId = null;
+      drawAnnotations();
+      renderAnnotationsList();
+      return;
+    }
+
+    // 开始绘制新标注
+    const rect = overlay.getBoundingClientRect();
+    pdfEditorState.isDrawing = true;
+    pdfEditorState.drawStart = { x: e.clientX - rect.left, y: e.clientY - rect.top };
+  };
+
+  overlay.onmousemove = (e) => {
+    if (!pdfEditorState) return;
+    const rect = overlay.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+
+    if (pdfEditorState.isDragging && pdfEditorState.selectedAnnId) {
+      // 拖拽移动标注 - 使用归一化坐标
+      const dx = (x - pdfEditorState.dragStart.x) / displayWidth;
+      const dy = (y - pdfEditorState.dragStart.y) / displayHeight;
+      const S = pdfStore.get();
+      const page = S.currentPage;
+      const anns = S.annotations[page] || [];
+      const ann = anns.find(a => a.id === pdfEditorState.selectedAnnId);
+      if (ann) {
+        ann.x = Math.max(0, Math.min(1 - ann.w, ann.x + dx));
+        ann.y = Math.max(0, Math.min(1 - ann.h, ann.y + dy));
+        pdfStore.set(s => {
+          const annotations = { ...s.annotations };
+          annotations[page] = [...anns];
+          return { ...s, annotations };
+        });
+        pdfEditorState.dragStart = { x, y };
+        drawAnnotations();
+      }
+    } else if (pdfEditorState.isDrawing) {
+      // 实时预览绘制中的标注
+      const sx = pdfEditorState.drawStart.x;
+      const sy = pdfEditorState.drawStart.y;
+      let preview = overlay.querySelector('.draw-preview');
+      if (!preview) {
+        preview = document.createElement('div');
+        preview.className = 'annotation-node draw-preview';
+        preview.style.background = pdfStore.get().color;
+        overlay.appendChild(preview);
+      }
+      const left = Math.min(sx, x);
+      const top = Math.min(sy, y);
+      const w = Math.abs(x - sx);
+      const h = Math.abs(y - sy);
+      preview.style.left = left + 'px';
+      preview.style.top = top + 'px';
+      preview.style.width = w + 'px';
+      preview.style.height = h + 'px';
+    }
+  };
+
+  overlay.onmouseup = (e) => {
+    if (!pdfEditorState) return;
+    const rect = overlay.getBoundingClientRect();
+    const x = e.clientX - rect.left;
+    const y = e.clientY - rect.top;
+
+    if (pdfEditorState.isDragging) {
+      pdfEditorState.isDragging = false;
+      return;
+    }
+
+    if (pdfEditorState.isDrawing) {
+      const S = pdfStore.get();
+      const sx = pdfEditorState.drawStart.x;
+      const sy = pdfEditorState.drawStart.y;
+      const dw = Math.abs(x - sx);
+      const dh = Math.abs(y - sy);
+      // 最小尺寸限制（像素）
+      if (dw < 10 || dh < 10) {
+        pdfEditorState.isDrawing = false;
+        overlay.querySelectorAll('.draw-preview').forEach(n => n.remove());
+        return;
+      }
+      // 存储为归一化坐标 (0-1)
+      const newAnn = {
+        id: Utils.uid(),
+        type: S.tool,
+        color: S.color,
+        x: Math.min(sx, x) / displayWidth,
+        y: Math.min(sy, y) / displayHeight,
+        w: dw / displayWidth,
+        h: dh / displayHeight
+      };
+      pushUndo();
+      pdfStore.set(s => {
+        const annotations = { ...s.annotations };
+        annotations[S.currentPage] = [...(annotations[S.currentPage] || []), newAnn];
+        return { ...s, annotations };
+      });
+      pdfEditorState.isDrawing = false;
+      pdfEditorState.selectedAnnId = newAnn.id;
+      overlay.querySelectorAll('.draw-preview').forEach(n => n.remove());
+      drawAnnotations();
+      renderAnnotationsList();
+    }
+  };
+}
+
+function deleteAnnotation(annId) {
+  const S = pdfStore.get();
+  const page = S.currentPage;
+  const anns = S.annotations[page] || [];
+  pushUndo();
+  pdfStore.set(s => {
+    const annotations = { ...s.annotations };
+    annotations[page] = anns.filter(a => a.id !== annId);
+    return { ...s, annotations };
+  });
+  if (pdfEditorState) pdfEditorState.selectedAnnId = null;
+  drawAnnotations();
+  renderAnnotationsList();
+}
+
+function pushUndo() {
+  const S = pdfStore.get();
+  pdfUndoStack.push(JSON.parse(JSON.stringify(S.annotations)));
+  if (pdfUndoStack.length > 50) pdfUndoStack.shift();
+}
+
+function undoAnnotation() {
+  if (pdfUndoStack.length === 0) return Utils.showToast('没有可撤销的操作', true);
+  const prev = pdfUndoStack.pop();
+  pdfStore.set(s => ({ ...s, annotations: prev }));
+  if (pdfEditorState) pdfEditorState.selectedAnnId = null;
+  drawAnnotations();
+  renderAnnotationsList();
+}
+
 // PDF 转图片
+let p2iCancelled = false;
+
 async function convertPdfToImages(file) {
   if (!file || file.type !== 'application/pdf') return Utils.showToast('请选择有效的PDF文件', true);
   
+  p2iCancelled = false;
   const S = p2iStore.get();
   const statusBox = app.querySelector('#p2i-status');
   const titleEl = app.querySelector('#p2i-status-title');
   const detailEl = app.querySelector('#p2i-status-detail');
   const bar = app.querySelector('#p2i-progress-bar');
+  const gallery = app.querySelector('#p2i-gallery');
   
   statusBox.classList.remove('hidden');
-  titleEl.textContent = '正在解析 PDF...';
+  if (gallery) gallery.classList.add('hidden');
+  titleEl.innerHTML = `正在解析 PDF... <button class="btn btn-ghost btn-sm ml-3" id="p2i-cancel-btn">取消</button>`;
   detailEl.textContent = '请稍候';
   bar.style.width = '0%';
 
@@ -793,12 +1506,12 @@ async function convertPdfToImages(file) {
     const arrayBuffer = await file.arrayBuffer();
     const doc = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
     const totalPages = doc.numPages;
-    const zip = new JSZip(); // 初始化 JSZip
+    const zip = S.mode === 'zip' ? new JSZip() : null;
+    const imageResults = S.mode === 'image' ? [] : null;
 
-    let htmlContent = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:w="urn:schemas-microsoft-com:office:word" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="utf-8"><title>PDF 转 Word</title></head><body>`;
-    
     for (let i = 1; i <= totalPages; i++) {
-      titleEl.textContent = `正在转换...`;
+      if (p2iCancelled) { titleEl.textContent = '已取消'; detailEl.textContent = `已处理 ${i - 1} / ${totalPages} 页后取消`; return; }
+      titleEl.innerHTML = `正在转换... <button class="btn btn-ghost btn-sm ml-3" id="p2i-cancel-btn">取消</button>`;
       detailEl.textContent = `已处理 ${i} / ${totalPages} 页`;
       bar.style.width = `${(i / totalPages) * 100}%`;
       
@@ -811,42 +1524,99 @@ async function convertPdfToImages(file) {
       
       await page.render({ canvasContext: ctx, viewport }).promise;
       
-      if (S.mode === 'word') {
-        const imgData = canvas.toDataURL('image/jpeg', 0.92);
-        htmlContent += `<img src="${imgData}" style="width:100%;"/>`;
-        if (i < totalPages) {
-          htmlContent += `<br clear=all style='page-break-before:always'>`;
-        }
-      } else if (S.mode === 'zip') {
+      if (S.mode === 'zip') {
         const blob = await new Promise(res => canvas.toBlob(res, `image/${S.format}`, 0.92));
         const imgName = `${file.name.replace(/\.pdf$/i, '')}_第${String(i).padStart(3, '0')}页.${S.format === 'jpeg' ? 'jpg' : 'png'}`;
         zip.file(imgName, blob);
+      } else if (S.mode === 'image') {
+        const blob = await new Promise(res => canvas.toBlob(res, `image/${S.format}`, 0.92));
+        const ext = S.format === 'jpeg' ? 'jpg' : 'png';
+        const imgName = `${file.name.replace(/\.pdf$/i, '')}_第${String(i).padStart(3, '0')}页.${ext}`;
+        const imgUrl = URL.createObjectURL(blob);
+        imageResults.push({ blob, url: imgUrl, name: imgName, page: i });
       }
     }
+
+    if (p2iCancelled) { titleEl.textContent = '已取消'; return; }
     
     titleEl.textContent = '正在生成文件...';
     detailEl.textContent = '即将开始下载';
     
-    if (S.mode === 'word') {
-      htmlContent += `</body></html>`;
-      const blob = new Blob(['\ufeff', htmlContent], { type: 'application/msword' });
-      saveAs(blob, file.name.replace(/\.pdf$/i, '') + '.doc');
-    } else if (S.mode === 'zip') {
+    if (S.mode === 'zip') {
       const content = await zip.generateAsync({ type: "blob" }, (metadata) => {
         detailEl.textContent = `正在打包: ${metadata.percent.toFixed(0)}%`;
       });
       saveAs(content, file.name.replace(/\.pdf$/i, '') + '_图片包.zip');
+    } else if (S.mode === 'image') {
+      renderImageGallery(imageResults, gallery);
     }
     
     titleEl.textContent = '转换完成！';
-    detailEl.textContent = '文件已开始下载';
-    Utils.showToast('文件已生成！');
+    detailEl.textContent = S.mode === 'image' ? '图片已生成，可逐张下载' : '文件已开始下载';
+    Utils.showToast(S.mode === 'image' ? '图片已生成！' : '文件已生成！');
     
   } catch (err) {
     console.error(err);
     titleEl.textContent = '转换失败';
     detailEl.textContent = 'PDF 可能已加密或损坏，或内存不足';
     Utils.showToast('转换失败: ' + err.message, true);
+  }
+}
+
+// PDF 转图片 - 直接图片模式：渲染预览画廊
+function renderImageGallery(images, gallery) {
+  if (!gallery || !images.length) return;
+  gallery.classList.remove('hidden');
+
+  // 单张图片直接自动下载
+  if (images.length === 1) {
+    saveAs(images[0].blob, images[0].name);
+  }
+
+  gallery.innerHTML = `
+    <div class="bg-white p-6 rounded-2xl border border-[--border]">
+      <div class="flex items-center justify-between mb-4">
+        <h3 class="text-lg font-semibold text-[--ink]">转换结果 <span class="text-[--muted] font-normal text-sm">(${images.length} 张图片)</span></h3>
+        <button class="btn btn-primary btn-sm" id="p2i-download-all">全部下载</button>
+      </div>
+      ${images.length === 1 ? '<div class="text-xs text-[--muted] mb-3">已自动下载，也可点击下方图片单独保存</div>' : ''}
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+        ${images.map((img, idx) => `
+          <div class="bg-[--bg-2] rounded-xl overflow-hidden border border-[--border] transition hover:shadow-md" style="transition: all .3s">
+            <div class="aspect-auto bg-[--bg-2] flex items-center justify-center overflow-hidden" style="max-height: 300px">
+              <img src="${img.url}" alt="第${img.page}页" class="max-w-full max-h-[300px] object-contain" />
+            </div>
+            <div class="p-3 flex items-center justify-between bg-white">
+              <span class="text-sm text-[--ink-soft] truncate">第 ${img.page} 页</span>
+              <button class="btn btn-ghost btn-sm" data-p2i-dl="${idx}">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></svg>
+                下载
+              </button>
+            </div>
+          </div>
+        `).join('')}
+      </div>
+    </div>
+  `;
+
+  // 存储引用供事件委托使用
+  gallery._images = images;
+
+  // 全部下载按钮
+  const dlAllBtn = gallery.querySelector('#p2i-download-all');
+  if (dlAllBtn) {
+    dlAllBtn.addEventListener('click', async () => {
+      dlAllBtn.setAttribute('disabled', '');
+      dlAllBtn.innerHTML = '<div class="spinner"></div> 下载中...';
+      for (let i = 0; i < images.length; i++) {
+        saveAs(images[i].blob, images[i].name);
+        // 间隔 300ms 避免浏览器拦截多文件下载
+        if (i < images.length - 1) await new Promise(r => setTimeout(r, 300));
+      }
+      dlAllBtn.removeAttribute('disabled');
+      dlAllBtn.textContent = '全部下载';
+      Utils.showToast('已开始下载全部图片');
+    });
   }
 }
 
@@ -926,7 +1696,12 @@ async function calculateEstimates(file) {
   const c = document.createElement('canvas'); c.width = img.width; c.height = img.height;
   const ctx = c.getContext('2d'); ctx.drawImage(img, 0, 0);
   const getBlobSize = (type, q) => new Promise(r => c.toBlob(b => r(b ? b.size : 0), type, q));
-  const [jpeg, webp, png] = await Promise.all([getBlobSize('image/jpeg', 0.8), getBlobSize('image/webp', 0.8), getBlobSize('image/png', 1.0)]);
+  // 性能优化：大图片跳过 PNG 预估（PNG 通常远大于 JPEG，用户极少选择）
+  const isLargeFile = file.size > 2 * 1024 * 1024;
+  const promises = [getBlobSize('image/jpeg', 0.8), getBlobSize('image/webp', 0.8)];
+  const [jpeg, webp] = await Promise.all(promises);
+  // PNG 按需延迟计算：大图标记为 0（点击时再算），小图正常计算
+  const png = isLargeFile ? 0 : await getBlobSize('image/png', 1.0);
   compressStore.set(s => ({ ...s, estimates: { jpeg, webp, png } }));
   renderFormatCards();
 }
@@ -950,6 +1725,51 @@ async function doCompress() {
   if (preview) { preview.src = compressStore.get().resultUrl; preview.classList.remove('hidden'); placeholder?.classList.add('hidden'); }
   const elSize = app.querySelector('#comp-new-size'); if (elSize) elSize.textContent = Utils.formatSize(blob.size);
   const dlBtn = app.querySelector('#comp-dl-btn'); if (dlBtn) dlBtn.removeAttribute('disabled');
+}
+
+// 批量压缩
+async function doBatchCompress() {
+  const S = compressStore.get();
+  if (S.batchFiles.length === 0) return Utils.showToast('请先添加图片', true);
+  compressStore.set(s => ({ ...s, batchProcessing: true, batchProgress: 0, batchResults: [] }));
+  renderBatchCompressTool();
+  const results = [];
+  for (let i = 0; i < S.batchFiles.length; i++) {
+    const file = S.batchFiles[i];
+    try {
+      const img = new Image();
+      const url = URL.createObjectURL(file);
+      img.src = url;
+      await new Promise((r, rej) => { img.onload = r; img.onerror = () => rej(new Error('图片加载失败')); });
+      const w = Math.round(img.width * (S.scale / 100)), h = Math.round(img.height * (S.scale / 100));
+      const c = document.createElement('canvas'); c.width = w; c.height = h;
+      const ctx = c.getContext('2d'); ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, w, h); ctx.drawImage(img, 0, 0, w, h);
+      const blob = await new Promise(r => c.toBlob(r, `image/${S.format}`, S.quality));
+      URL.revokeObjectURL(url);
+      const ext = S.format === 'jpeg' ? 'jpg' : S.format;
+      const baseName = file.name.replace(/\.[^.]+$/, '');
+      results.push({ blob, name: `${baseName}.${ext}`, origSize: file.size, size: blob.size });
+    } catch (e) {
+      results.push({ blob: null, name: file.name, origSize: file.size, size: file.size, error: true });
+    }
+    compressStore.set(s => ({ ...s, batchProgress: i + 1, batchResults: [...results] }));
+    renderBatchCompressTool();
+    // 让浏览器有机会更新 UI
+    await new Promise(r => setTimeout(r, 10));
+  }
+  compressStore.set(s => ({ ...s, batchProcessing: false }));
+  // 自动打包下载
+  await downloadBatchZip(results);
+  renderBatchCompressTool();
+  Utils.showToast(`批量压缩完成！${results.length} 张图片已打包下载`);
+}
+
+async function downloadBatchZip(results) {
+  const zip = new JSZip();
+  const valid = results.filter(r => r.blob);
+  valid.forEach(r => zip.file(r.name, r.blob));
+  const content = await zip.generateAsync({ type: "blob" });
+  saveAs(content, `compressed_images_${Date.now()}.zip`);
 }
 
 // 大小写转换
@@ -990,14 +1810,21 @@ function doGenerateMock() {
       const max = parseFloat(S.numMax) || 100;
       const dec = Math.max(0, Math.min(6, S.numDec));
       for (let i = 0; i < count; i++) {
-        const val = Math.random() * (max - min) + min;
+        const rand = crypto.getRandomValues(new Uint32Array(1))[0] / 4294967295;
+        const val = rand * (max - min) + min;
         results.push(val.toFixed(dec));
       }
     } else if (S.type === 'picker') {
       const list = S.listText.split('\n').map(s => s.trim()).filter(Boolean);
       if (!list.length) return Utils.showToast('请输入候选名单', true);
       const pickCount = Math.min(count, list.length);
-      const shuffled = [...list].sort(() => crypto.getRandomValues(new Uint32Array(1))[0] / 4294967295 - 0.5);
+      // Fisher-Yates 洗牌算法，确保公平随机
+      const shuffled = [...list];
+      for (let j = shuffled.length - 1; j > 0; j--) {
+        const rand = crypto.getRandomValues(new Uint32Array(1))[0] / 4294967295;
+        const k = Math.floor(rand * (j + 1));
+        [shuffled[j], shuffled[k]] = [shuffled[k], shuffled[j]];
+      }
       results = shuffled.slice(0, pickCount);
     }
 
@@ -1030,13 +1857,18 @@ function doCalculateDateDiff() {
   let workDays = 0, weekendDays = 0;
   const s = start <= end ? start : end;
   const e = start <= end ? end : start;
-  let current = new Date(s);
 
-  while (current < e) {
-    const day = current.getDay();
+  // 优化：用数学计算替代逐日遍历，O(1) 复杂度
+  const fullWeeks = Math.floor(totalDays / 7);
+  const remainder = totalDays % 7;
+  workDays = fullWeeks * 5;
+  weekendDays = fullWeeks * 2;
+  // 处理余数天数
+  const startDay = s.getDay();
+  for (let i = 0; i < remainder; i++) {
+    const day = (startDay + i) % 7;
     if (day !== 0 && day !== 6) workDays++;
     else weekendDays++;
-    current.setDate(current.getDate() + 1);
   }
 
   const later = start <= end ? end : start;
@@ -1123,14 +1955,27 @@ app.addEventListener('click', async e => {
   }
 
   if (closest('#reset-image')) return resetStore(imageStore, { files: [], mode: 'fit', orient: 'auto', quality: 0.8 });
-  if (closest('#reset-compress')) return resetStore(compressStore, { file: null, url: '', name: '', origSize: 0, quality: 0.8, format: 'jpeg', scale: 100, resultBlob: null, resultUrl: '', estimates: { jpeg: 0, webp: 0, png: 0 } });
+  if (closest('#reset-compress')) { if (compressStore.get().url) URL.revokeObjectURL(compressStore.get().url); if (compressStore.get().resultUrl) URL.revokeObjectURL(compressStore.get().resultUrl); return resetStore(compressStore, { file: null, url: '', name: '', origSize: 0, quality: 0.8, format: 'jpeg', scale: 100, resultBlob: null, resultUrl: '', estimates: { jpeg: 0, webp: 0, png: 0 }, batchMode: false, batchFiles: [], batchResults: [], batchProcessing: false, batchProgress: 0 }); }
+
+  // 批量压缩模式
+  const compMode = closest('[data-comp-mode]');
+  if (compMode) {
+    const mode = compMode.dataset.compMode;
+    if (mode === 'batch') { compressStore.set(s => ({ ...s, batchMode: true })); return renderBatchCompressTool(); }
+    else { compressStore.set(s => ({ ...s, batchMode: false })); return renderCompressTool(); }
+  }
+  if (closest('#reset-batch')) { compressStore.set(s => ({ ...s, batchFiles: [], batchResults: [], batchProgress: 0, batchProcessing: false })); return renderBatchCompressTool(); }
+  if (closest('#batch-compress-btn')) return doBatchCompress();
+  if (closest('#batch-download-btn')) { const r = compressStore.get().batchResults; if (r.length) return downloadBatchZip(r); return; }
+  const batchFmt = closest('[data-batch-fmt]');
+  if (batchFmt) { compressStore.set(s => ({ ...s, format: batchFmt.dataset.batchFmt })); app.querySelectorAll('[data-batch-fmt]').forEach(o => o.classList.toggle('active', o === batchFmt)); return; }
   if (closest('#reset-text')) return resetStore(textStore, { input: '', mode: 'upper' });
   if (closest('#reset-mock')) return resetStore(mockStore, { type: 'uuid', count: 10, pwdLen: 12, pwdOpts: { upper: true, lower: true, num: true, sym: true }, numMin: 1, numMax: 100, numDec: 2, listText: '', listCount: 1, result: '' });
   if (closest('#reset-date')) return resetStore(dateStore, { mode: 'diff', startDate: '', endDate: '', baseDate: '', offset: 1, unit: 'days', result: null });
 
-  for (const key of ['mode', 'orient', 'quality']) { const opt = closest(`[data-${key}]`); if (opt && app.querySelector('#convert-img-btn')) { app.querySelectorAll(`[data-${key}]`).forEach(o => o.classList.remove('active')); opt.classList.add('active'); imageStore.set(s => ({ ...s, [key]: key === 'quality' ? parseFloat(opt.dataset[key]) : opt.dataset[key] })); return; } }
+  for (const key of ['mode', 'orient', 'quality']) { const opt = closest(`[data-${key}]`); if (opt && app.querySelector('#convert-img-btn')) { app.querySelectorAll(`[data-${key}]`).forEach(o => o.classList.remove('active')); opt.classList.add('active'); imageStore.set(s => ({ ...s, [key]: key === 'quality' ? parseFloat(opt.dataset[key]) : opt.dataset[key] })); updatePdfPreview(); return; } }
 
-  const rmImg = closest('[data-rm-img]'); if (rmImg) { const i = +rmImg.dataset.rmImg; const files = imageStore.get().files; URL.revokeObjectURL(files[i].url); files.splice(i, 1); imageStore.set(s => ({ ...s, files })); syncImageListDOM(); return; }
+  const rmImg = closest('[data-rm-img]'); if (rmImg) { const i = +rmImg.dataset.rmImg; const files = imageStore.get().files; URL.revokeObjectURL(files[i].url); files.splice(i, 1); imageStore.set(s => ({ ...s, files })); syncImageListDOM(); updatePdfPreview(); return; }
   if (closest('#convert-img-btn')) return convertToPdf();
 
   const cfmt = closest('[data-cfmt]'); if (cfmt && app.querySelector('#comp-ctrl')) { app.querySelectorAll('[data-cfmt]').forEach(o => o.classList.remove('active')); cfmt.classList.add('active'); compressStore.set(s => ({ ...s, format: cfmt.dataset.cfmt })); renderFormatCards(); return doCompress(); }
@@ -1141,8 +1986,20 @@ app.addEventListener('click', async e => {
 
   const mt = closest('[data-mock-type]');
   if (mt) {
-    mockStore.set(s => ({ ...s, type: mt.dataset.mockType }));
-    return renderMockTool();
+    // 切换前保存当前 textarea 内容，防止丢失
+    const listEl = app.querySelector('#mock-list');
+    if (listEl) mockStore.set(s => ({ ...s, listText: listEl.value }));
+    const newType = mt.dataset.mockType;
+    mockStore.set(s => ({ ...s, type: newType }));
+    // 局部更新：只切换按钮样式和配置区域显隐，不重渲染整个页面
+    app.querySelectorAll('[data-mock-type]').forEach(el => {
+      el.classList.toggle('btn-primary', el.dataset.mockType === newType);
+      el.classList.toggle('btn-ghost', el.dataset.mockType !== newType);
+    });
+    app.querySelector('#mock-opts-pwd')?.classList.toggle('hidden', newType !== 'password');
+    app.querySelector('#mock-opts-num')?.classList.toggle('hidden', newType !== 'number');
+    app.querySelector('#mock-opts-picker')?.classList.toggle('hidden', newType !== 'picker');
+    return;
   }
   if (closest('#mock-gen-btn')) return doGenerateMock();
   if (closest('#mock-copy-btn')) { const v = mockStore.get().result; if (!v) return Utils.showToast('结果为空', true); Utils.copy(v).then(() => Utils.showToast('已复制结果')); return; }
@@ -1184,15 +2041,95 @@ app.addEventListener('click', async e => {
   }
   if (closest('#btn-process')) return processPdf();
 
+  // PDF 可视化工作台 - 旋转
+  if (closest('#btn-rotate-left')) return rotateSelectedPages(-90);
+  if (closest('#btn-rotate-right')) return rotateSelectedPages(90);
+
+  // PDF 可视化工作台 - 编辑器
+  const editPage = closest('[data-edit-page]');
+  if (editPage) {
+    const pageNum = parseInt(editPage.dataset.editPage);
+    pdfStore.set(s => ({ ...s, view: 'edit', currentPage: pageNum, tool: 'select' }));
+    pdfUndoStack = [];
+    return renderPdfTool();
+  }
+  if (closest('#btn-back-to-grid')) {
+    pdfStore.set(s => ({ ...s, view: 'grid' }));
+    pdfEditorState = null;
+    return renderPdfTool();
+  }
+  if (closest('#btn-prev-page')) {
+    const S = pdfStore.get();
+    if (S.currentPage > 1) { pdfStore.set(s => ({ ...s, currentPage: s.currentPage - 1 })); pdfUndoStack = []; return renderPdfTool(); }
+    return;
+  }
+  if (closest('#btn-next-page')) {
+    const S = pdfStore.get();
+    if (S.currentPage < S.pageCount) { pdfStore.set(s => ({ ...s, currentPage: s.currentPage + 1 })); pdfUndoStack = []; return renderPdfTool(); }
+    return;
+  }
+  const editorTool = closest('[data-editor-tool]');
+  if (editorTool) {
+    const tool = editorTool.dataset.editorTool;
+    pdfStore.set(s => ({ ...s, tool }));
+    app.querySelectorAll('[data-editor-tool]').forEach(el => el.classList.toggle('active', el.dataset.editorTool === tool));
+    const overlay = document.getElementById('editor-overlay');
+    if (overlay) overlay.className = `editor-overlay ${tool === 'select' ? 'tool-select' : ''}`;
+    return;
+  }
+  const editorColor = closest('[data-editor-color]');
+  if (editorColor) {
+    pdfStore.set(s => ({ ...s, color: editorColor.dataset.editorColor }));
+    app.querySelectorAll('[data-editor-color]').forEach(el => el.classList.toggle('active', el === editorColor));
+    return;
+  }
+  if (closest('#btn-undo')) return undoAnnotation();
+  if (closest('#btn-delete-ann')) {
+    if (pdfEditorState && pdfEditorState.selectedAnnId) return deleteAnnotation(pdfEditorState.selectedAnnId);
+    Utils.showToast('请先选中一个标注', true);
+    return;
+  }
+  const delAnnList = closest('[data-del-ann-list]');
+  if (delAnnList) { deleteAnnotation(delAnnList.dataset.delAnnList); return; }
+  const annItem = closest('[data-ann-item]');
+  if (annItem) {
+    if (pdfEditorState) { pdfEditorState.selectedAnnId = annItem.dataset.annItem; drawAnnotations(); renderAnnotationsList(); }
+    return;
+  }
+
   // PDF 转图片
   const p2iMode = closest('[data-p2i-mode]');
   if (p2iMode) {
     const mode = p2iMode.dataset.p2iMode;
     p2iStore.set(s => ({ ...s, mode }));
     app.querySelectorAll('[data-p2i-mode]').forEach(el => el.classList.toggle('active', el.dataset.p2iMode === mode));
-    const fmtWrap = app.querySelector('#p2i-format-wrap');
-    if (mode === 'word') fmtWrap.classList.add('hidden');
-    else fmtWrap.classList.remove('hidden');
+    // 切换模式时隐藏画廊和状态
+    const gallery = app.querySelector('#p2i-gallery');
+    if (gallery) gallery.classList.add('hidden');
+    const status = app.querySelector('#p2i-status');
+    if (status) status.classList.add('hidden');
+    return;
+  }
+  if (closest('#p2i-clear-file')) { p2iStore.set(s => ({ ...s, pendingFile: null })); return renderPdfToImageTool(); }
+  if (closest('#p2i-start-btn')) {
+    const file = p2iStore.get().pendingFile;
+    if (!file) return Utils.showToast('请先上传 PDF 文件', true);
+    return convertPdfToImages(file);
+  }
+  if (closest('#p2i-cancel-btn')) { p2iCancelled = true; return Utils.showToast('正在取消...'); }
+
+  // PDF 转图片 - 单张下载
+  const p2iDl = closest('[data-p2i-dl]');
+  if (p2iDl) {
+    const gallery = app.querySelector('#p2i-gallery');
+    if (gallery && gallery._images) {
+      const idx = parseInt(p2iDl.dataset.p2iDl);
+      const img = gallery._images[idx];
+      if (img) {
+        saveAs(img.blob, img.name);
+        Utils.showToast('已下载第 ' + img.page + ' 页');
+      }
+    }
     return;
   }
 });
@@ -1201,8 +2138,10 @@ app.addEventListener('input', e => {
   const id = e.target.id;
   if (id === 'num-input') return doConvert();
   if (id === 'tc-input') return doTextCase();
-  if (id === 'comp-q') { compressStore.set(s => ({ ...s, quality: e.target.value / 100 })); app.querySelector('#comp-q-val').textContent = e.target.value; return Utils.debounce(doCompress, 300)(); }
-  if (id === 'comp-s') { compressStore.set(s => ({ ...s, scale: parseInt(e.target.value) })); app.querySelector('#comp-s-val').textContent = e.target.value; return Utils.debounce(doCompress, 300)(); }
+  if (id === 'comp-q') { compressStore.set(s => ({ ...s, quality: e.target.value / 100 })); app.querySelector('#comp-q-val').textContent = e.target.value; return debouncedDoCompress(); }
+  if (id === 'comp-s') { compressStore.set(s => ({ ...s, scale: parseInt(e.target.value) })); app.querySelector('#comp-s-val').textContent = e.target.value; return debouncedDoCompress(); }
+  if (id === 'batch-q') { compressStore.set(s => ({ ...s, quality: e.target.value / 100 })); app.querySelector('#batch-q-val').textContent = e.target.value; return; }
+  if (id === 'batch-s') { compressStore.set(s => ({ ...s, scale: parseInt(e.target.value) })); app.querySelector('#batch-s-val').textContent = e.target.value; return; }
 
   if (id === 'mock-count') mockStore.set(s => ({ ...s, count: parseInt(e.target.value) }));
   if (id === 'mock-pwd-len') { mockStore.set(s => ({ ...s, pwdLen: parseInt(e.target.value) })); e.target.previousElementSibling.textContent = `密码长度: ${e.target.value}`; }
@@ -1220,10 +2159,31 @@ app.addEventListener('input', e => {
 });
 
 app.addEventListener('change', e => {
-  if (e.target.id === 'p2i-scale' || e.target.id === 'p2i-format') {
-    // 触发 input 事件兼容处理
-    app.dispatchEvent(new InputEvent('input', { bubbles: true, data: e.target.value, target: e.target }));
+  const id = e.target.id;
+  if (id === 'p2i-scale') { p2iStore.set(s => ({ ...s, scale: parseFloat(e.target.value) })); return; }
+  if (id === 'p2i-format') { p2iStore.set(s => ({ ...s, format: e.target.value })); return; }
+});
+
+// PDF 编辑器快捷键和窗口 resize
+window.addEventListener('keydown', (e) => {
+  if ((e.ctrlKey || e.metaKey) && e.key === 'z') {
+    const S = pdfStore.get();
+    if (S.view === 'edit') {
+      e.preventDefault();
+      undoAnnotation();
+    }
   }
+});
+
+window.addEventListener('resize', () => {
+  // 防抖重绘编辑器
+  if (pdfResizeTimer) clearTimeout(pdfResizeTimer);
+  pdfResizeTimer = setTimeout(() => {
+    const S = pdfStore.get();
+    if (S.view === 'edit' && pdfEditorState) {
+      initEditor();
+    }
+  }, 300);
 });
 
 app.addEventListener('files-selected', async e => {
@@ -1239,7 +2199,7 @@ app.addEventListener('files-selected', async e => {
       pdfArrayBuffer = await file.arrayBuffer();
       pdfJsDoc = await pdfjsLib.getDocument({ data: pdfArrayBuffer.slice(0) }).promise;
       currentFile = file;
-      pdfStore.set({ fileName: file.name, pageCount: pdfJsDoc.numPages, mode: 'delete', selected: [] });
+      pdfStore.set({ fileName: file.name, pageCount: pdfJsDoc.numPages, mode: 'delete', selected: [], view: 'grid', currentPage: 0, tool: 'select', color: '#ffffff', rotations: {}, annotations: {}, pageOrder: Array.from({ length: pdfJsDoc.numPages }, (_, i) => i + 1) });
       renderPdfTool();
     } catch (err) {
       Utils.showToast('PDF 解析失败，可能已加密或损坏', true);
@@ -1249,7 +2209,9 @@ app.addEventListener('files-selected', async e => {
   }
   if (zone.id === 'p2i-drop') {
     const file = e.detail[0];
-    return convertPdfToImages(file);
+    if (!file || file.type !== 'application/pdf') return Utils.showToast('请选择有效的PDF文件', true);
+    p2iStore.set(s => ({ ...s, pendingFile: file }));
+    return renderPdfToImageTool();
   }
   if (zone.id === 'comp-drop') {
     const file = e.detail[0]; if (!file || !file.type.startsWith('image/')) return Utils.showToast('请选择有效的图片', true);
@@ -1263,13 +2225,35 @@ app.addEventListener('files-selected', async e => {
     if (preview) { preview.src = url; preview.classList.remove('hidden'); placeholder?.classList.add('hidden'); }
     calculateEstimates(file); return doCompress();
   }
+  if (zone.id === 'comp-batch-drop') {
+    const files = [...e.detail].filter(f => f.type.startsWith('image/'));
+    if (files.length === 0) return Utils.showToast('请选择有效的图片', true);
+    compressStore.set(s => ({ ...s, batchFiles: [...s.batchFiles, ...files], batchResults: [], batchProgress: 0 }));
+    return renderBatchCompressTool();
+  }
 });
 
 window.addEventListener('beforeunload', () => {
   imageStore.get().files.forEach(f => URL.revokeObjectURL(f.url));
   const cs = compressStore.get();
   ['url', 'resultUrl'].forEach(k => { if (cs[k]) URL.revokeObjectURL(cs[k]); });
+  // 清理 PDF 转图片画廊的对象 URL
+  const gallery = document.querySelector('#p2i-gallery');
+  if (gallery && gallery._images) gallery._images.forEach(img => URL.revokeObjectURL(img.url));
+  pdfEditorState = null;
   if (pdfObserver) pdfObserver.disconnect();
+  if (pdfSortable) pdfSortable.destroy();
+});
+
+// 全局错误处理，防止异步异常导致 UI 卡死
+window.addEventListener('error', (e) => {
+  console.error('全局错误:', e.error || e.message);
+  Utils.showToast('发生未知错误，请刷新重试', true);
+});
+window.addEventListener('unhandledrejection', (e) => {
+  console.error('未捕获的 Promise 错误:', e.reason);
+  Utils.showToast('操作失败: ' + (e.reason?.message || '未知错误'), true);
+  e.preventDefault?.();
 });
 
 // ═══════════════════════════════════════════
@@ -1291,6 +2275,17 @@ function router() {
   const base = (location.hash.slice(1) || '/').split('?')[0];
   if (base !== '/image-to-pdf' && sortableInst) { sortableInst.destroy(); sortableInst = null; }
   if (base !== '/pdf-split-merge' && pdfObserver) { pdfObserver.disconnect(); pdfObserver = null; }
+  if (base !== '/pdf-split-merge' && pdfSortable) { pdfSortable.destroy(); pdfSortable = null; }
+  if (base !== '/pdf-split-merge') { pdfEditorState = null; pdfUndoStack = []; }
+  // 离开 PDF 转图片页面时清理画廊对象 URL 和待处理文件
+  if (base !== '/pdf-to-image') {
+    const gallery = document.querySelector('#p2i-gallery');
+    if (gallery && gallery._images) {
+      gallery._images.forEach(img => URL.revokeObjectURL(img.url));
+      gallery._images = null;
+    }
+    p2iStore.set(s => ({ ...s, pendingFile: null }));
+  }
   (ROUTES[base] || renderHome)(); window.scrollTo(0, 0);
 }
 window.addEventListener('hashchange', router);
